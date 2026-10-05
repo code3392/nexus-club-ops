@@ -110,29 +110,6 @@ class NexusApp {
         this.closeCommandPalette();
       }
     });
-
-    // Close navigation & user dropdowns when clicking outside
-    document.addEventListener('click', (e) => {
-      const moreWrap = e.target.closest('.nav-more-dropdown-wrap');
-      if (!moreWrap) {
-        const moreMenu = document.getElementById('navMoreDropdown');
-        if (moreMenu) moreMenu.classList.add('hidden');
-      }
-      const userWrap = e.target.closest('.auth-user-dropdown-wrap');
-      if (!userWrap) {
-        const userMenu = document.getElementById('userDropdownMenu');
-        if (userMenu) userMenu.classList.add('hidden');
-      }
-    });
-  }
-
-  toggleMoreDropdown(e) {
-    if (e && e.stopPropagation) e.stopPropagation();
-    sound.playClick();
-    const dropdown = document.getElementById('navMoreDropdown');
-    if (dropdown) {
-      dropdown.classList.toggle('hidden');
-    }
   }
 
   handleCreateFormClick() {
