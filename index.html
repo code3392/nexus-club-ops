@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEXUS CLUB OPS — Next-Gen Campus Fest & Event Management Engine</title>
+  <meta name="description" content="In-house smart club operations platform replacing third-party Google Forms for university fests, hackathons, and campus events. Zero spreadsheet chaos, automated cryptographic passes, and live gate check-in.">
+
+  <!-- Inter and JetBrains Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+
+  <!-- Interactive Constellation Network Canvas Background -->
+  <canvas id="networkCanvas"></canvas>
+
+  <div class="app-wrapper">
+    <!-- Navigation Header -->
+    <header class="nav-header">
+      <div class="nav-inner">
+        <div class="brand-group" onclick="window.nexusApp.switchTab('arena')">
+          <div class="brand-symbol">⚡</div>
+          <div class="brand-title-wrap">
+            <span class="brand-name">NEXUS OPS</span>
+            <span class="brand-badge">KILL THE FORMS // FEST OS</span>
+          </div>
+        </div>
+
+        <!-- Mode Navigation Tabs -->
+        <nav class="nav-tabs-bar" aria-label="Main Navigation">
+          <button class="nav-tab-btn active" data-tab="arena">
+            <span>🎪</span> Fest Arena
+          </button>
+          <button class="nav-tab-btn" data-tab="studio">
+            <span>🛠️</span> Form Studio
+          </button>
+          <button class="nav-tab-btn" data-tab="scanner">
+            <span>⚡</span> Gate Scanner
+          </button>
+          <button class="nav-tab-btn" data-tab="admin">
+            <span>📊</span> Command Center
+          </button>
+        </nav>
+
+        <!-- Right Quick Actions -->
+        <div class="nav-actions-right">
+          <button class="search-trigger-btn" onclick="window.nexusApp.toggleCommandPalette()" title="Press Ctrl+K">
+            <span>🔍 Search</span>
+            <span class="kbd-shortcut">Ctrl+K</span>
+          </button>
+
+          <button id="soundToggleBtn" class="util-btn" title="Toggle Sound FX">
+            🔊 Sound FX
+          </button>
+
+          <button id="resetDataBtn" class="util-btn" title="Restore Default Mock State">
+            🔄 Demo Reset
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Live Campus Announcement Ticker Strip -->
+    <div class="ticker-strip">
+      <span class="ticker-label">🔴 LIVE CAMPUS FEED:</span>
+      <div class="ticker-marquee" id="heroAnnouncementTicker">
+        <!-- Dynamically injected announcements -->
+        Loading live fest broadcasts...
+      </div>
+    </div>
+
+    <!-- Main Views Container -->
+    <main class="main-content">
+      
+      <!-- ===================================================================
+           TAB 1: FEST ARENA (ATTENDEE DISCOVERY & PASS GENERATION)
+           =================================================================== -->
+      <section id="tabView-arena" class="tab-view-section active">
+        <!-- Hero Section -->
+        <div class="hero-arena">
+          <div class="hero-badge-capsule">
+            <span class="live-pulse"></span>
+            <span>Annual Campus Tech & Cultural Fest 2026</span>
+          </div>
+
+          <h1 class="hero-headline">
+            Say Goodbye to <span class="gradient-text">Google Forms Chaos</span> in Campus Events.
+          </h1>
+
+          <p class="hero-subtitle">
+            An in-house fest operating system engineered for student clubs. Instant dynamic team codes, real-time ticket quota lock, anti-fraud payment gateway simulation, and 0.4-second QR gate check-ins.
+          </p>
+
+          <div class="hero-cta-row">
+            <button class="btn btn-primary btn-glow btn-lg" onclick="document.getElementById('arenaFilterAnchor').scrollIntoView({ behavior: 'smooth' })">
+              🚀 Explore Live Fest Events
+            </button>
+            <button class="btn btn-secondary btn-lg" onclick="window.nexusApp.switchTab('studio')">
+              🛠️ Build Custom Event Form
+            </button>
+          </div>
+
+          <!-- Hero Telemetry Bar -->
+          <div class="hero-telemetry-bar">
+            <div class="telemetry-card">
+              <div class="t-number" id="heroStatRegs">4,820</div>
+              <div class="t-label">Active Pass Holders</div>
+              <div class="t-tag text-emerald">↑ Real-Time Quota Synced</div>
+            </div>
+            <div class="telemetry-card">
+              <div class="t-number">0.4s</div>
+              <div class="t-label">Average Gate Scan Latency</div>
+              <div class="t-tag text-cyan">⚡ 94% faster than clipboards</div>
+            </div>
+            <div class="telemetry-card">
+              <div class="t-number">100%</div>
+              <div class="t-label">Payment Verification Rate</div>
+              <div class="t-tag text-emerald">🛡️ Zero fake screenshots</div>
+            </div>
+            <div class="telemetry-card">
+              <div class="t-number" id="heroStatEvents">6</div>
+              <div class="t-label">Flagship Fest Arenas</div>
+              <div class="t-tag text-amber">🏆 $15,500+ Prize Pools</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- The "Why Google Forms Breaks Down" Comparison & ROI Calculator -->
+        <div class="comparison-section">
+          <div class="comp-header">
+            <h2 class="comp-title">Why University Clubs Are Retiring Google Forms</h2>
+            <p class="comp-sub">A side-by-side comparison of old student committee struggles vs. Nexus Smart Operations</p>
+          </div>
+
+          <div class="comp-grid">
+            <div class="comp-card comp-card-bad">
+              <div class="comp-card-header">
+                <span class="icon">❌</span>
+                <h4>The Third-Party Google Forms Trap</h4>
+              </div>
+              <ul class="comp-list">
+                <li>
+                  <span>⚠️</span>
+                  <div><strong>Duplicate & Broken Teams:</strong> Members register separately; team leaders lose track of who signed up; duplicate submissions overwhelm coordinators.</div>
+                </li>
+                <li>
+                  <span>⚠️</span>
+                  <div><strong>Payment Screenshot Nightmares:</strong> Students upload fake, photoshopped, or duplicate UPI transaction receipts. Club treasurers spend 20+ hours manually reconciling.</div>
+                </li>
+                <li>
+                  <span>⚠️</span>
+                  <div><strong>Zero Automated Quotas:</strong> Forms cannot dynamically close at exactly 100 seats without brittle third-party extensions, causing severe overbooking.</div>
+                </li>
+                <li>
+                  <span>⚠️</span>
+                  <div><strong>40-Minute Gate Queues:</strong> Volunteers scroll through massive 500-row paper printouts or slow Google Sheets at the venue door in the sweltering heat.</div>
+                </li>
+                <li>
+                  <span>⚠️</span>
+                  <div><strong>Manual Certificate Dispatch:</strong> Mail-merging 1,000 certificates hits Gmail daily limits and results in wrong names on certificates.</div>
+                </li>
+              </ul>
+            </div>
+
+            <div class="comp-card comp-card-good">
+              <div class="comp-card-header">
+                <span class="icon">✨</span>
+                <h4>The Nexus Smart Ops Standard</h4>
+              </div>
+              <ul class="comp-list">
+                <li>
+                  <span>⚡</span>
+                  <div><strong>Dynamic Team Roster Engine:</strong> Team captain claims a ticket; members are invited with one shared team code and validated against campus roll IDs.</div>
+                </li>
+                <li>
+                  <span>⚡</span>
+                  <div><strong>Instant Simulated Payment Webhook:</strong> Real-time automated transaction locking. No manual image review; tickets unlock immediately upon payment.</div>
+                </li>
+                <li>
+                  <span>⚡</span>
+                  <div><strong>Hard Capacity Cap:</strong> Live slot counters lock immediately when the venue capacity is reached, automatically queueing surplus students to waitlist.</div>
+                </li>
+                <li>
+                  <span>⚡</span>
+                  <div><strong>0.4s Fast-Lane QR Gate Check-in:</strong> Volunteers use the high-speed camera scanner with Web Audio double-chime feedback and duplicate prevention alerts.</div>
+                </li>
+                <li>
+                  <span>⚡</span>
+                  <div><strong>Verifiable Cryptographic Credentials:</strong> Automated Certificate of Merit dispenser with unique verification hashes and instant printing.</div>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Interactive Fest Time & Queue Savings Calculator -->
+          <div class="calculator-box">
+            <div class="calc-title">💡 Interactive Fest Efficiency Calculator</div>
+            <div class="calc-inputs-row">
+              <div class="calc-input-group">
+                <label for="calcAttendees">Expected Total Attendees:</label>
+                <input type="number" id="calcAttendees" value="1200" min="100" max="10000" step="100">
+              </div>
+              <div class="calc-input-group">
+                <label for="calcEvents">Number of Club Events:</label>
+                <input type="number" id="calcEvents" value="12" min="1" max="50">
+              </div>
+            </div>
+
+            <div class="calc-metrics-grid">
+              <div class="cm-box">
+                <div class="cm-val text-emerald" id="calcResultHours">576 hrs</div>
+                <div class="cm-label">Organizing Committee Time Saved</div>
+              </div>
+              <div class="cm-box">
+                <div class="cm-val text-rose" id="calcResultFraud">48 passes</div>
+                <div class="cm-label">Fake/Spoofed Receipts Blocked</div>
+              </div>
+              <div class="cm-box">
+                <div class="cm-val text-cyan" id="calcResultQueue">144 mins</div>
+                <div class="cm-label">Saved in Gate Entrance Queueing</div>
+              </div>
+              <div class="cm-box">
+                <div class="cm-val text-amber" id="calcResultMoney">$300</div>
+                <div class="cm-label">Saved in Printed Badges & Add-ons</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Event Showcase & Filter Anchor -->
+        <div id="arenaFilterAnchor" class="arena-filter-bar">
+          <div class="filter-pills-row">
+            <button class="filter-pill active" data-filter="all" onclick="window.nexusApp.setFilter('all')">
+              🌟 All Events
+            </button>
+            <button class="filter-pill" data-filter="hackathon" onclick="window.nexusApp.setFilter('hackathon')">
+              💻 Hackathons
+            </button>
+            <button class="filter-pill" data-filter="cultural" onclick="window.nexusApp.setFilter('cultural')">
+              🎸 Music & Cultural
+            </button>
+            <button class="filter-pill" data-filter="robotics" onclick="window.nexusApp.setFilter('robotics')">
+              🤖 Robotics Arena
+            </button>
+            <button class="filter-pill" data-filter="gaming" onclick="window.nexusApp.setFilter('gaming')">
+              🎮 Esports LAN
+            </button>
+            <button class="filter-pill" data-filter="design" onclick="window.nexusApp.setFilter('design')">
+              🎨 Design & UX
+            </button>
+            <button class="filter-pill" data-filter="business" onclick="window.nexusApp.setFilter('business')">
+              🚀 Startups & E-Summit
+            </button>
+          </div>
+
+          <input type="text" id="eventSearchInput" class="events-search-input" 
+            placeholder="Search events, clubs, or prize..." 
+            oninput="window.nexusApp.handleSearch(this.value)" />
+        </div>
+
+        <!-- Dynamic Events Grid -->
+        <div id="eventsGridContainer" class="events-grid">
+          <!-- Populated dynamically by app.js -->
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           TAB 2: FORM BUILDER STUDIO ("GOOGLE FORMS KILLER")
+           =================================================================== -->
+      <section id="tabView-studio" class="tab-view-section">
+        <div class="studio-header mb-4">
+          <h2 class="section-title">
+            🛠️ Nexus Form Studio: <span class="gradient-text">The Google Forms Killer</span>
+          </h2>
+          <p class="section-desc">
+            Equip every club coordinator to design smart event registrations in seconds. Features built-in team rosters, capacity throttles, conditional questions, and live mobile simulator preview.
+          </p>
+        </div>
+
+        <div class="studio-layout-grid">
+          <!-- Left: Schema Editor Controls -->
+          <div id="fbStudioContainer">
+            <!-- Injected by formBuilder.js -->
+          </div>
+
+          <!-- Right: Live Interactive Mobile Preview -->
+          <div class="phone-preview-col">
+            <div id="fbPhonePreview">
+              <!-- Injected by formBuilder.js -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           TAB 3: GATE CHECK-IN & SCANNER TERMINAL
+           =================================================================== -->
+      <section id="tabView-scanner" class="tab-view-section">
+        <div class="scanner-header mb-4">
+          <h2 class="section-title">
+            ⚡ Live Gate Check-in & <span class="gradient-text">Verification Terminal</span>
+          </h2>
+          <p class="section-desc">
+            Sub-second contactless attendee check-in. Turn any device camera into a high-security gate turnstile with instant audio feedback, duplicate pass prevention, and gate telemetry.
+          </p>
+        </div>
+
+        <div id="scannerContainer">
+          <!-- Injected by scanner.js -->
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           TAB 4: ORGANIZER COMMAND CENTER & ANALYTICS
+           =================================================================== -->
+      <section id="tabView-admin" class="tab-view-section">
+        <div class="admin-header mb-4">
+          <h2 class="section-title">
+            📊 Club Operations <span class="gradient-text">Command Center</span>
+          </h2>
+          <p class="section-desc">
+            Full operational visibility for campus coordinators, student deans, and club heads. Real-time check-in trajectory, club attendance breakdown, attendee CRM, live broadcast updates, and verifiable certificate generation.
+          </p>
+        </div>
+
+        <div id="adminContainer">
+          <!-- Injected by analytics.js -->
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Global Modal Container for Registration, Holographic Badges & Certificates -->
+    <div id="globalModalContainer"></div>
+
+    <!-- Quick Command Palette Modal (Ctrl+K) -->
+    <div id="commandPaletteModal" class="command-palette-modal hidden" onclick="if(event.target===this) window.nexusApp.closeCommandPalette()">
+      <div class="command-palette-card">
+        <div class="cp-input-wrap">
+          <span class="cp-icon">⚡</span>
+          <input type="text" id="commandPaletteInput" class="cp-input" placeholder="Type to search events, switch views, or register..."
+            oninput="window.nexusApp.renderCommandPaletteItems(this.value)" />
+          <span class="kbd-shortcut">ESC</span>
+        </div>
+        <div class="cp-list" id="commandPaletteList"></div>
+      </div>
+    </div>
+
+    <!-- Application Footer -->
+    <footer class="app-footer">
+      <div class="footer-inner">
+        <div class="brand-group" onclick="window.nexusApp.switchTab('arena')">
+          <div class="brand-symbol">⚡</div>
+          <span class="brand-name">NEXUS CLUB OPS</span>
+        </div>
+        <p class="footer-tagline">
+          Built for student communities, technical societies, and collegiate fests. Eradicate Google Forms and fragmented spreadsheets forever.
+        </p>
+        <div class="footer-badges">
+          <span class="f-badge">🔒 SHA-256 Crypto Passes</span>
+          <span class="f-badge">⚡ Sub-Second Web Audio Scanner</span>
+          <span class="f-badge">📱 Live Mobile Schema Studio</span>
+          <span class="f-badge">🏆 Verifiable Certificate Dispenser</span>
+          <span class="f-badge">💾 Offline LocalStorage Engine</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Application Bootstrap -->
+  <script type="module" src="scripts/app.js"></script>
+</body>
+</html>
