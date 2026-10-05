@@ -444,7 +444,7 @@ class NexusApp {
             </div>
             <div class="form-group">
               <label class="form-label">Tagline / Brief Description</label>
-              <textarea id="newFestDescription" class="form-textarea" placeholder="Brief tagline or description of this festival..." rows="2"></textarea>
+              <textarea id="newFestDescription" class="form-input form-textarea" placeholder="Brief tagline or description of this festival..." rows="2"></textarea>
             </div>
             <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:0.5rem;">
               <button type="button" class="btn btn-secondary" onclick="window.nexusApp.closeModal()">Cancel</button>
