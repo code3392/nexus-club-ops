@@ -280,6 +280,9 @@ export class AdminCommandCenter {
           </td>
           <td>
             <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+              <button class="btn btn-primary btn-sm btn-glow" onclick="window.nexusApp.startRegistration('${evt.id}')" title="Register / Participate in this event">
+                🎟️ Participate
+              </button>
               <button class="btn btn-secondary btn-sm" onclick="window.adminCenter.editForm('${evt.id}')" title="Edit Form Questions & Gates">
                 ✏️ Edit
               </button>

@@ -560,11 +560,14 @@ class NexusApp {
       const isFull = evt.registeredCount >= evt.capacity || evt.status === 'closed';
       const slotsLeft = Math.max(0, evt.capacity - evt.registeredCount);
 
+      const isCreator = auth.currentUser && evt.createdBy && (evt.createdBy.toLowerCase() === auth.currentUser.email.toLowerCase());
+
       return `
         <div class="event-card" data-id="${evt.id}">
           <div class="event-card-banner" style="background: ${evt.gradient};">
             <div class="banner-top-row">
               <span class="event-club-badge">${evt.festName || evt.clubName}</span>
+              ${isCreator ? '<span class="event-club-badge" style="background:rgba(99,102,241,0.3); border:1px solid rgba(129,140,248,0.5);">👑 Your Event</span>' : ''}
               <span class="event-tier-badge">${evt.fee === 0 ? 'FREE ENTRY' : '$' + evt.fee + ' FEE'}</span>
             </div>
             <div class="event-banner-content">
@@ -618,7 +621,7 @@ class NexusApp {
               </button>
               <button class="btn btn-primary btn-sm ${isFull ? 'btn-disabled' : 'btn-glow'}" 
                 onclick="window.nexusApp.startRegistration('${evt.id}')" ${isFull ? 'disabled' : ''}>
-                ${isFull ? 'Quota Full (Closed)' : 'Register Now &rarr;'}
+                ${isFull ? 'Quota Full (Closed)' : (isCreator ? '🎟️ Participate in Your Form &rarr;' : 'Register Now &rarr;')}
               </button>
             </div>
           </div>
@@ -733,7 +736,7 @@ class NexusApp {
             <button class="btn btn-secondary" onclick="window.nexusApp.closeModal()">Close</button>
             <button class="btn btn-primary ${isFull ? 'btn-disabled' : 'btn-glow'}" 
               onclick="window.nexusApp.startRegistration('${event.id}')" ${isFull ? 'disabled' : ''}>
-              ${isFull ? 'Registration Closed (Capacity Reached)' : 'Proceed to Registration Form &rarr;'}
+              ${isFull ? 'Registration Closed (Capacity Reached)' : (auth.currentUser && event.createdBy && (event.createdBy.toLowerCase() === auth.currentUser.email.toLowerCase()) ? '🎟️ Participate / Register in Your Event &rarr;' : 'Proceed to Registration Form &rarr;')}
             </button>
           </div>
         </div>

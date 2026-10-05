@@ -678,6 +678,21 @@ export class FormBuilderStudio {
       db.addAnnouncement('New Event Published!', `"${newEvent.title}" by ${newEvent.clubName} is now live with customizable gates and automated quota.`, 'New Event', '#06b6d4');
 
       this.showToast('Event & Form Published!', `"${newEvent.title}" is now live in the Fest Directory.`);
+
+      // Reset current schema to default
+      this.currentSchema = JSON.parse(JSON.stringify(this.defaultSchema));
+      this.renderStudio();
+      this.renderPhonePreview();
+
+      // Update Arena & stats
+      if (window.nexusApp) {
+        window.nexusApp.renderFestArena();
+        window.nexusApp.updateHeroStats();
+      }
+
+      // Allow creator to immediately participate/register in their new form
+      this.showPublishedSuccessModal(newEvent);
+      return;
     }
 
     // Reset current schema to default
@@ -691,6 +706,35 @@ export class FormBuilderStudio {
       window.nexusApp.renderFestArena();
       window.nexusApp.updateHeroStats();
     }
+  }
+
+  showPublishedSuccessModal(event) {
+    const modal = document.getElementById('globalModalContainer');
+    if (!modal) return;
+    modal.innerHTML = `
+      <div class="modal-backdrop" onclick="if(event.target===this) window.nexusApp.closeModal()">
+        <div class="modal-dialog" style="max-width: 500px; text-align: center; padding: 2rem;">
+          <div style="font-size: 3rem; margin-bottom: 0.75rem;">🚀</div>
+          <h2 style="color: #ffffff; font-size: 1.4rem; font-weight: 800; margin-bottom: 0.5rem;">Registration Form Published!</h2>
+          <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.5;">
+            <strong>"${event.title}"</strong> is now live. As the creator, you can participate/register in your own form right now, mint a holographic pass, and test gate check-in scanning.
+          </p>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <button class="btn btn-primary btn-glow btn-lg" onclick="window.nexusApp.closeModal(); window.nexusApp.startRegistration('${event.id}')">
+              🎟️ Participate / Register in Your Event &rarr;
+            </button>
+            <div style="display: flex; gap: 0.75rem; justify-content: center;">
+              <button class="btn btn-secondary" onclick="window.nexusApp.closeModal(); window.nexusApp.switchTab('admin')">
+                📊 Open Dashboard
+              </button>
+              <button class="btn btn-secondary" onclick="window.nexusApp.closeModal(); window.nexusApp.switchTab('arena')">
+                🏠 View in Arena
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   showToast(title, desc) {
