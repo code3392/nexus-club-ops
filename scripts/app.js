@@ -1,4 +1,5 @@
 // Main Application Controller & Coordinator
+// Custom built for 9th DRMC International Tech Carnival 2026 & Smart Club Operations
 import { db } from './data.js';
 import { sound } from './sound.js';
 import { NetworkCanvas } from './canvas.js';
@@ -6,11 +7,13 @@ import { FormBuilderStudio } from './formBuilder.js';
 import { GateScannerTerminal } from './scanner.js';
 import { AdminCommandCenter } from './analytics.js';
 import { renderHolographicBadge } from './badges.js';
+import { renderCertificateModal } from './certificates.js';
 import { auth } from './auth.js';
 
 class NexusApp {
   constructor() {
     this.currentTab = 'arena';
+    this.activeFestFilter = 'all';
     this.activeFilter = 'all';
     this.searchQuery = '';
     this.currentRegEvent = null;
@@ -27,7 +30,7 @@ class NexusApp {
   }
 
   init() {
-    // Canvas background
+    // Interactive canvas background
     this.canvas = new NetworkCanvas('networkCanvas');
 
     // Sub-modules
@@ -37,6 +40,7 @@ class NexusApp {
     window.adminCenter = new AdminCommandCenter('adminContainer');
 
     this.bindEvents();
+    this.renderFestDirectory();
     this.renderFestArena();
     this.updateHeroStats();
 
@@ -53,7 +57,11 @@ class NexusApp {
       btn.addEventListener('click', (e) => {
         sound.playClick();
         const tab = e.currentTarget.dataset.tab;
-        this.switchTab(tab);
+        if (tab === 'myregs') {
+          this.openMyRegistrationsModal();
+        } else {
+          this.switchTab(tab);
+        }
       });
     });
 
@@ -71,7 +79,7 @@ class NexusApp {
     const resetBtn = document.getElementById('resetDataBtn');
     if (resetBtn) {
       resetBtn.addEventListener('click', () => {
-        if (confirm('Reset to initial campus demo state? All custom forms and mock registrations will be restored.')) {
+        if (confirm('Reset to initial DRMC Tech Carnival demo state? All initial fests, events, and registrations will be restored.')) {
           sound.playClick();
           db.resetToDefault();
           location.reload();
@@ -113,6 +121,7 @@ class NexusApp {
 
     // Sub-view refresh
     if (tabId === 'arena') {
+      this.renderFestDirectory();
       this.renderFestArena();
     } else if (tabId === 'scanner') {
       window.gateScanner.render();
@@ -126,19 +135,19 @@ class NexusApp {
   updateHeroStats() {
     const registrations = db.getRegistrations();
     const events = db.getEvents();
-    const clubs = db.getClubs();
+    const fests = db.getFests ? db.getFests() : [];
     const totalRegs = registrations.length;
     const checkedIn = registrations.filter(r => r.checkedIn).length;
 
     const statRegEl = document.getElementById('heroStatRegs');
     const statEventsEl = document.getElementById('heroStatEvents');
     const statCheckedEl = document.getElementById('heroStatChecked');
-    const statClubsEl = document.getElementById('heroStatClubs');
+    const statFestsEl = document.getElementById('heroStatFests');
 
     if (statRegEl) statRegEl.textContent = totalRegs.toString();
     if (statEventsEl) statEventsEl.textContent = events.length.toString();
     if (statCheckedEl) statCheckedEl.textContent = checkedIn.toString();
-    if (statClubsEl) statClubsEl.textContent = clubs.length.toString();
+    if (statFestsEl) statFestsEl.textContent = fests.length.toString();
   }
 
   updateCalculator() {
@@ -160,7 +169,165 @@ class NexusApp {
     document.getElementById('calcResultMoney').textContent = `$${paperSavedDollars}`;
   }
 
-  // Render Fest Arena Event Showcase
+  // ===================================================================
+  // FEST DIRECTORY LOGIC (Rulebook: Organization → Fest → Event)
+  // ===================================================================
+
+  renderFestDirectory() {
+    const container = document.getElementById('festsGridContainer');
+    if (!container) return;
+
+    const fests = db.getFests ? db.getFests() : [];
+    const events = db.getEvents ? db.getEvents() : [];
+
+    container.innerHTML = fests.map(fest => {
+      const festEvents = events.filter(e => e.festId === fest.id);
+      const isSelected = this.activeFestFilter === fest.id;
+
+      return `
+        <div class="fest-card ${isSelected ? 'fest-card-selected' : ''}" data-id="${fest.id}">
+          <div class="fest-card-banner" style="background: ${fest.bannerGradient};">
+            <div class="fest-badge-top">
+              <span class="fest-status-pill">${fest.status}</span>
+              <span class="fest-events-count">${festEvents.length} Contests</span>
+            </div>
+            <div>
+              <div style="font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.85);">${fest.edition}</div>
+              <h3 class="fest-card-title">${fest.title}</h3>
+            </div>
+          </div>
+
+          <div class="fest-card-body">
+            <div>
+              <div class="fest-org-tag">
+                <span>🏛️</span>
+                <span>${fest.organization || 'DRMC IT Club'}</span>
+              </div>
+
+              <p class="fest-tagline">${fest.tagline || fest.description}</p>
+
+              <div class="fest-meta-list">
+                <div class="fest-meta-item">
+                  <span>📅</span>
+                  <span>${fest.date}</span>
+                </div>
+                <div class="fest-meta-item">
+                  <span>📍</span>
+                  <span>${fest.venue}</span>
+                </div>
+              </div>
+
+              <div class="fest-events-pills">
+                ${festEvents.map(e => `<span class="fest-event-mini-pill">${e.title}</span>`).join('')}
+              </div>
+            </div>
+
+            <div class="fest-card-actions">
+              <button class="btn btn-primary btn-sm btn-block" onclick="window.nexusApp.openFestDetails('${fest.id}')">
+                🎪 Select Fest & View Schedule &rarr;
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="window.nexusApp.setFestFilter('${fest.id}')" title="Filter events below to this fest">
+                Filter
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  openFestDetails(festId) {
+    sound.playClick();
+    const fest = (db.getFests ? db.getFests() : []).find(f => f.id === festId);
+    if (!fest) return;
+
+    const festEvents = db.getEvents().filter(e => e.festId === fest.id);
+    const modal = document.getElementById('globalModalContainer');
+    if (!modal) return;
+
+    modal.innerHTML = `
+      <div class="modal-backdrop" onclick="if(event.target===this) window.nexusApp.closeModal()">
+        <div class="fest-modal-dialog">
+          <div class="fest-modal-hero" style="background: ${fest.bannerGradient};">
+            <div class="banner-top-row">
+              <span class="event-club-badge">${fest.organization}</span>
+              <span class="fest-status-pill" style="background:rgba(0,0,0,0.6);">${fest.status}</span>
+            </div>
+            <div style="margin-top:1rem;">
+              <span class="event-category-chip">${fest.edition.toUpperCase()}</span>
+              <h2 style="font-size:1.6rem; font-weight:800; color:#ffffff; margin:0.3rem 0;">${fest.title}</h2>
+              <p style="color:rgba(255,255,255,0.9); font-size:0.92rem; max-width:680px;">${fest.description}</p>
+            </div>
+            <button class="modal-close-btn" onclick="window.nexusApp.closeModal()" style="position:absolute; top:1.25rem; right:1.25rem;">✕</button>
+          </div>
+
+          <div style="padding:1.5rem 2rem;">
+            <div class="modal-info-columns" style="margin-bottom:1.5rem;">
+              <div>
+                <p>📍 <strong>Official Venue:</strong> ${fest.venue}</p>
+                <p>📅 <strong>Festival Dates:</strong> ${fest.date}</p>
+              </div>
+              <div style="text-align:right;">
+                <span class="badge badge-paid" style="font-size:0.8rem; padding:6px 12px;">Official DRMC IT Club Event</span>
+              </div>
+            </div>
+
+            <h4 style="font-size:1.1rem; font-weight:700; color:#ffffff; margin-bottom:0.75rem;">
+              Contests & Events in this Festival (${festEvents.length})
+            </h4>
+
+            <div class="fest-events-scroll-list">
+              ${festEvents.map(evt => {
+                const isFull = evt.registeredCount >= evt.capacity || evt.status === 'closed';
+                return `
+                  <div class="fest-event-tile" onclick="window.nexusApp.closeModal(); window.nexusApp.openEventDetails('${evt.id}')">
+                    <div>
+                      <span class="event-category-chip" style="color:#818cf8;">${evt.category.toUpperCase()}</span>
+                      <div class="fet-title">${evt.title}</div>
+                      <div style="font-size:0.78rem; color:#94a3b8; line-height:1.4;">${evt.tagline}</div>
+                    </div>
+                    <div class="fet-meta">
+                      <span>🎟️ ${evt.fee === 0 ? 'Free Entry' : '$' + evt.fee}</span>
+                      <span class="${isFull ? 'text-rose' : 'text-emerald'}">
+                        ${isFull ? '🔴 Closed / Full' : `⚡ ${evt.capacity - evt.registeredCount} slots left`}
+                      </span>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+
+          <div class="modal-footer" style="padding:1rem 2rem; border-top:1px solid var(--border-subtle); display:flex; justify-content:space-between;">
+            <button class="btn btn-secondary" onclick="window.nexusApp.closeModal()">Close</button>
+            <button class="btn btn-primary btn-glow" onclick="window.nexusApp.closeModal(); window.nexusApp.setFestFilter('${fest.id}')">
+              Filter Directory to this Fest &rarr;
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  setFestFilter(festId) {
+    sound.playClick();
+    this.activeFestFilter = festId;
+    document.querySelectorAll('#festFilterPillsRow .filter-pill').forEach(pill => {
+      pill.classList.toggle('active', pill.dataset.fest === festId);
+    });
+    this.renderFestArena();
+    const anchor = document.getElementById('arenaFilterAnchor');
+    if (anchor) anchor.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  resetFestFilter() {
+    this.setFestFilter('all');
+  }
+
+  // ===================================================================
+  // EVENT SHOWCASE & FILTERING
+  // ===================================================================
+
   renderFestArena() {
     const container = document.getElementById('eventsGridContainer');
     if (!container) return;
@@ -168,16 +335,25 @@ class NexusApp {
     const events = db.getEvents();
     let filtered = events;
 
+    // Filter by fest
+    if (this.activeFestFilter !== 'all') {
+      filtered = filtered.filter(e => e.festId === this.activeFestFilter);
+    }
+
+    // Filter by category
     if (this.activeFilter !== 'all') {
       filtered = filtered.filter(e => e.category === this.activeFilter);
     }
 
+    // Search query
     if (this.searchQuery) {
       const q = this.searchQuery.toLowerCase();
       filtered = filtered.filter(e =>
         e.title.toLowerCase().includes(q) ||
         e.clubName.toLowerCase().includes(q) ||
-        e.tagline.toLowerCase().includes(q)
+        (e.festName && e.festName.toLowerCase().includes(q)) ||
+        e.tagline.toLowerCase().includes(q) ||
+        (e.venue && e.venue.toLowerCase().includes(q))
       );
     }
 
@@ -195,15 +371,15 @@ class NexusApp {
 
     container.innerHTML = filtered.map(evt => {
       const pct = Math.min(100, Math.round((evt.registeredCount / evt.capacity) * 100));
-      const isFull = evt.registeredCount >= evt.capacity;
+      const isFull = evt.registeredCount >= evt.capacity || evt.status === 'closed';
       const slotsLeft = Math.max(0, evt.capacity - evt.registeredCount);
 
       return `
         <div class="event-card" data-id="${evt.id}">
           <div class="event-card-banner" style="background: ${evt.gradient};">
             <div class="banner-top-row">
-              <span class="event-club-badge">${evt.clubName}</span>
-              <span class="event-tier-badge">${evt.fee === 0 ? 'FREE TIER' : '$' + evt.fee + ' ENTRY'}</span>
+              <span class="event-club-badge">${evt.festName || evt.clubName}</span>
+              <span class="event-tier-badge">${evt.fee === 0 ? 'FREE ENTRY' : '$' + evt.fee + ' FEE'}</span>
             </div>
             <div class="event-banner-content">
               <span class="event-category-chip">${evt.category.toUpperCase()}</span>
@@ -213,6 +389,10 @@ class NexusApp {
 
           <div class="event-card-body">
             <p class="event-tagline">${evt.tagline}</p>
+
+            <div style="margin-bottom:0.75rem;">
+              <span class="event-deadline-pill">⏳ Deadline: ${evt.deadline || 'Oct 23, 2026 • 11:59 PM'}</span>
+            </div>
 
             <div class="event-details-grid">
               <div class="detail-item">
@@ -229,20 +409,20 @@ class NexusApp {
               </div>
               <div class="detail-item">
                 <span class="d-icon">👥</span>
-                <span>${evt.isTeam ? `Teams (${evt.minTeam}-${evt.maxTeam} Hackers)` : 'Solo / Individual'}</span>
+                <span>${evt.isTeam ? `Teams (${evt.minTeam}-${evt.maxTeam} Members)` : 'Individual / Solo'}</span>
               </div>
             </div>
 
-            <!-- Dynamic Capacity Quota Bar (Forms Killer Feature) -->
+            <!-- Dynamic Capacity Quota Bar (Google Forms Killer Feature) -->
             <div class="capacity-meter-box">
               <div class="capacity-meter-header">
-                <span>Slots Filled: <strong>${evt.registeredCount} / ${evt.capacity}</strong></span>
-                <span class="slots-alert ${slotsLeft <= 5 ? 'text-rose' : 'text-emerald'}">
+                <span>Quota: <strong>${evt.registeredCount} / ${evt.capacity} Filled</strong></span>
+                <span class="slots-alert ${slotsLeft <= 5 || isFull ? 'text-rose' : 'text-emerald'}">
                   ${isFull ? '🔴 Capacity Reached' : `⚡ ${slotsLeft} slots remaining`}
                 </span>
               </div>
               <div class="capacity-meter-track">
-                <div class="capacity-meter-fill" style="width: ${pct}%; background: ${pct > 85 ? '#ef4444' : '#6366f1'};"></div>
+                <div class="capacity-meter-fill" style="width: ${pct}%; background: ${pct >= 100 ? '#ef4444' : pct > 80 ? '#f59e0b' : '#6366f1'};"></div>
               </div>
             </div>
 
@@ -252,7 +432,7 @@ class NexusApp {
               </button>
               <button class="btn btn-primary btn-sm ${isFull ? 'btn-disabled' : 'btn-glow'}" 
                 onclick="window.nexusApp.startRegistration('${evt.id}')" ${isFull ? 'disabled' : ''}>
-                ${isFull ? 'Waitlist Only' : 'Register Now &rarr;'}
+                ${isFull ? 'Quota Full (Closed)' : 'Register Now &rarr;'}
               </button>
             </div>
           </div>
@@ -264,7 +444,7 @@ class NexusApp {
   setFilter(category) {
     sound.playClick();
     this.activeFilter = category;
-    document.querySelectorAll('.filter-pill').forEach(pill => {
+    document.querySelectorAll('#categoryFilterPillsRow .filter-pill').forEach(pill => {
       pill.classList.toggle('active', pill.dataset.filter === category);
     });
     this.renderFestArena();
@@ -272,12 +452,14 @@ class NexusApp {
 
   resetFilters() {
     this.activeFilter = 'all';
+    this.activeFestFilter = 'all';
     this.searchQuery = '';
     const searchInput = document.getElementById('eventSearchInput');
     if (searchInput) searchInput.value = '';
     document.querySelectorAll('.filter-pill').forEach(pill => {
-      pill.classList.toggle('active', pill.dataset.filter === 'all');
+      pill.classList.toggle('active', pill.dataset.filter === 'all' || pill.dataset.fest === 'all');
     });
+    this.renderFestDirectory();
     this.renderFestArena();
   }
 
@@ -286,7 +468,10 @@ class NexusApp {
     this.renderFestArena();
   }
 
-  // Event Details Modal
+  // ===================================================================
+  // EVENT DETAILS MODAL (Rulebook Page 1 & 2)
+  // ===================================================================
+
   openEventDetails(eventId) {
     sound.playClick();
     const event = db.getEvents().find(e => e.id === eventId);
@@ -295,12 +480,15 @@ class NexusApp {
     const modal = document.getElementById('globalModalContainer');
     if (!modal) return;
 
+    const isFull = event.registeredCount >= event.capacity || event.status === 'closed';
+    const slotsLeft = Math.max(0, event.capacity - event.registeredCount);
+
     modal.innerHTML = `
       <div class="modal-backdrop" onclick="if(event.target===this) window.nexusApp.closeModal()">
         <div class="modal-dialog modal-lg">
           <div class="modal-header">
             <div>
-              <span class="modal-club-tag">${event.clubName}</span>
+              <span class="modal-club-tag">${event.festName || 'Tech Carnival 2026'} • ${event.clubName}</span>
               <h2 class="modal-title">${event.title}</h2>
             </div>
             <button class="modal-close-btn" onclick="window.nexusApp.closeModal()">✕</button>
@@ -319,7 +507,7 @@ class NexusApp {
                 </div>
                 <div class="hd-box">
                   <div class="hd-label">Ticket Tier</div>
-                  <div class="hd-val">${event.fee === 0 ? 'Free Attendance' : '$' + event.fee}</div>
+                  <div class="hd-val">${event.fee === 0 ? 'Free Entry' : '$' + event.fee}</div>
                 </div>
               </div>
             </div>
@@ -327,22 +515,28 @@ class NexusApp {
             <div class="modal-info-columns">
               <div class="mic-left">
                 <h4>Event Description & Scope</h4>
-                <p>${event.tagline}</p>
-                <p>Equipped with instant holographic NFC/QR pass generation. Once registered, your team pass is cryptographically locked with zero manual spreadsheet reconciliation.</p>
+                <p>${event.description || event.tagline}</p>
 
-                <h4>Schedule & Venue</h4>
-                <p>📍 <strong>Location:</strong> ${event.venue}</p>
-                <p>⏰ <strong>Time:</strong> ${event.date}</p>
+                <h4>Schedule, Venue & Deadline</h4>
+                <p>📍 <strong>Venue:</strong> ${event.venue}</p>
+                <p>⏰ <strong>Event Time:</strong> ${event.date}</p>
+                <p>⏳ <strong>Registration Deadline:</strong> <span style="color:#fbbf24; font-weight:700;">${event.deadline || 'Oct 23, 2026 • 11:59 PM'}</span></p>
+
+                ${event.rules ? `
+                  <h4>Contest Rules & Submission</h4>
+                  <p style="color:#cbd5e1; font-size:0.88rem;">${event.rules}</p>
+                ` : ''}
               </div>
 
               <div class="mic-right">
                 <div class="smart-features-card">
-                  <h5>🛡️ Nexus Ops Protections</h5>
+                  <h5>🛡️ Smart Registration Controls</h5>
                   <ul>
-                    <li>✓ Automatic seat lock at ${event.capacity} entries</li>
-                    <li>✓ Anti-screenshot payment verification</li>
-                    <li>✓ Dynamic teammate invite links</li>
-                    <li>✓ 0.4s fast-lane gate check-in</li>
+                    <li>✓ <strong>Auto Quota Lock:</strong> Strict capacity of ${event.capacity} seats</li>
+                    <li>✓ <strong>${slotsLeft} Slots Remaining:</strong> ${isFull ? 'Waitlist Only' : 'Open for registration'}</li>
+                    <li>✓ <strong>Format:</strong> ${event.isTeam ? `Team of ${event.minTeam}-${event.maxTeam} members` : 'Individual solo registration'}</li>
+                    <li>✓ <strong>Credential:</strong> Instant cryptographic holographic pass</li>
+                    <li>✓ <strong>Gate:</strong> 0.4s audio check-in at venue entrance</li>
                   </ul>
                 </div>
               </div>
@@ -351,8 +545,9 @@ class NexusApp {
 
           <div class="modal-footer">
             <button class="btn btn-secondary" onclick="window.nexusApp.closeModal()">Close</button>
-            <button class="btn btn-primary btn-glow" onclick="window.nexusApp.startRegistration('${event.id}')">
-              Proceed to Smart Registration &rarr;
+            <button class="btn btn-primary ${isFull ? 'btn-disabled' : 'btn-glow'}" 
+              onclick="window.nexusApp.startRegistration('${event.id}')" ${isFull ? 'disabled' : ''}>
+              ${isFull ? 'Registration Closed (Capacity Reached)' : 'Proceed to Registration Form &rarr;'}
             </button>
           </div>
         </div>
@@ -360,11 +555,19 @@ class NexusApp {
     `;
   }
 
-  // Multi-Step Smart Registration Flow
+  // ===================================================================
+  // REGISTRATION SYSTEM (Rulebook Page 2)
+  // ===================================================================
+
   startRegistration(eventId) {
     sound.playClick();
     const event = db.getEvents().find(e => e.id === eventId);
     if (!event) return;
+
+    if (event.registeredCount >= event.capacity || event.status === 'closed') {
+      alert(`Registration for "${event.title}" is currently closed because the capacity limit (${event.capacity} seats) has been reached.`);
+      return;
+    }
 
     const user = auth.currentUser;
     this.currentRegEvent = event;
@@ -394,7 +597,7 @@ class NexusApp {
       if (f.type === 'select') {
         inputEl = `
           <select id="${f.id}" class="gform-input" onchange="window.nexusApp.updateAnswer('${f.id}', this.value)">
-            <option value="">Choose</option>
+            <option value="">Choose an option...</option>
             ${(f.options || []).map(opt => `<option value="${opt}" ${savedVal === opt ? 'selected' : ''}>${opt}</option>`).join('')}
           </select>
         `;
@@ -413,7 +616,7 @@ class NexusApp {
       } else {
         inputEl = `
           <input type="${f.type === 'url' ? 'url' : 'text'}" id="${f.id}" class="gform-input" 
-            placeholder="Your answer" value="${savedVal}"
+            placeholder="${f.placeholder || 'Your answer'}" value="${savedVal}"
             oninput="window.nexusApp.updateAnswer('${f.id}', this.value)" />
         `;
       }
@@ -433,7 +636,7 @@ class NexusApp {
     if (evt.isTeam) {
       const membersRows = this.registrationDraft.teamMembers.map((m, idx) => `
         <div class="gform-tm-row">
-          <input type="text" class="gform-input tm-name" placeholder="Teammate ${idx + 1} Name" value="${m.name}"
+          <input type="text" class="gform-input tm-name" placeholder="Teammate ${idx + 1} Full Name" value="${m.name}"
             onchange="window.nexusApp.updateTeammate(${idx}, 'name', this.value)" />
           ${idx > 0 ? `<button type="button" class="btn-remove-tm" onclick="window.nexusApp.removeTeammate(${idx})">✕</button>` : ''}
         </div>
@@ -442,7 +645,7 @@ class NexusApp {
       teamSectionHtml = `
         <div class="gform-card">
           <label class="gform-question-title">Team Name <span class="req">*</span></label>
-          <input type="text" id="regTeamName" class="gform-input" value="${this.registrationDraft.teamName}" placeholder="Your answer" required />
+          <input type="text" id="regTeamName" class="gform-input" value="${this.registrationDraft.teamName}" placeholder="e.g. NeuralKnights" required />
         </div>
 
         <div class="gform-card">
@@ -463,11 +666,11 @@ class NexusApp {
       <div class="modal-backdrop" onclick="if(event.target===this) window.nexusApp.closeModal()">
         <div class="gform-modal-dialog">
           
-          <!-- Google Forms Style Header Card -->
-          <div class="gform-header-card" style="border-top-color: ${evt.category === 'hackathon' ? '#6366f1' : '#ec4899'};">
-            <div class="gform-header-badge">${evt.clubName}</div>
+          <!-- Header Card -->
+          <div class="gform-header-card" style="border-top-color: #6366f1;">
+            <div class="gform-header-badge">${evt.festName || 'Tech Carnival 2026'} • ${evt.clubName}</div>
             <h2 class="gform-title">${evt.title}</h2>
-            <p class="gform-desc">${evt.tagline || 'Please fill out this form to register for the event.'}</p>
+            <p class="gform-desc">${evt.description || evt.tagline}</p>
             <div class="gform-meta-row">
               <span>📅 ${evt.date}</span>
               <span>📍 ${evt.venue}</span>
@@ -479,26 +682,26 @@ class NexusApp {
           <form id="eventRegistrationForm" onsubmit="event.preventDefault(); window.nexusApp.submitRegistrationForm();">
             <!-- Full Name -->
             <div class="gform-card">
-              <label class="gform-question-title">Full Name <span class="req">*</span></label>
-              <input type="text" id="regName" class="gform-input" value="${this.registrationDraft.leadName}" placeholder="Your answer" required />
+              <label class="gform-question-title">Lead Attendee Full Name <span class="req">*</span></label>
+              <input type="text" id="regName" class="gform-input" value="${this.registrationDraft.leadName}" placeholder="e.g. Tanvir Hossain" required />
             </div>
 
             <!-- Email -->
             <div class="gform-card">
-              <label class="gform-question-title">Campus Email Address <span class="req">*</span></label>
-              <input type="email" id="regEmail" class="gform-input" value="${this.registrationDraft.leadEmail}" placeholder="Your answer" required />
+              <label class="gform-question-title">Email Address <span class="req">*</span></label>
+              <input type="email" id="regEmail" class="gform-input" value="${this.registrationDraft.leadEmail}" placeholder="e.g. tanvir.h@campus.edu" required />
             </div>
 
             <!-- Student ID / Roll -->
             <div class="gform-card">
-              <label class="gform-question-title">Student Roll / ID Number <span class="req">*</span></label>
-              <input type="text" id="regRoll" class="gform-input" value="${this.registrationDraft.collegeRoll}" placeholder="Your answer" required />
+              <label class="gform-question-title">Student Roll / Institution ID <span class="req">*</span></label>
+              <input type="text" id="regRoll" class="gform-input" value="${this.registrationDraft.collegeRoll}" placeholder="e.g. DRMC-2024-104" required />
             </div>
 
             <!-- Phone -->
             <div class="gform-card">
-              <label class="gform-question-title">Phone Number</label>
-              <input type="tel" id="regPhone" class="gform-input" value="${this.registrationDraft.leadPhone}" placeholder="Your answer" />
+              <label class="gform-question-title">Contact Phone Number</label>
+              <input type="tel" id="regPhone" class="gform-input" value="${this.registrationDraft.leadPhone}" placeholder="+880 1711-..." />
             </div>
 
             <!-- Team Section if applicable -->
@@ -511,7 +714,7 @@ class NexusApp {
             <div class="gform-actions-card">
               <div class="gform-actions-left">
                 <button type="submit" class="btn btn-primary btn-glow btn-gform-submit">
-                  ${evt.fee > 0 ? `Pay $${evt.fee} & Submit` : 'Submit'}
+                  ${evt.fee > 0 ? `Pay $${evt.fee} & Submit` : 'Submit Registration'}
                 </button>
                 <button type="button" class="btn-text-clear" onclick="window.nexusApp.clearRegistrationForm()">
                   Clear form
@@ -528,70 +731,9 @@ class NexusApp {
     `;
   }
 
-  clearRegistrationForm() {
-    sound.playClick();
-    this.registrationDraft = {
-      leadName: '',
-      leadEmail: '',
-      leadPhone: '',
-      collegeRoll: '',
-      teamName: '',
-      teamMembers: [{ name: '', role: 'Leader' }],
-      answers: {}
-    };
-    this.renderRegistrationModal();
-  }
-
-  submitRegistrationForm() {
-    sound.playClick();
-    const evt = this.currentRegEvent;
-    const name = document.getElementById('regName')?.value.trim();
-    const email = document.getElementById('regEmail')?.value.trim();
-    const roll = document.getElementById('regRoll')?.value.trim();
-    const phone = document.getElementById('regPhone')?.value.trim();
-
-    if (!name || !email || !roll) {
-      alert('Please fill out all required fields.');
-      return;
-    }
-
-    if (evt.isTeam) {
-      const teamName = document.getElementById('regTeamName')?.value.trim();
-      if (!teamName) {
-        alert('Please enter your Team Name.');
-        return;
-      }
-      this.registrationDraft.teamName = teamName;
-    }
-
-    this.registrationDraft.leadName = name;
-    this.registrationDraft.leadEmail = email;
-    this.registrationDraft.collegeRoll = roll;
-    this.registrationDraft.leadPhone = phone;
-    if (this.registrationDraft.teamMembers[0]) {
-      this.registrationDraft.teamMembers[0].name = name;
-    }
-
-    // Check custom required fields
-    for (const f of (evt.customFields || [])) {
-      if (f.required && !this.registrationDraft.answers[f.id]) {
-        const val = document.getElementById(f.id)?.value.trim();
-        if (!val) {
-          alert(`Please answer: "${f.label}"`);
-          return;
-        }
-        this.registrationDraft.answers[f.id] = val;
-      }
-    }
-
-    // Direct Pass Generation
-    const txnId = evt.fee > 0 ? ('TXN-' + Math.floor(1000000000 + Math.random() * 9000000000)) : null;
-    this.finishRegistration(txnId);
-  }
-
   addTeammate() {
     sound.playClick();
-    if (this.registrationDraft.teamMembers.length < this.currentRegEvent.maxTeam) {
+    if (this.currentRegEvent && this.registrationDraft.teamMembers.length < this.currentRegEvent.maxTeam) {
       this.registrationDraft.teamMembers.push({ name: '', role: 'Member' });
       this.renderRegistrationModal();
     }
@@ -613,32 +755,86 @@ class NexusApp {
     this.registrationDraft.answers[fieldId] = value;
   }
 
-  simulatePaymentSuccess() {
-    sound.playPassUnlocked();
-    this.finishRegistration('TXN-' + Math.floor(1000000000 + Math.random() * 9000000000));
+  clearRegistrationForm() {
+    this.registrationDraft.leadName = '';
+    this.registrationDraft.leadEmail = '';
+    this.registrationDraft.leadPhone = '';
+    this.registrationDraft.collegeRoll = '';
+    this.registrationDraft.teamName = '';
+    this.registrationDraft.teamMembers = [{ name: '', role: 'Leader' }];
+    this.registrationDraft.answers = {};
+    this.renderRegistrationModal();
+  }
+
+  submitRegistrationForm() {
+    const nameInput = document.getElementById('regName');
+    const emailInput = document.getElementById('regEmail');
+    const rollInput = document.getElementById('regRoll');
+    const teamInput = document.getElementById('regTeamName');
+
+    if (!nameInput || !nameInput.value.trim()) {
+      alert('Please enter your full name.');
+      return;
+    }
+    if (!emailInput || !emailInput.value.trim()) {
+      alert('Please enter a valid email address.');
+      return;
+    }
+    if (!rollInput || !rollInput.value.trim()) {
+      alert('Please enter your Student Roll / ID.');
+      return;
+    }
+
+    if (this.currentRegEvent.isTeam && (!teamInput || !teamInput.value.trim())) {
+      alert('Please enter a Team Name.');
+      return;
+    }
+
+    // Save draft
+    this.registrationDraft.leadName = nameInput.value.trim();
+    this.registrationDraft.leadEmail = emailInput.value.trim();
+    this.registrationDraft.collegeRoll = rollInput.value.trim();
+    const phoneInput = document.getElementById('regPhone');
+    if (phoneInput) this.registrationDraft.leadPhone = phoneInput.value.trim();
+    if (teamInput) this.registrationDraft.teamName = teamInput.value.trim();
+
+    // Check required custom questions
+    for (const f of (this.currentRegEvent.customFields || [])) {
+      if (f.required && !this.registrationDraft.answers[f.id]) {
+        alert(`Please complete the required question: "${f.label}"`);
+        return;
+      }
+    }
+
+    // Finish registration
+    this.finishRegistration();
   }
 
   finishRegistration(txnId = null) {
     sound.playPassUnlocked();
     const evt = this.currentRegEvent;
-    const ticketId = 'NX-' + evt.category.substring(0, 4).toUpperCase() + '-' + Math.floor(1000 + Math.random() * 9000);
+    const catPrefix = evt.category ? evt.category.substring(0, 4).toUpperCase() : 'TECH';
+    const ticketId = 'DRMC-' + catPrefix + '-' + Math.floor(1000 + Math.random() * 9000);
 
     const newReg = {
       id: 'REG-' + Date.now().toString(36),
       ticketId,
       eventId: evt.id,
+      festId: evt.festId || 'fest-techcarnival-2026',
       eventTitle: evt.title,
-      clubName: evt.clubName,
+      festTitle: evt.festName || 'Tech Carnival 2026',
+      clubName: evt.clubName || 'DRMC IT Club',
       leadName: this.registrationDraft.leadName,
       leadEmail: this.registrationDraft.leadEmail,
       leadPhone: this.registrationDraft.leadPhone,
       collegeRoll: this.registrationDraft.collegeRoll,
       teamName: evt.isTeam ? this.registrationDraft.teamName : null,
-      teamMembers: evt.isTeam ? this.registrationDraft.teamMembers.filter(m => m.name.trim()) : [],
+      teamMembers: evt.isTeam ? this.registrationDraft.teamMembers.filter(m => m.name && m.name.trim()) : [],
       answers: this.registrationDraft.answers,
+      registrationStatus: 'Approved',
       paymentStatus: evt.fee === 0 ? 'PAID_FREE' : 'VERIFIED',
-      transactionId: txnId,
-      amount: evt.fee,
+      transactionId: txnId || ('TXN-' + Math.floor(1000000000 + Math.random() * 9000000000)),
+      amount: evt.fee || 0,
       registeredAt: new Date().toISOString(),
       checkedIn: false,
       gate: null,
@@ -647,10 +843,15 @@ class NexusApp {
 
     db.addRegistration(newReg);
     this.updateHeroStats();
+    this.renderFestArena();
 
-    // Show minted badge modal
+    // Open confirmation badge modal
     this.openBadgeModal(ticketId, true);
   }
+
+  // ===================================================================
+  // REGISTRATION CONFIRMATION & HOLOGRAPHIC PASS MODAL
+  // ===================================================================
 
   openBadgeModal(ticketId, isNewlyMinted = false) {
     sound.playPassUnlocked();
@@ -700,29 +901,201 @@ class NexusApp {
   }
 
   copyTicketId(ticketId) {
-    sound.playClick();
     navigator.clipboard?.writeText(ticketId);
+    sound.playClick();
     alert(`Pass ID ${ticketId} copied to clipboard!`);
   }
+
+  openCertificate(ticketId) {
+    const reg = db.getRegistrations().find(r => r.ticketId === ticketId);
+    if (!reg) return;
+    const modalContainer = document.getElementById('globalModalContainer');
+    if (modalContainer) {
+      modalContainer.innerHTML = renderCertificateModal(reg, reg.eventTitle, reg.clubName);
+    }
+  }
+
+  // ===================================================================
+  // ATTENDEE SELF-SERVICE: MY REGISTRATIONS (Rulebook Page 2: 5 pts)
+  // ===================================================================
+
+  openMyRegistrationsModal(filterQuery = '') {
+    sound.playClick();
+    const modal = document.getElementById('globalModalContainer');
+    if (!modal) return;
+
+    const userEmail = auth.currentUser ? auth.currentUser.email : '';
+    const query = filterQuery || userEmail;
+    const allRegs = db.getRegistrations();
+    let myRegs = query ? db.getRegistrationsByEmailOrTicket(query) : allRegs.slice(0, 4);
+
+    modal.innerHTML = `
+      <div class="modal-backdrop" onclick="if(event.target===this) window.nexusApp.closeModal()">
+        <div class="my-regs-dialog">
+          <div class="modal-header">
+            <div>
+              <span class="badge badge-paid">Attendee Self-Service</span>
+              <h2 class="modal-title" style="margin-top:0.25rem;">🎟️ My Registrations & Passes</h2>
+            </div>
+            <button class="modal-close-btn" onclick="window.nexusApp.closeModal()">✕</button>
+          </div>
+
+          <div class="modal-body">
+            <p style="color:var(--text-muted); font-size:0.88rem; margin-bottom:1rem;">
+              Look up your registered passes by campus email or pass ticket ID. View holographic credentials, download certificates, or manage registrations.
+            </p>
+
+            <div class="my-regs-lookup-bar">
+              <input type="text" id="myRegsLookupInput" class="my-regs-input" 
+                placeholder="Enter email or Pass ID (e.g. aarav.patel@campus.edu or DRMC-AI-8821)"
+                value="${query}" 
+                onkeydown="if(event.key==='Enter') window.nexusApp.lookupMyRegistrations(this.value)" />
+              <button class="btn btn-primary" onclick="window.nexusApp.lookupMyRegistrations(document.getElementById('myRegsLookupInput').value)">
+                🔍 Find Passes
+              </button>
+            </div>
+
+            <div id="myRegsResultsList">
+              ${this.renderMyRegsCards(myRegs)}
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="window.nexusApp.closeModal()">Close</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  lookupMyRegistrations(val) {
+    const q = val.trim();
+    const results = q ? db.getRegistrationsByEmailOrTicket(q) : db.getRegistrations().slice(0, 4);
+    const container = document.getElementById('myRegsResultsList');
+    if (container) {
+      container.innerHTML = this.renderMyRegsCards(results);
+    }
+  }
+
+  renderMyRegsCards(regs) {
+    if (!regs || regs.length === 0) {
+      return `
+        <div class="empty-state-box" style="padding:2rem 1rem;">
+          <div class="empty-icon">🎟️</div>
+          <h4>No Registrations Found</h4>
+          <p>We couldn't find any passes matching that email or Ticket ID. Try registering for an event first.</p>
+          <button class="btn btn-primary btn-sm" onclick="window.nexusApp.closeModal(); document.getElementById('arenaFilterAnchor').scrollIntoView({behavior:'smooth'});">
+            Explore Contests
+          </button>
+        </div>
+      `;
+    }
+
+    return regs.map(r => {
+      const status = r.registrationStatus || (r.checkedIn ? 'Checked In' : 'Approved');
+      const isCancelled = status === 'Cancelled';
+
+      return `
+        <div class="my-reg-card">
+          <div class="my-reg-header">
+            <div>
+              <div class="my-reg-fest">${r.festTitle || 'DRMC Fest'}</div>
+              <div class="my-reg-title">${r.eventTitle}</div>
+            </div>
+            <span class="badge ${isCancelled ? 'status-cancelled' : r.checkedIn ? 'status-checked-in' : 'status-approved'}">
+              ${isCancelled ? '❌ CANCELLED' : r.checkedIn ? '🟢 CHECKED IN' : '✅ APPROVED'}
+            </span>
+          </div>
+
+          <div class="my-reg-meta-row">
+            <div class="my-reg-meta-item">
+              <span>Pass Ticket ID</span>
+              <strong class="mono">${r.ticketId}</strong>
+            </div>
+            <div class="my-reg-meta-item">
+              <span>Lead Attendee</span>
+              <strong>${r.leadName}</strong>
+            </div>
+            <div class="my-reg-meta-item">
+              <span>Team / Format</span>
+              <strong>${r.teamName || 'Individual (Solo)'}</strong>
+            </div>
+            <div class="my-reg-meta-item">
+              <span>Registered Date</span>
+              <strong>${new Date(r.registeredAt).toLocaleDateString()}</strong>
+            </div>
+          </div>
+
+          <div class="my-reg-actions">
+            ${!isCancelled ? `
+              <button class="btn btn-primary btn-sm" onclick="window.nexusApp.openBadgeModal('${r.ticketId}')">
+                🎫 View Holographic Pass
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="window.nexusApp.openCertificate('${r.ticketId}')">
+                🏆 Certificate
+              </button>
+              <button class="btn btn-secondary btn-sm text-danger" onclick="window.nexusApp.cancelAttendeeRegistration('${r.ticketId}')">
+                ✕ Cancel Registration
+              </button>
+            ` : `
+              <span class="text-rose" style="font-size:0.8rem;">Registration was cancelled. Quota seat released.</span>
+            `}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  cancelAttendeeRegistration(ticketId) {
+    if (confirm(`Are you sure you want to cancel registration for pass ${ticketId}? This will release your seat quota back to other attendees.`)) {
+      sound.playClick();
+      db.cancelRegistration(ticketId);
+      this.updateHeroStats();
+      this.renderFestArena();
+      this.openMyRegistrationsModal(ticketId);
+      
+      const toast = document.createElement('div');
+      toast.className = 'nexus-toast toast-success';
+      toast.innerHTML = `
+        <div class="toast-icon">✓</div>
+        <div class="toast-content">
+          <div class="toast-title">Registration Cancelled</div>
+          <div class="toast-desc">Seat quota has been released and pass ${ticketId} is now deactivated.</div>
+        </div>
+      `;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.classList.add('visible'), 50);
+      setTimeout(() => {
+        toast.classList.remove('visible');
+        setTimeout(() => toast.remove(), 400);
+      }, 3500);
+    }
+  }
+
+  // ===================================================================
+  // MODAL & COMMAND PALETTE
+  // ===================================================================
 
   closeModal() {
     const modal = document.getElementById('globalModalContainer');
     if (modal) modal.innerHTML = '';
   }
 
-  // Command Palette
   toggleCommandPalette() {
-    sound.playClick();
     const cp = document.getElementById('commandPaletteModal');
     if (!cp) return;
-    cp.classList.toggle('hidden');
-    if (!cp.classList.contains('hidden')) {
+    const isHidden = cp.classList.contains('hidden');
+    if (isHidden) {
+      sound.playClick();
+      cp.classList.remove('hidden');
       const input = document.getElementById('commandPaletteInput');
       if (input) {
         input.value = '';
         input.focus();
         this.renderCommandPaletteItems('');
       }
+    } else {
+      cp.classList.add('hidden');
     }
   }
 
@@ -731,22 +1104,33 @@ class NexusApp {
     if (cp) cp.classList.add('hidden');
   }
 
-  renderCommandPaletteItems(query) {
+  renderCommandPaletteItems(query = '') {
     const list = document.getElementById('commandPaletteList');
     if (!list) return;
 
     const events = db.getEvents();
+    const fests = db.getFests ? db.getFests() : [];
+
     const items = [
-      { type: 'NAV', title: '🎪 Jump to Fest Arena', action: () => this.switchTab('arena') },
-      { type: 'NAV', title: '🛠️ Open Form Studio ("Kill Google Forms")', action: () => this.switchTab('studio') },
-      { type: 'NAV', title: '⚡ Open Gate Check-in Scanner', action: () => this.switchTab('scanner') },
-      { type: 'NAV', title: '📊 Open Organizer Command Center', action: () => this.switchTab('admin') },
-      ...events.map(e => ({
-        type: 'EVENT',
-        title: `Register: ${e.title} (${e.clubName})`,
+      { type: 'NAV', title: '🎪 Fest Directory (Browse Festivals)', action: () => this.switchTab('arena') },
+      { type: 'NAV', title: '🎟️ My Passes / Manage Registrations', action: () => this.openMyRegistrationsModal() },
+      { type: 'NAV', title: '🛠️ Form Studio (Build Custom Forms)', action: () => this.switchTab('studio') },
+      { type: 'NAV', title: '⚡ Gate Check-in QR Scanner', action: () => this.switchTab('scanner') },
+      { type: 'NAV', title: '📊 Organizer Command Center', action: () => this.switchTab('admin') },
+      ...fests.map(f => ({
+        type: 'FEST',
+        title: `Festival: ${f.title}`,
         action: () => {
           this.switchTab('arena');
-          this.startRegistration(e.id);
+          this.openFestDetails(f.id);
+        }
+      })),
+      ...events.map(e => ({
+        type: 'EVENT',
+        title: `Register: ${e.title} (${e.festName || e.clubName})`,
+        action: () => {
+          this.switchTab('arena');
+          this.openEventDetails(e.id);
         }
       }))
     ];

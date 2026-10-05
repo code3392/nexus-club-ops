@@ -37,10 +37,11 @@
 
         <!-- Mode Navigation Tabs -->
         <nav class="nav-tabs-bar" aria-label="Main Navigation">
-          <button class="nav-tab-btn active" data-tab="arena">Events</button>
-          <button class="nav-tab-btn" data-tab="studio">Form Builder</button>
-          <button class="nav-tab-btn" data-tab="scanner">Gate Scanner</button>
-          <button class="nav-tab-btn" data-tab="admin">Dashboard</button>
+          <button class="nav-tab-btn active" data-tab="arena">🎪 Fest Directory</button>
+          <button class="nav-tab-btn" data-tab="myregs" onclick="window.nexusApp.openMyRegistrationsModal()">🎟️ My Passes</button>
+          <button class="nav-tab-btn" data-tab="studio">🛠️ Form Builder</button>
+          <button class="nav-tab-btn" data-tab="scanner">⚡ Gate Scanner</button>
+          <button class="nav-tab-btn" data-tab="admin">📊 Dashboard</button>
         </nav>
 
         <!-- Right Actions -->
@@ -85,48 +86,70 @@
         <div class="hero-arena">
           <div class="hero-badge-capsule">
             <span class="live-pulse"></span>
-            <span>Annual Campus Tech & Cultural Fest 2026</span>
+            <span>Dhaka Residential Model College • DRMC IT Club</span>
           </div>
 
           <h1 class="hero-headline">
-            Smart Club Events, <span class="gradient-text">Simplified</span>.
+            Smart Club Operations, <span class="gradient-text">Eliminating Google Forms</span>.
           </h1>
 
           <p class="hero-subtitle">
-            Easy registration forms like Google Forms, with automated team passes, seat limits, and 0.4s QR gate check-in.
+            Official Fest & Event Registration Platform for DRMC IT Club. Full Organization → Fest → Event → Registration flow with instant holographic passes, automated seat quotas, and 0.4s gate check-in.
           </p>
 
           <div class="hero-cta-row">
-            <button class="btn btn-primary btn-glow btn-lg" onclick="document.getElementById('arenaFilterAnchor').scrollIntoView({ behavior: 'smooth' })">
-              🚀 Explore Events
+            <button class="btn btn-primary btn-glow btn-lg" onclick="document.getElementById('festsDirectorySection').scrollIntoView({ behavior: 'smooth' })">
+              🎪 Browse Fests & Contests
+            </button>
+            <button class="btn btn-secondary btn-lg" onclick="window.nexusApp.openMyRegistrationsModal()">
+              🎟️ My Passes / Registrations
             </button>
             <button class="btn btn-secondary btn-lg" onclick="window.nexusApp.switchTab('studio')">
-              🛠️ Create Form
+              🛠️ Form Studio
             </button>
           </div>
 
           <!-- Real Dynamic Stats Bar -->
           <div class="hero-telemetry-bar">
             <div class="telemetry-card">
+              <div class="t-number" id="heroStatFests">3</div>
+              <div class="t-label">Official Festivals</div>
+              <div class="t-tag text-muted">DRMC IT Club</div>
+            </div>
+            <div class="telemetry-card">
+              <div class="t-number" id="heroStatEvents">9</div>
+              <div class="t-label">Active Contests</div>
+              <div class="t-tag text-muted">Currently hosted</div>
+            </div>
+            <div class="telemetry-card">
               <div class="t-number" id="heroStatRegs">5</div>
               <div class="t-label">Registered Attendees</div>
               <div class="t-tag text-muted">Database records</div>
-            </div>
-            <div class="telemetry-card">
-              <div class="t-number" id="heroStatEvents">6</div>
-              <div class="t-label">Active Events</div>
-              <div class="t-tag text-muted">Currently hosted</div>
             </div>
             <div class="telemetry-card">
               <div class="t-number" id="heroStatChecked">3</div>
               <div class="t-label">Checked In</div>
               <div class="t-tag text-emerald">Verified at gate</div>
             </div>
-            <div class="telemetry-card">
-              <div class="t-number" id="heroStatClubs">4</div>
-              <div class="t-label">Host Clubs</div>
-              <div class="t-tag text-muted">Student societies</div>
+          </div>
+        </div>
+
+        <!-- Fest Directory Section (Rulebook Page 1 & 2) -->
+        <div class="fests-directory-section" id="festsDirectorySection">
+          <div class="section-head-bar">
+            <div class="sh-title-group">
+              <h2>🎪 Available & Upcoming Festivals</h2>
+              <p>Organization: <strong>DRMC IT Club</strong> • Select a festival to view schedules, venues, and registered contests.</p>
             </div>
+            <div class="sh-actions">
+              <button class="btn btn-secondary btn-sm" onclick="window.nexusApp.resetFestFilter()">
+                🌟 View All Events Across Fests
+              </button>
+            </div>
+          </div>
+
+          <div class="fests-grid" id="festsGridContainer">
+            <!-- Populated dynamically by app.js -->
           </div>
         </div>
 
@@ -234,32 +257,52 @@
 
         <!-- Event Showcase & Filter Anchor -->
         <div id="arenaFilterAnchor" class="arena-filter-bar">
-          <div class="filter-pills-row">
+          <div class="filter-pills-row" id="festFilterPillsRow">
+            <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-right:4px;">Fest:</span>
+            <button class="filter-pill active" data-fest="all" onclick="window.nexusApp.setFestFilter('all')">
+              🌟 All Fests
+            </button>
+            <button class="filter-pill" data-fest="fest-techcarnival-2026" onclick="window.nexusApp.setFestFilter('fest-techcarnival-2026')">
+              🏆 Tech Carnival 2026
+            </button>
+            <button class="filter-pill" data-fest="fest-wintertech-2026" onclick="window.nexusApp.setFestFilter('fest-wintertech-2026')">
+              ❄️ Winter Tech Fest
+            </button>
+            <button class="filter-pill" data-fest="fest-freshers-2027" onclick="window.nexusApp.setFestFilter('fest-freshers-2027')">
+              🌱 Freshers Tech Fest
+            </button>
+          </div>
+
+          <div class="filter-pills-row" id="categoryFilterPillsRow">
+            <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-right:4px;">Category:</span>
             <button class="filter-pill active" data-filter="all" onclick="window.nexusApp.setFilter('all')">
-              🌟 All Events
+              All Contests
             </button>
-            <button class="filter-pill" data-filter="hackathon" onclick="window.nexusApp.setFilter('hackathon')">
-              💻 Hackathons
+            <button class="filter-pill" data-filter="ai" onclick="window.nexusApp.setFilter('ai')">
+              🤖 AI & Web
             </button>
-            <button class="filter-pill" data-filter="cultural" onclick="window.nexusApp.setFilter('cultural')">
-              🎸 Music & Cultural
+            <button class="filter-pill" data-filter="programming" onclick="window.nexusApp.setFilter('programming')">
+              💻 Programming
             </button>
             <button class="filter-pill" data-filter="robotics" onclick="window.nexusApp.setFilter('robotics')">
-              🤖 Robotics Arena
+              ⚙️ Robotics
             </button>
             <button class="filter-pill" data-filter="gaming" onclick="window.nexusApp.setFilter('gaming')">
-              🎮 Esports LAN
+              🎮 Gaming
             </button>
-            <button class="filter-pill" data-filter="design" onclick="window.nexusApp.setFilter('design')">
-              🎨 Design & UX
+            <button class="filter-pill" data-filter="hackathon" onclick="window.nexusApp.setFilter('hackathon')">
+              ⚡ Hackathon
             </button>
-            <button class="filter-pill" data-filter="business" onclick="window.nexusApp.setFilter('business')">
-              🚀 Startups & E-Summit
+            <button class="filter-pill" data-filter="workshop" onclick="window.nexusApp.setFilter('workshop')">
+              📚 Workshops
+            </button>
+            <button class="filter-pill" data-filter="quiz" onclick="window.nexusApp.setFilter('quiz')">
+              🧠 Quiz
             </button>
           </div>
 
           <input type="text" id="eventSearchInput" class="events-search-input" 
-            placeholder="Search events, clubs, or prize..." 
+            placeholder="Search contests, fests, rules, prizes, or venues..." 
             oninput="window.nexusApp.handleSearch(this.value)" />
         </div>
 

@@ -7,6 +7,8 @@ export class AdminCommandCenter {
   constructor(containerId) {
     this.container = document.getElementById(containerId);
     this.currentFilter = 'all';
+    this.currentFestFilter = 'all';
+    this.currentStatusFilter = 'all';
     this.searchQuery = '';
   }
 
@@ -126,9 +128,23 @@ export class AdminCommandCenter {
               <input type="text" id="crmSearch" class="admin-search-input" placeholder="Search attendee, ticket ID, team..."
                 oninput="window.adminCenter.handleSearch(this.value)" />
 
+              <select class="admin-select" onchange="window.adminCenter.handleFestFilter(this.value)">
+                <option value="all">All Fests</option>
+                ${(db.getFests ? db.getFests() : []).map(f => `<option value="${f.id}" ${this.currentFestFilter === f.id ? 'selected' : ''}>${f.shortName || f.title}</option>`).join('')}
+              </select>
+
               <select class="admin-select" onchange="window.adminCenter.handleFilter(this.value)">
                 <option value="all">All Events</option>
-                ${events.map(e => `<option value="${e.id}">${e.title}</option>`).join('')}
+                ${events.map(e => `<option value="${e.id}" ${this.currentFilter === e.id ? 'selected' : ''}>${e.title}</option>`).join('')}
+              </select>
+
+              <select class="admin-select" onchange="window.adminCenter.handleStatusFilter(this.value)">
+                <option value="all">All Statuses</option>
+                <option value="Approved" ${this.currentStatusFilter === 'Approved' ? 'selected' : ''}>Approved</option>
+                <option value="Pending" ${this.currentStatusFilter === 'Pending' ? 'selected' : ''}>Pending</option>
+                <option value="Waitlisted" ${this.currentStatusFilter === 'Waitlisted' ? 'selected' : ''}>Waitlisted</option>
+                <option value="Checked In" ${this.currentStatusFilter === 'Checked In' ? 'selected' : ''}>Checked In</option>
+                <option value="Cancelled" ${this.currentStatusFilter === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
               </select>
 
               <button class="btn btn-secondary btn-sm" onclick="window.adminCenter.exportCSV()">
@@ -142,8 +158,9 @@ export class AdminCommandCenter {
               <thead>
                 <tr>
                   <th>Attendee & Team</th>
-                  <th>Event</th>
+                  <th>Event & Fest</th>
                   <th>Ticket ID</th>
+                  <th>Registration Status</th>
                   <th>Payment</th>
                   <th>Gate Status</th>
                   <th>Actions</th>
@@ -179,8 +196,14 @@ export class AdminCommandCenter {
 
   renderTableRows(regs) {
     let filtered = regs;
+    if (this.currentFestFilter !== 'all') {
+      filtered = filtered.filter(r => r.festId === this.currentFestFilter);
+    }
     if (this.currentFilter !== 'all') {
       filtered = filtered.filter(r => r.eventId === this.currentFilter);
+    }
+    if (this.currentStatusFilter !== 'all') {
+      filtered = filtered.filter(r => (r.registrationStatus || 'Approved') === this.currentStatusFilter);
     }
     if (this.searchQuery) {
       const q = this.searchQuery.toLowerCase();
@@ -188,15 +211,20 @@ export class AdminCommandCenter {
         r.leadName.toLowerCase().includes(q) ||
         r.ticketId.toLowerCase().includes(q) ||
         (r.teamName && r.teamName.toLowerCase().includes(q)) ||
-        r.eventTitle.toLowerCase().includes(q)
+        r.eventTitle.toLowerCase().includes(q) ||
+        (r.festTitle && r.festTitle.toLowerCase().includes(q))
       );
     }
 
     if (filtered.length === 0) {
-      return `<tr><td colspan="6" class="table-empty">No attendee records match your filter query.</td></tr>`;
+      return `<tr><td colspan="7" class="table-empty">No attendee records match your filter criteria.</td></tr>`;
     }
 
-    return filtered.map(r => `
+    return filtered.map(r => {
+      const status = r.registrationStatus || (r.checkedIn ? 'Checked In' : 'Approved');
+      const statusClass = 'status-' + status.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+      return `
       <tr>
         <td>
           <div class="crm-attendee-cell">
@@ -210,10 +238,20 @@ export class AdminCommandCenter {
         </td>
         <td>
           <div class="crm-event-name">${r.eventTitle}</div>
-          <div class="crm-club-name">${r.clubName}</div>
+          <div class="crm-club-name">${r.festTitle || r.clubName}</div>
         </td>
         <td>
           <span class="mono crm-ticket-id">${r.ticketId}</span>
+        </td>
+        <td>
+          <select class="admin-status-dropdown ${statusClass}" 
+            onchange="window.adminCenter.updateParticipantStatus('${r.ticketId}', this.value)">
+            <option value="Approved" ${status === 'Approved' ? 'selected' : ''}>✅ Approved</option>
+            <option value="Pending" ${status === 'Pending' ? 'selected' : ''}>⏳ Pending</option>
+            <option value="Waitlisted" ${status === 'Waitlisted' ? 'selected' : ''}>📋 Waitlisted</option>
+            <option value="Checked In" ${status === 'Checked In' ? 'selected' : ''}>🟢 Checked In</option>
+            <option value="Cancelled" ${status === 'Cancelled' ? 'selected' : ''}>❌ Cancelled</option>
+          </select>
         </td>
         <td>
           <span class="badge ${r.amount === 0 ? 'badge-neutral' : 'badge-paid'}">
@@ -222,7 +260,7 @@ export class AdminCommandCenter {
         </td>
         <td>
           <span class="badge ${r.checkedIn ? 'badge-checked' : 'badge-pending'}">
-            ${r.checkedIn ? '🟢 CHECKED IN' : '🟡 PENDING GATE'}
+            ${r.checkedIn ? '🟢 VERIFIED' : '🟡 AT GATE'}
           </span>
         </td>
         <td>
@@ -239,11 +277,28 @@ export class AdminCommandCenter {
           </div>
         </td>
       </tr>
-    `).join('');
+      `;
+    }).join('');
   }
 
   handleSearch(val) {
     this.searchQuery = val;
+    const body = document.getElementById('crmTableBody');
+    if (body) {
+      body.innerHTML = this.renderTableRows(db.getRegistrations());
+    }
+  }
+
+  handleFestFilter(festId) {
+    this.currentFestFilter = festId;
+    const body = document.getElementById('crmTableBody');
+    if (body) {
+      body.innerHTML = this.renderTableRows(db.getRegistrations());
+    }
+  }
+
+  handleStatusFilter(status) {
+    this.currentStatusFilter = status;
     const body = document.getElementById('crmTableBody');
     if (body) {
       body.innerHTML = this.renderTableRows(db.getRegistrations());
@@ -256,6 +311,34 @@ export class AdminCommandCenter {
     if (body) {
       body.innerHTML = this.renderTableRows(db.getRegistrations());
     }
+  }
+
+  updateParticipantStatus(ticketId, newStatus) {
+    sound.playClick();
+    db.updateRegistrationStatus(ticketId, newStatus);
+    const body = document.getElementById('crmTableBody');
+    if (body) {
+      body.innerHTML = this.renderTableRows(db.getRegistrations());
+    }
+    this.showToast(`Updated: ${ticketId} set to "${newStatus}"`);
+  }
+
+  showToast(msg) {
+    const toast = document.createElement('div');
+    toast.className = 'nexus-toast toast-success';
+    toast.innerHTML = `
+      <div class="toast-icon">⚡</div>
+      <div class="toast-content">
+        <div class="toast-title">Organizer Management</div>
+        <div class="toast-desc">${msg}</div>
+      </div>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add('visible'), 50);
+    setTimeout(() => {
+      toast.classList.remove('visible');
+      setTimeout(() => toast.remove(), 400);
+    }, 3000);
   }
 
   toggleCheckIn(ticketId) {
@@ -312,16 +395,18 @@ export class AdminCommandCenter {
   exportCSV() {
     sound.playClick();
     const registrations = db.getRegistrations();
-    const headers = ['Ticket ID', 'Attendee Name', 'Email', 'Roll No', 'Event', 'Team Name', 'Members Count', 'Amount Paid', 'Checked In', 'Check In Time', 'Gate'];
+    const headers = ['Ticket ID', 'Attendee Name', 'Email', 'Roll No', 'Fest', 'Event', 'Team Name', 'Members Count', 'Status', 'Amount Paid', 'Checked In', 'Check In Time', 'Gate'];
     
     const rows = registrations.map(r => [
       r.ticketId,
       `"${r.leadName}"`,
       r.leadEmail,
       r.collegeRoll || '',
+      `"${r.festTitle || 'DRMC Fest'}"`,
       `"${r.eventTitle}"`,
       `"${r.teamName || 'Solo'}"`,
       r.teamMembers ? r.teamMembers.length : 1,
+      r.registrationStatus || 'Approved',
       r.amount || 0,
       r.checkedIn ? 'YES' : 'NO',
       r.checkedInAt || '',

@@ -8,8 +8,9 @@ export class FormBuilderStudio {
     this.phonePreview = document.getElementById(previewPhoneId);
     this.currentSchema = {
       eventTitle: 'RoboWars 2026: Sumo Bot Championship',
+      festId: 'fest-techcarnival-2026',
       category: 'robotics',
-      clubName: 'Autonomous Robotics Guild',
+      clubName: 'DRMC IT Club',
       date: 'Nov 02, 2026',
       venue: 'Robotics Central Arena',
       prizePool: '$1,800',
@@ -152,9 +153,15 @@ export class FormBuilderStudio {
                 oninput="window.formStudio.updateMeta('eventTitle', this.value)">
             </div>
             <div>
+              <label class="fb-label">Belonging Fest / Carnival</label>
+              <select id="fbMetaFest" class="fb-input" onchange="window.formStudio.updateMeta('festId', this.value)">
+                ${(db.getFests ? db.getFests() : []).map(f => `<option value="${f.id}" ${f.id === (this.currentSchema.festId || 'fest-techcarnival-2026') ? 'selected' : ''}>${f.title}</option>`).join('')}
+              </select>
+            </div>
+            <div>
               <label class="fb-label">Organization / Club Name</label>
               <input type="text" id="fbMetaClub" class="fb-input" 
-                placeholder="e.g. IEEE Student Branch, ACM, Debate Society" 
+                placeholder="e.g. DRMC IT Club, IEEE, Robotics Guild" 
                 value="${this.currentSchema.clubName || ''}"
                 oninput="window.formStudio.updateMeta('clubName', this.value)">
             </div>
@@ -339,8 +346,15 @@ export class FormBuilderStudio {
       });
     }
 
+    const fests = db.getFests ? db.getFests() : [];
+    const fest = fests.find(f => f.id === this.currentSchema.festId) || fests[0];
+    const festId = fest ? fest.id : 'fest-techcarnival-2026';
+    const festName = fest ? fest.shortName : 'Tech Carnival 2026';
+
     const newEvent = {
       id: 'evt-' + Date.now().toString(36),
+      festId: festId,
+      festName: festName,
       clubId: clubId,
       title: this.currentSchema.eventTitle || 'Untitled Event',
       category: this.currentSchema.category || 'tech',
@@ -356,7 +370,7 @@ export class FormBuilderStudio {
       maxTeam: 4,
       capacity: this.currentSchema.capacity || 50,
       registeredCount: 0,
-      status: 'hot',
+      status: 'open',
       gradient: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
       customFields: this.currentSchema.fields
     };

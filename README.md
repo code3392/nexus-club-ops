@@ -1,87 +1,176 @@
-# ⚡ NEXUS CLUB OPS (KillTheForms)
-### Next-Gen In-House Fest & Event Management Operating System for Student Clubs
-
-> **Project Theme:** Smart Club Operations — Building an in-house fest and event management platform to completely eliminate third-party Google Forms, fragmented spreadsheets, and gate chaos.
-
----
-
-## 🌟 The Core Problem We Solved
-
-University fests, hackathons, and student technical societies have traditionally relied on **Google Forms**. This created massive operational friction:
-1. **Broken Team Roster Registration:** Team members register separately, leading to duplicated entries, mismatched team names, and missing roster members.
-2. **Fake Payment Verification:** Google Forms forces treasurers to manually verify thousands of uploaded UPI/card payment screenshots, resulting in 20+ hours of tedious work and vulnerability to photoshopped transaction IDs.
-3. **No Dynamic Capacity Throttling:** Google Forms cannot close registrations at exactly the venue seat limit without unstable third-party extensions, leading to severe overbooking and student complaints.
-4. **40-Minute Gate Queues:** Gate security relies on printed spreadsheets or slow internet to search 500+ rows, creating massive bottlenecks at the venue entrance.
-5. **Disconnected Certificates:** Post-fest certificate generation relies on brittle mail merges that frequently hit Gmail limits and lack verifiable authenticity.
+# ⚡ NEXUS CLUB OPS
+### Next-Gen In-House Fest & Event Management Operating System
+**9th DRMC International Tech Carnival 2026 — AI Web Development Contest**
+**Theme:** Smart Club Operations
 
 ---
 
-## 🚀 Key Features of NEXUS CLUB OPS
-
-### 1. 🎪 Fest Arena (Attendee Portal)
-- **Flagship Event Showcase:** Multi-club event discovery across Hackathons, Robotics Arenas, Cultural Bands, Esports LANs, Design Sprints, and Venture Pitches.
-- **Dynamic Quota Bars:** Real-time capacity meters showing slots filled vs remaining with auto-locking when full.
-- **Side-by-Side Comparison:** Interactive comparison of Google Forms pain points vs Nexus Ops capabilities.
-- **Interactive ROI Calculator:** Computes organizing committee hours saved, payment fraud prevented, and gate minutes saved.
-
-### 2. 🛠️ Nexus Form Studio ("The Google Forms Killer")
-- **Custom Schema Builder:** Club leads can drag/click to add custom questions (Text, Dropdown, Radio, URL/Portfolio, and Dynamic Teammate Rosters).
-- **Seat Capacity Lock:** Hard limit stops overbooking immediately.
-- **Live Mobile Device Simulator:** Real-time phone simulator showing live preview keystroke by keystroke as fields are edited.
-- **One-Click Deployment:** Instantly publishes new club events into the fest portal without touching code.
-
-### 3. ⚡ Gate Check-in & Scanner Terminal
-- **Sub-Second Contactless QR Check-in:** Camera scanner integrated with Web Audio API sound synthesizer.
-  - 🎵 **Double Chime:** Valid authorized pass.
-  - ⚠️ **Loud Alarm:** Duplicate entry alert (shows exact time and gate where the ticket was already checked in).
-  - ⛔ **Error Tone:** Unregistered / fraudulent pass.
-- **Quick Test Launchers:** One-click sample barcode buttons to test valid, unchecked, duplicate, and fake passes in real time.
-- **Gate Telemetry Feed:** Real-time check-in conversion, gate speed, and live security log.
-
-### 4. 🎫 Cryptographic Holographic E-Pass
-- **Dynamic Vector QR Code:** Pure SVG mathematical matrix generation with zero external library dependencies.
-- **Holographic Foil Shader:** Cyber iridescent gradient animations with attendee name, team roster, dietary requirements, and SHA-256 security watermark.
-- **Print & Gate Ready:** Direct 1-click test at the scanner, copy ID, and printable pass layout.
-
-### 5. 📊 Organizer Command Center & Analytics
-- **Executive KPI Dashboard:** Total attendees, gross revenue, check-in conversion, and 0% Google Forms dependency score.
-- **Pure Canvas Velocity Charts:** Daily registration trajectory curve and club attendance share donut chart.
-- **Unified Participant CRM:** Full-featured attendee table with search, event filters, check-in toggles, and clean CSV export.
-- **Cryptographic Certificate Dispenser:** 1-click printable Certificate of Merit with unique verification hashes and Dean/Convenor signatures.
-- **Live Campus Broadcaster:** Push emergency bulletins directly to the top marquee ticker across all attendee devices.
+## 1. Project Name
+**NEXUS CLUB OPS** (The Smart Club Operations & In-House Fest Engine)
 
 ---
 
-## 🛠️ Tech Stack & Architecture
+## 2. Project Description
+Traditionally, collegiate fests, tech clubs, and student societies heavily rely on third-party tools like Google Forms for event registrations. This creates an unprofessional attendee experience:
+- Broken team rosters where teammates register separately and create duplicate rows.
+- No automated capacity limit, resulting in forms remaining open past venue capacity and causing severe overbooking.
+- 40-minute gate bottlenecks caused by volunteers manually searching through fragmented spreadsheets.
+- Vulnerability to forged payment screenshots and tedious manual reconciliations.
 
-- **Zero-Dependency Core:** Pure vanilla HTML5, modern CSS3, and ES Modules. Runs instantly in any modern browser without needing `npm install`.
-- **Web Audio API:** Custom oscillator synthesizer generating responsive micro-interaction clicks, success chimes, and gate alarms.
-- **Interactive Canvas Network:** Real-time interactive node constellation background that reacts to mouse movement.
-- **Local Persistence Engine:** Full state management with `localStorage`, pre-loaded with realistic sample data for 4 clubs and 6 events.
-- **Self-Contained Local Server:** Built-in `serve.js` using Node's standard `http` module.
+**NEXUS CLUB OPS** is an in-house web platform purpose-built for student organizations (specifically modeled for **DRMC IT Club**). It replaces Google Forms by implementing the complete hierarchical model defined in the contest rulebook:
+
+$$\text{Organization} \longrightarrow \text{Fest} \longrightarrow \text{Event} \longrightarrow \text{Registration}$$
+
+The platform enables attendees to browse official festivals, inspect event schedules and venue details, register with instant quota checks, and manage their passes. Organizers gain a centralized Command Center with live gate check-in, real-time participant status management, and instant analytics.
 
 ---
 
-## 💻 How to Run Locally
+## 3. Features
 
-1. Clone or open the repository folder:
+### 🎪 Fest & Event Directory (`Organization → Fest → Event`)
+- **Multi-Festival Support:** Pre-loaded with official DRMC IT Club festivals:
+  - **9th DRMC International Tech Carnival 2026** (AI Web Dev, Programming Contest, Robotics Challenge, Gaming Tournament)
+  - **Winter Tech Fest 2026** (Hackathon 24h, AI Workshop, Tech Quiz Olympiad)
+  - **Freshers Tech Fest 2027** (Coding Challenge, AI Bootcamp)
+- **Fest Details View:** Inspect festival schedules, venue details, and curated event listings.
+- **Search & Filtering:** Real-time search across events, fests, rules, prizes, and venues, paired with quick category pills (AI & Web, Programming, Robotics, Gaming, Hackathons, Workshops, Quiz).
+- **Comprehensive Event Detail Cards:** Shows parent festival badge, host club, dates, venue, registration deadlines, and live capacity progress bars.
+
+### 📝 Google Forms Replacement (Registration System)
+- **Clean, Minimal Form Interface:** Intuitive card-based input matching the familiarity of Google Forms without external dependencies.
+- **Unified Team Registration:** Team leader registers once, inputting team details and members with auto-generated shared pass credentials.
+- **Dynamic Capacity Quota Lock:** Automatically stops submissions when the venue capacity limit is reached, displaying a clean "Quota Full / Capacity Reached" state.
+- **Deadline Enforcement:** Clear visual deadline countdown and automated registration status locks.
+- **Contest-Specific Custom Questions:** Flexible schemas supporting text, select dropdowns, radio buttons, and URL portfolio links.
+
+### 🎟️ Attendee Self-Service (`My Passes / Registrations`)
+- **Attendee Lookup:** Attendees can look up their registrations by entering their campus email or Ticket ID.
+- **View Holographic Credentials:** One-click access to dynamic 3D holographic digital passes and pure SVG QR codes.
+- **Verifiable Certificate Dispenser:** View and download verifiable digital certificates with SHA-256 hashes.
+- **Registration Management & Cancellation:** Attendees can cancel registrations with one click, which **automatically decrements registered counts in real time**, reopening seats for others.
+
+### 📊 Organizer Command Center & Management
+- **Executive Dashboard:** Live metrics for total registrations, capacity utilization, verified gate check-ins, and club participation.
+- **Attendee Roster Management:** Search and filter participants by Festival, Event, and Status.
+- **Participant Status Management:** Organizers can update participant registration status in real time (`Approved`, `Pending`, `Waitlisted`, `Checked In`, `Cancelled`).
+- **Clean CSV Export:** 1-click export of complete attendee rosters with ticket IDs, team info, and gate timestamps.
+- **Emergency Broadcast Engine:** Push urgent bulletins across festival screens and attendee passes.
+
+### ⚡ Creative Bonus Features
+- **0.4s Web Audio QR Gate Scanner:** Sub-second entrance verification with custom synthesized audio chimes for valid passes, duplicate detection alarms, and invalid pass alerts.
+- **Interactive Form Builder Studio:** Allows club leads to create new custom event registration schemas with a live mobile phone simulator preview.
+- **3D Holographic Pass Generator:** Interactive card physics with iridescent foil gradients, tamper-resistant SHA-256 security signatures, and print mode.
+- **Pure Canvas Constellation Background:** Interactive animated node network reacting to cursor coordinates.
+
+---
+
+## 4. Tech Stack
+- **Frontend Architecture:** Vanilla JavaScript (ES2022 Modules), Semantic HTML5, and Modern CSS3 (CSS Variables, Flexbox, Grid, Backdrop Filters).
+- **Zero Heavy Frameworks:** Eliminates virtual DOM overhead, delivering 60 FPS animations and instant page loads.
+- **Audio Synthesis:** Web Audio API (`AudioContext` and `OscillatorNode`) for synthesized gate sound effects and micro-interactions.
+- **Visuals & Charts:** HTML5 Canvas 2D API for particle network background and velocity trajectory charts.
+- **Offline Data Engine:** Reactive `StateManager` leveraging `localStorage` for complete offline state persistence.
+- **Local Web Server:** Lightweight, zero-dependency Node.js HTTP server (`serve.js`).
+
+---
+
+## 5. Setup Instructions
+
+### Option A: Run Locally via Node.js
+1. Clone the repository:
    ```bash
-   cd c:\Users\User\Downloads\AIwebdev
+   git clone https://github.com/code3392/nexus-club-ops.git
+   cd nexus-club-ops
    ```
-
-2. Start the local server:
+2. Start the local server (no `npm install` needed):
    ```bash
    node serve.js
    ```
-
 3. Open in your browser:
    ```
    http://localhost:3000
    ```
-   *(Or double-click `index.html` to run directly in any browser!)*
+
+### Option B: Direct Browser Launch
+Because the application uses standard browser ES Modules and zero third-party build steps, you can also launch `index.html` directly in modern web browsers or host it with any static server.
 
 ---
 
-## ⌨️ Keyboard Shortcuts
-- `Ctrl + K` (or `Cmd + K`): Open global quick navigation command palette.
-- `Escape`: Close any open modal or dialog.
+## 6. Deployment URL
+- **Live Public Deployment (GitHub Pages):** [https://code3392.github.io/nexus-club-ops/](https://code3392.github.io/nexus-club-ops/)
+- **Public GitHub Repository:** [https://github.com/code3392/nexus-club-ops](https://github.com/code3392/nexus-club-ops)
+
+---
+
+## 7. Demo Credentials
+The application is pre-loaded with comprehensive mock data so judges can immediately evaluate all features without manual data entry.
+
+- **Role:** Organizer / Admin / Attendee
+- **Quick Demo Sign-in:** Click the profile icon in the navigation bar to use the one-click demo credentials:
+  - **Organizer Admin:** `admin@drmc.edu.bd` (Password: any 6+ chars)
+  - **Contestant Attendee:** `aarav.patel@campus.edu` (Password: any 6+ chars)
+- **Pre-loaded Ticket IDs to test at Gate Scanner or My Passes:**
+  - `DRMC-AI-8821` (Aarav Patel - AI Web Dev Contest)
+  - `DRMC-PROG-4412` (Tanvir Hossain - Programming Contest)
+  - `DRMC-ROBO-9019` (David Zhang - Robotics Challenge)
+  - `DRMC-GAME-3310` (Kenji Sato - Gaming Tournament)
+  - `DRMC-HACK-1209` (Zubair Rahman - Winter Hackathon)
+
+---
+
+## 8. Third-Party Services / APIs
+- **Typography:** Google Fonts (`Inter` and `JetBrains Mono` via CDN).
+- **100% Self-Contained:** Zero paid third-party APIs. Vector QR generation, audio synthesis, and cryptographic hashing are implemented in pure native client-side JavaScript to ensure offline reliability during campus festivals.
+
+---
+
+## 9. AI Tools & Features Used
+In compliance with contest rules (Rulebook Page 4, Section 9), the development tools and AI agents used in creating this project are disclosed below:
+- **Google Antigravity Agentic Assistant / DeepMind Agent:** Autonomous codebase coordination, pair programming, schema design, and responsive layout styling.
+- **LLM Assisted Models (Claude 3.5 Sonnet / Gemini):** Rapid algorithmic brainstorming, UI copy generation, and rulebook compliance audit.
+
+---
+
+## 10. Screenshots & Flow Diagram
+
+### Architecture Flow:
+```
+DRMC IT Club (Organization)
+│
+├── 9th DRMC International Tech Carnival 2026 (Fest)
+│   ├── AI Web Development Contest (Event)
+│   ├── Programming Contest (Event)
+│   ├── Robotics Challenge (Event)
+│   └── Gaming Tournament (Event)
+│
+├── Winter Tech Fest 2026 (Fest)
+│   ├── Hackathon (24-Hour Sprint) (Event)
+│   ├── AI & Modern Web Workshop (Event)
+│   └── Tech Quiz Olympiad (Event)
+│
+└── Freshers Tech Fest 2027 (Fest)
+    ├── Freshers Coding Challenge (Event)
+    └── AI & Generative Tools Bootcamp (Event)
+```
+
+### User Navigation Flow:
+```
+Fest / Event Directory ──► Select a Fest ──► View Fest Schedule & Contests
+                                                     │
+                                                     ▼
+Registration Confirmation ◄── Submit Form ◄── Select Event & View Details
+          │
+          ▼
+Holographic Pass & QR ──► 0.4s Gate Scanner Check-in
+```
+
+---
+
+## 11. Known Limitations
+- Camera-based QR scanning requires browser camera permissions over `localhost` or `https://` (on `http://` network origins, browsers block camera access; one-click simulation buttons are built-in for instant gate testing).
+- Persistent state uses browser `localStorage`. To reset to the initial demo state at any time, click **⚙️ Preferences → 🔄 Reset Demo Data**.
+
+---
+
+## 12. License
+This project is open-source and released under the **MIT License**. See the [LICENSE](LICENSE) file for complete terms.
