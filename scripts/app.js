@@ -89,15 +89,6 @@ class NexusApp {
         this.closeCommandPalette();
       }
     });
-
-    // ROI Calculator input listeners
-    const calcAttendees = document.getElementById('calcAttendees');
-    const calcEvents = document.getElementById('calcEvents');
-    if (calcAttendees && calcEvents) {
-      [calcAttendees, calcEvents].forEach(input => {
-        input.addEventListener('input', () => this.updateCalculator());
-      });
-    }
   }
 
   handleCreateFormClick() {
@@ -154,25 +145,6 @@ class NexusApp {
     if (statEventsEl) statEventsEl.textContent = events.length.toString();
     if (statCheckedEl) statCheckedEl.textContent = checkedIn.toString();
     if (statFestsEl) statFestsEl.textContent = fests.length.toString();
-  }
-
-  updateCalculator() {
-    const attendeesEl = document.getElementById('calcAttendees');
-    const eventsEl = document.getElementById('calcEvents');
-    if (!attendeesEl || !eventsEl) return;
-
-    const attendees = parseInt(attendeesEl.value) || 1200;
-    const events = parseInt(eventsEl.value) || 12;
-
-    const hoursSaved = Math.round((attendees * 0.08) * events * 0.5);
-    const fraudPrevented = Math.round(attendees * 0.04);
-    const queueMinutesSaved = Math.round(attendees * 0.12);
-    const paperSavedDollars = Math.round(attendees * 0.25);
-
-    document.getElementById('calcResultHours').textContent = `${hoursSaved} hrs`;
-    document.getElementById('calcResultFraud').textContent = `${fraudPrevented} passes`;
-    document.getElementById('calcResultQueue').textContent = `${queueMinutesSaved} mins`;
-    document.getElementById('calcResultMoney').textContent = `$${paperSavedDollars}`;
   }
 
   // ===================================================================
