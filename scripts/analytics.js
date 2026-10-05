@@ -402,7 +402,7 @@ export class AdminCommandCenter {
       `"${r.leadName}"`,
       r.leadEmail,
       r.collegeRoll || '',
-      `"${r.festTitle || 'DRMC Fest'}"`,
+      `"${r.festTitle || 'Campus Fest'}"`,
       `"${r.eventTitle}"`,
       `"${r.teamName || 'Solo'}"`,
       r.teamMembers ? r.teamMembers.length : 1,

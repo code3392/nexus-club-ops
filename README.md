@@ -1,6 +1,6 @@
 # ⚡ NEXUS CLUB OPS
 ### Next-Gen In-House Fest & Event Management Operating System
-**9th DRMC International Tech Carnival 2026 — AI Web Development Contest**
+**International Tech Carnival 2026 — AI Web Development Contest**
 **Theme:** Smart Club Operations
 
 ---
@@ -17,7 +17,7 @@ Traditionally, collegiate fests, tech clubs, and student societies heavily rely 
 - 40-minute gate bottlenecks caused by volunteers manually searching through fragmented spreadsheets.
 - Vulnerability to forged payment screenshots and tedious manual reconciliations.
 
-**NEXUS CLUB OPS** is an in-house web platform purpose-built for student organizations (specifically modeled for **DRMC IT Club**). It replaces Google Forms by implementing the complete hierarchical model defined in the contest rulebook:
+**NEXUS CLUB OPS** is an in-house web platform purpose-built for student organizations, tech clubs, and university societies. It replaces Google Forms by implementing the complete hierarchical model defined in the contest rulebook:
 
 $$\text{Organization} \longrightarrow \text{Fest} \longrightarrow \text{Event} \longrightarrow \text{Registration}$$
 
@@ -28,8 +28,8 @@ The platform enables attendees to browse official festivals, inspect event sched
 ## 3. Features
 
 ### 🎪 Fest & Event Directory (`Organization → Fest → Event`)
-- **Multi-Festival Support:** Pre-loaded with official DRMC IT Club festivals:
-  - **9th DRMC International Tech Carnival 2026** (AI Web Dev, Programming Contest, Robotics Challenge, Gaming Tournament)
+- **Multi-Festival Support:** Pre-loaded with official collegiate festivals:
+  - **International Tech Carnival 2026** (AI Web Dev, Programming Contest, Robotics Challenge, Gaming Tournament)
   - **Winter Tech Fest 2026** (Hackathon 24h, AI Workshop, Tech Quiz Olympiad)
   - **Freshers Tech Fest 2027** (Coding Challenge, AI Bootcamp)
 - **Fest Details View:** Inspect festival schedules, venue details, and curated event listings.
@@ -107,14 +107,14 @@ The application is pre-loaded with comprehensive mock data so judges can immedia
 
 - **Role:** Organizer / Admin / Attendee
 - **Quick Demo Sign-in:** Click the profile icon in the navigation bar to use the one-click demo credentials:
-  - **Organizer Admin:** `admin@drmc.edu.bd` (Password: any 6+ chars)
+  - **Organizer Admin:** `admin@campus.edu` (Password: any 6+ chars)
   - **Contestant Attendee:** `aarav.patel@campus.edu` (Password: any 6+ chars)
 - **Pre-loaded Ticket IDs to test at Gate Scanner or My Passes:**
-  - `DRMC-AI-8821` (Aarav Patel - AI Web Dev Contest)
-  - `DRMC-PROG-4412` (Tanvir Hossain - Programming Contest)
-  - `DRMC-ROBO-9019` (David Zhang - Robotics Challenge)
-  - `DRMC-GAME-3310` (Kenji Sato - Gaming Tournament)
-  - `DRMC-HACK-1209` (Zubair Rahman - Winter Hackathon)
+  - `NX-AI-8821` (Aarav Patel - AI Web Dev Contest)
+  - `NX-PROG-4412` (Tanvir Hossain - Programming Contest)
+  - `NX-ROBO-9019` (David Zhang - Robotics Challenge)
+  - `NX-GAME-3310` (Kenji Sato - Gaming Tournament)
+  - `NX-HACK-1209` (Zubair Rahman - Winter Hackathon)
 
 ---
 
@@ -135,9 +135,9 @@ In compliance with contest rules (Rulebook Page 4, Section 9), the development t
 
 ### Architecture Flow:
 ```
-DRMC IT Club (Organization)
+Campus Tech Society (Organization)
 │
-├── 9th DRMC International Tech Carnival 2026 (Fest)
+├── International Tech Carnival 2026 (Fest)
 │   ├── AI Web Development Contest (Event)
 │   ├── Programming Contest (Event)
 │   ├── Robotics Challenge (Event)

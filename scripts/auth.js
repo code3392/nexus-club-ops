@@ -279,7 +279,7 @@ export class AuthSystem {
     const googleUser = {
       name: 'Aarav Patel',
       email: 'aarav.patel@campus.edu',
-      rollNo: 'DRMC-2024-104',
+      rollNo: '2024-CS-104',
       avatar: '👨‍💻',
       provider: 'google',
       verified: true,

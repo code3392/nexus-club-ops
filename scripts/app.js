@@ -1,5 +1,5 @@
 // Main Application Controller & Coordinator
-// Custom built for 9th DRMC International Tech Carnival 2026 & Smart Club Operations
+// Custom built for Smart Campus Operations & Universal Festival Management
 import { db } from './data.js';
 import { sound } from './sound.js';
 import { NetworkCanvas } from './canvas.js';
@@ -79,7 +79,7 @@ class NexusApp {
     const resetBtn = document.getElementById('resetDataBtn');
     if (resetBtn) {
       resetBtn.addEventListener('click', () => {
-        if (confirm('Reset to initial DRMC Tech Carnival demo state? All initial fests, events, and registrations will be restored.')) {
+        if (confirm('Reset to initial platform demo state? All initial fests, events, and registrations will be restored.')) {
           sound.playClick();
           db.resetToDefault();
           location.reload();
@@ -201,7 +201,7 @@ class NexusApp {
             <div>
               <div class="fest-org-tag">
                 <span>🏛️</span>
-                <span>${fest.organization || 'DRMC IT Club'}</span>
+                <span>${fest.organization || 'Campus Tech Society'}</span>
               </div>
 
               <p class="fest-tagline">${fest.tagline || fest.description}</p>
@@ -268,7 +268,7 @@ class NexusApp {
                 <p>📅 <strong>Festival Dates:</strong> ${fest.date}</p>
               </div>
               <div style="text-align:right;">
-                <span class="badge badge-paid" style="font-size:0.8rem; padding:6px 12px;">Official DRMC IT Club Event</span>
+                <span class="badge badge-paid" style="font-size:0.8rem; padding:6px 12px;">Official Campus Event</span>
               </div>
             </div>
 
@@ -698,7 +698,7 @@ class NexusApp {
             <!-- Student ID / Roll -->
             <div class="gform-card">
               <label class="gform-question-title">Student Roll / Institution ID <span class="req">*</span></label>
-              <input type="text" id="regRoll" class="gform-input" value="${this.registrationDraft.collegeRoll}" placeholder="e.g. DRMC-2024-104" required />
+              <input type="text" id="regRoll" class="gform-input" value="${this.registrationDraft.collegeRoll}" placeholder="e.g. 2024-CS-104" required />
             </div>
 
             <!-- Phone -->
@@ -817,7 +817,7 @@ class NexusApp {
     sound.playPassUnlocked();
     const evt = this.currentRegEvent;
     const catPrefix = evt.category ? evt.category.substring(0, 4).toUpperCase() : 'TECH';
-    const ticketId = 'DRMC-' + catPrefix + '-' + Math.floor(1000 + Math.random() * 9000);
+    const ticketId = 'NX-' + catPrefix + '-' + Math.floor(1000 + Math.random() * 9000);
 
     const newReg = {
       id: 'REG-' + Date.now().toString(36),
@@ -826,7 +826,7 @@ class NexusApp {
       festId: evt.festId || 'fest-techcarnival-2026',
       eventTitle: evt.title,
       festTitle: evt.festName || 'Tech Carnival 2026',
-      clubName: evt.clubName || 'DRMC IT Club',
+      clubName: evt.clubName || 'Campus Tech Society',
       leadName: this.registrationDraft.leadName,
       leadEmail: this.registrationDraft.leadEmail,
       leadPhone: this.registrationDraft.leadPhone,
@@ -950,7 +950,7 @@ class NexusApp {
 
             <div class="my-regs-lookup-bar">
               <input type="text" id="myRegsLookupInput" class="my-regs-input" 
-                placeholder="Enter email or Pass ID (e.g. aarav.patel@campus.edu or DRMC-AI-8821)"
+                placeholder="Enter email or Pass ID (e.g. aarav.patel@campus.edu or NX-AI-8821)"
                 value="${query}" 
                 onkeydown="if(event.key==='Enter') window.nexusApp.lookupMyRegistrations(this.value)" />
               <button class="btn btn-primary" onclick="window.nexusApp.lookupMyRegistrations(document.getElementById('myRegsLookupInput').value)">
@@ -1002,7 +1002,7 @@ class NexusApp {
         <div class="my-reg-card">
           <div class="my-reg-header">
             <div>
-              <div class="my-reg-fest">${r.festTitle || 'DRMC Fest'}</div>
+              <div class="my-reg-fest">${r.festTitle || 'Campus Fest'}</div>
               <div class="my-reg-title">${r.eventTitle}</div>
             </div>
             <span class="badge ${isCancelled ? 'status-cancelled' : r.checkedIn ? 'status-checked-in' : 'status-approved'}">

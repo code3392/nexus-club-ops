@@ -10,7 +10,7 @@ export class FormBuilderStudio {
       eventTitle: 'RoboWars 2026: Sumo Bot Championship',
       festId: 'fest-techcarnival-2026',
       category: 'robotics',
-      clubName: 'DRMC IT Club',
+      clubName: 'Campus Tech Society',
       date: 'Nov 02, 2026',
       venue: 'Robotics Central Arena',
       prizePool: '$1,800',
@@ -161,7 +161,7 @@ export class FormBuilderStudio {
             <div>
               <label class="fb-label">Organization / Club Name</label>
               <input type="text" id="fbMetaClub" class="fb-input" 
-                placeholder="e.g. DRMC IT Club, IEEE, Robotics Guild" 
+                placeholder="e.g. Campus Tech Society, IEEE, Robotics Guild" 
                 value="${this.currentSchema.clubName || ''}"
                 oninput="window.formStudio.updateMeta('clubName', this.value)">
             </div>
