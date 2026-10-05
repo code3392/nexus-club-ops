@@ -353,6 +353,9 @@ class NexusApp {
         e.clubName.toLowerCase().includes(q) ||
         (e.festName && e.festName.toLowerCase().includes(q)) ||
         e.tagline.toLowerCase().includes(q) ||
+        (e.category && e.category.toLowerCase().includes(q)) ||
+        (e.description && e.description.toLowerCase().includes(q)) ||
+        (e.prizePool && e.prizePool.toLowerCase().includes(q)) ||
         (e.venue && e.venue.toLowerCase().includes(q))
       );
     }
@@ -1034,6 +1037,11 @@ class NexusApp {
               <button class="btn btn-secondary btn-sm" onclick="window.nexusApp.openCertificate('${r.ticketId}')">
                 🏆 Certificate
               </button>
+              ${r.teamName ? `
+                <button class="btn btn-secondary btn-sm" onclick="window.nexusApp.editRegistrationTeam('${r.ticketId}')">
+                  ✏️ Edit Team
+                </button>
+              ` : ''}
               <button class="btn btn-secondary btn-sm text-danger" onclick="window.nexusApp.cancelAttendeeRegistration('${r.ticketId}')">
                 ✕ Cancel Registration
               </button>
@@ -1044,6 +1052,39 @@ class NexusApp {
         </div>
       `;
     }).join('');
+  }
+
+  editRegistrationTeam(ticketId) {
+    const reg = db.getRegistrations().find(r => r.ticketId === ticketId);
+    if (!reg) return;
+
+    const newTeamName = prompt('Update Team Name:', reg.teamName || '');
+    if (newTeamName === null) return;
+    if (!newTeamName.trim()) {
+      alert('Team Name cannot be empty.');
+      return;
+    }
+
+    reg.teamName = newTeamName.trim();
+    db.save();
+    sound.playClick();
+    this.openMyRegistrationsModal(ticketId);
+
+    const toast = document.createElement('div');
+    toast.className = 'nexus-toast toast-success';
+    toast.innerHTML = `
+      <div class="toast-icon">✓</div>
+      <div class="toast-content">
+        <div class="toast-title">Team Info Updated</div>
+        <div class="toast-desc">Team name updated to "${reg.teamName}" on pass ${ticketId}.</div>
+      </div>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add('visible'), 50);
+    setTimeout(() => {
+      toast.classList.remove('visible');
+      setTimeout(() => toast.remove(), 400);
+    }, 3500);
   }
 
   cancelAttendeeRegistration(ticketId) {

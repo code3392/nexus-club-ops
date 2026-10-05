@@ -58,8 +58,8 @@ export class AuthSystem {
               <div class="dd-roll">${this.currentUser.rollNo || 'ID: 2024-CAMPUS-991'}</div>
             </div>
             <div class="dropdown-divider"></div>
-            <button class="dropdown-item" onclick="window.nexusApp.switchTab('arena'); window.authSystem.toggleUserDropdown()">
-              🎫 My Registered Fests
+            <button class="dropdown-item" onclick="window.nexusApp.openMyRegistrationsModal(); window.authSystem.toggleUserDropdown()">
+              🎟️ My Passes & Registrations
             </button>
             <button class="dropdown-item" onclick="window.nexusApp.switchTab('admin'); window.authSystem.toggleUserDropdown()">
               📊 Organizer Portal
@@ -277,13 +277,13 @@ export class AuthSystem {
 
     // Simulated Instant Google OAuth 2.0 flow
     const googleUser = {
-      name: 'Alex Chen',
-      email: 'alex.chen@campus.edu',
-      rollNo: '2023-CS-104',
+      name: 'Aarav Patel',
+      email: 'aarav.patel@campus.edu',
+      rollNo: 'DRMC-2024-104',
       avatar: '👨‍💻',
       provider: 'google',
       verified: true,
-      role: 'Convenor & Tech Lead'
+      role: 'Contestant & Lead Hacker'
     };
 
     this.saveUser(googleUser);
