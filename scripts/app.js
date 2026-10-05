@@ -244,7 +244,15 @@ class NexusApp {
                 <span>${fest.organization || 'Campus Tech Society'}</span>
               </div>
 
-              <p class="fest-tagline">${fest.tagline || fest.description}</p>
+              <!-- Compact description with Show More toggle -->
+              <div class="fest-desc-wrap" style="margin-bottom: 0.5rem;">
+                <p class="fest-tagline fest-tagline-clamped" id="festDesc-${fest.id}">${fest.description || fest.tagline || 'Official campus festival hub.'}</p>
+                ${(fest.description || fest.tagline || '').length > 90 ? `
+                  <button type="button" class="fest-show-more-btn" onclick="window.nexusApp.toggleFestDescription('${fest.id}', event)">
+                    Show more &darr;
+                  </button>
+                ` : ''}
+              </div>
 
               <div class="fest-meta-list">
                 <div class="fest-meta-item">
@@ -260,22 +268,39 @@ class NexusApp {
               <div class="fest-events-pills">
                 ${festEvents.length > 0
                   ? festEvents.map(e => `<span class="fest-event-mini-pill">${e.title}</span>`).join('')
-                  : '<span style="font-size:0.75rem; color:var(--text-muted);">Ready for your custom events</span>'}
+                  : '<span style="font-size:0.72rem; color:var(--text-muted);">Ready for your custom events</span>'}
               </div>
             </div>
 
             <div class="fest-card-actions">
               <button class="btn btn-primary btn-sm btn-block" onclick="window.nexusApp.openFestDetails('${fest.id}')">
-                🎪 Select Fest & View Schedule &rarr;
+                🎪 Select Fest & Schedule &rarr;
               </button>
-              <button class="btn btn-secondary btn-sm" onclick="window.nexusApp.navigateToFestEvents('${fest.id}')" title="View events in this fest">
-                Events &rarr;
+              <button class="btn btn-secondary btn-sm" onclick="window.nexusApp.openEditFestModal('${fest.id}')" title="Edit Festival Details">
+                ✏️ Edit
+              </button>
+              <button class="btn btn-outline-danger btn-sm" onclick="window.nexusApp.deleteFest('${fest.id}')" title="Delete Festival">
+                🗑️
               </button>
             </div>
           </div>
         </div>
       `;
     }).join('');
+  }
+
+  toggleFestDescription(festId, e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const el = document.getElementById(`festDesc-${festId}`);
+    const btn = e ? e.currentTarget : null;
+    if (!el) return;
+    const isClamped = el.classList.toggle('fest-tagline-clamped');
+    if (btn) {
+      btn.innerHTML = isClamped ? 'Show more &darr;' : 'Show less &uarr;';
+    }
   }
 
   renderFestFilterPills() {
@@ -470,6 +495,8 @@ class NexusApp {
       shortName,
       edition,
       organization: auth.currentUser ? auth.currentUser.name : 'Campus Society',
+      createdBy: auth.currentUser ? auth.currentUser.id : null,
+      creatorEmail: auth.currentUser ? auth.currentUser.email : null,
       status: 'Active',
       date,
       venue,
@@ -486,6 +513,135 @@ class NexusApp {
     this.renderFestDirectory();
     this.renderFestFilterPills();
     this.updateHeroStats();
+    if (window.adminCenter && typeof window.adminCenter.render === 'function') {
+      window.adminCenter.render();
+    }
+    if (window.formStudio && window.formStudio.renderMetaFields) {
+      window.formStudio.renderMetaFields();
+    }
+  }
+
+  openEditFestModal(festId) {
+    if (!auth.currentUser) {
+      auth.requireAuth(() => this.openEditFestModal(festId), 'Please sign in to edit this festival.');
+      return;
+    }
+    const fest = db.getFest ? db.getFest(festId) : (db.getFests ? db.getFests().find(f => f.id === festId) : null);
+    if (!fest) {
+      alert('Festival not found.');
+      return;
+    }
+    const modal = document.getElementById('globalModalContainer');
+    if (!modal) return;
+
+    modal.innerHTML = `
+      <div class="modal-backdrop" onclick="if(event.target===this) window.nexusApp.closeModal()">
+        <div class="modal-dialog" style="max-width: 540px;">
+          <div class="modal-header">
+            <h3>✏️ Edit Festival Details</h3>
+            <button class="modal-close-btn" onclick="window.nexusApp.closeModal()">✕</button>
+          </div>
+          <form class="modal-body" onsubmit="event.preventDefault(); window.nexusApp.handleUpdateFest('${fest.id}');" style="display:flex; flex-direction:column; gap:1rem;">
+            <div class="form-group">
+              <label class="form-label">Festival Title <span class="req">*</span></label>
+              <input type="text" id="editFestTitle" class="form-input" value="${fest.title || ''}" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Short Name <span class="req">*</span></label>
+              <input type="text" id="editFestShortName" class="form-input" value="${fest.shortName || fest.title || ''}" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Edition / Season</label>
+              <input type="text" id="editFestEdition" class="form-input" value="${fest.edition || ''}" placeholder="e.g. 9th Annual Edition" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Date & Timing</label>
+              <input type="text" id="editFestDate" class="form-input" value="${fest.date || ''}" placeholder="e.g. September 24-26, 2026" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Venue / Location</label>
+              <input type="text" id="editFestVenue" class="form-input" value="${fest.venue || ''}" placeholder="e.g. Dhaka Residential Model College" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Host Organization / Society</label>
+              <input type="text" id="editFestOrg" class="form-input" value="${fest.organization || ''}" placeholder="e.g. DRMC IT CLUB" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tagline / Brief Description</label>
+              <textarea id="editFestDescription" class="form-input form-textarea" rows="3" placeholder="Brief tagline or description...">${fest.description || fest.tagline || ''}</textarea>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem; flex-wrap:wrap; gap:0.5rem;">
+              <button type="button" class="btn btn-outline-danger btn-sm" onclick="window.nexusApp.deleteFest('${fest.id}')">
+                🗑️ Delete Festival
+              </button>
+              <div style="display:flex; gap:0.75rem;">
+                <button type="button" class="btn btn-secondary" onclick="window.nexusApp.closeModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary btn-glow">Save Changes</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+  }
+
+  handleUpdateFest(festId) {
+    const title = document.getElementById('editFestTitle')?.value.trim();
+    if (!title) return;
+    const shortName = document.getElementById('editFestShortName')?.value.trim() || title;
+    const edition = document.getElementById('editFestEdition')?.value.trim() || 'Annual Edition';
+    const date = document.getElementById('editFestDate')?.value.trim() || 'TBA';
+    const venue = document.getElementById('editFestVenue')?.value.trim() || 'Campus Grounds';
+    const organization = document.getElementById('editFestOrg')?.value.trim() || (auth.currentUser ? auth.currentUser.name : 'Campus Society');
+    const description = document.getElementById('editFestDescription')?.value.trim() || '';
+
+    if (db.updateFest) {
+      db.updateFest(festId, {
+        title,
+        shortName,
+        edition,
+        date,
+        venue,
+        organization,
+        description,
+        tagline: description
+      });
+    }
+
+    sound.playSuccess();
+    this.closeModal();
+    this.renderFestDirectory();
+    this.renderFestArena();
+    this.renderFestFilterPills();
+    this.updateHeroStats();
+    if (window.adminCenter && typeof window.adminCenter.render === 'function') {
+      window.adminCenter.render();
+    }
+    if (window.formStudio && window.formStudio.renderMetaFields) {
+      window.formStudio.renderMetaFields();
+    }
+  }
+
+  deleteFest(festId) {
+    const fest = db.getFest ? db.getFest(festId) : (db.getFests ? db.getFests().find(f => f.id === festId) : null);
+    const title = fest ? fest.title : 'this festival';
+    if (!confirm(`Are you sure you want to delete "${title}"? This cannot be undone.`)) {
+      return;
+    }
+
+    if (db.deleteFest) {
+      db.deleteFest(festId);
+    }
+
+    sound.playClick();
+    this.closeModal();
+    this.renderFestDirectory();
+    this.renderFestArena();
+    this.renderFestFilterPills();
+    this.updateHeroStats();
+    if (window.adminCenter && typeof window.adminCenter.render === 'function') {
+      window.adminCenter.render();
+    }
     if (window.formStudio && window.formStudio.renderMetaFields) {
       window.formStudio.renderMetaFields();
     }

@@ -24,6 +24,7 @@ export class AdminCommandCenter {
 
     const registrations = db.getRegistrations();
     const events = db.getEvents();
+    const fests = db.getFests ? db.getFests() : [];
     const clubs = db.getClubs();
     const announcements = db.state.announcements || [];
 
@@ -119,6 +120,37 @@ export class AdminCommandCenter {
 
           <div class="broadcast-feed" id="broadcastFeed">
             ${this.renderBroadcastFeed(announcements)}
+          </div>
+        </div>
+
+        <!-- Created Festivals & Hubs Management Section -->
+        <div class="admin-table-card" style="margin-bottom: 2rem;">
+          <div class="table-card-header">
+            <div class="table-title-group">
+              <div class="table-title">🎪 Created Festivals & Operations (${fests.length})</div>
+              <div class="table-subtitle">Edit festival details, manage timelines, or remove created festival hubs</div>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="window.nexusApp.openCreateFestModal()">
+              ➕ Add New Festival
+            </button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="crm-table">
+              <thead>
+                <tr>
+                  <th>Festival & Edition</th>
+                  <th>Host / Society</th>
+                  <th>Dates & Venue</th>
+                  <th>Contests / Events</th>
+                  <th>Status</th>
+                  <th>Manage Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${this.renderCreatedFestsRows(fests, events)}
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -231,6 +263,70 @@ export class AdminCommandCenter {
     `).join('');
   }
 
+  renderCreatedFestsRows(fests, events) {
+    if (!fests || fests.length === 0) {
+      return `
+        <tr>
+          <td colspan="6" style="text-align:center; padding: 2.5rem 1rem; color:var(--text-muted);">
+            <div style="font-size:2rem; margin-bottom:0.5rem;">🎪</div>
+            <strong>No festivals created yet.</strong>
+            <p style="font-size:0.85rem; margin-top:0.25rem;">Create a festival umbrella container to host multiple contests, hackathons, and symposiums.</p>
+            <button class="btn btn-primary btn-sm" style="margin-top:0.75rem;" onclick="window.nexusApp.openCreateFestModal()">
+              ➕ Add New Festival
+            </button>
+          </td>
+        </tr>
+      `;
+    }
+
+    return fests.map(f => {
+      const festEvents = events.filter(e => e.festId === f.id);
+
+      return `
+        <tr>
+          <td>
+            <div style="font-weight: 700; color: #ffffff; font-size: 0.95rem;">${f.title}</div>
+            <div style="font-size: 0.78rem; color: #818cf8; font-weight:600;">${f.edition || 'Annual Edition'}</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${(f.description || f.tagline || '').replace(/"/g, '&quot;')}">
+              ${f.description || f.tagline || ''}
+            </div>
+          </td>
+          <td>
+            <div style="font-size: 0.88rem; color: #c7d2fe;">${f.organization || 'Campus Society'}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">${f.shortName || f.title}</div>
+          </td>
+          <td>
+            <div style="font-size: 0.84rem; color: #ffffff;">📅 ${f.date || 'TBA'}</div>
+            <div style="font-size: 0.76rem; color: var(--text-muted);">📍 ${f.venue || 'Campus'}</div>
+          </td>
+          <td>
+            <span class="fest-event-mini-pill" style="font-size:0.75rem; color:#38bdf8;">
+              ${festEvents.length} Contests / Events
+            </span>
+          </td>
+          <td>
+            <span class="badge status-approved" style="font-size:0.75rem;">
+              🟢 ${f.status || 'Active'}
+            </span>
+          </td>
+          <td>
+            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+              <button class="btn btn-secondary btn-sm" onclick="window.nexusApp.openEditFestModal('${f.id}')" title="Edit Festival details and info">
+                ✏️ Edit
+              </button>
+              <button class="btn btn-outline-danger btn-sm" onclick="window.nexusApp.deleteFest('${f.id}')" title="Delete & Remove Festival">
+                🗑️ Remove
+              </button>
+              <button class="btn btn-primary btn-sm btn-glow" onclick="window.nexusApp.switchTab('arena'); setTimeout(() => window.nexusApp.openFestDetails('${f.id}'), 120);" title="View Festival Arena">
+                🎪 View
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
   // Requirement 8: Render Created Forms Rows with Edit, Expire & Cancel Controls
   renderCreatedFormsRows(events) {
     if (!events || events.length === 0) {
@@ -299,6 +395,18 @@ export class AdminCommandCenter {
         </tr>
       `;
     }).join('');
+  }
+
+  editFest(festId) {
+    if (window.nexusApp && window.nexusApp.openEditFestModal) {
+      window.nexusApp.openEditFestModal(festId);
+    }
+  }
+
+  deleteFest(festId) {
+    if (window.nexusApp && window.nexusApp.deleteFest) {
+      window.nexusApp.deleteFest(festId);
+    }
   }
 
   // Requirement 8: Edit created form in Form Studio

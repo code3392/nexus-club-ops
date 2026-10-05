@@ -3589,9 +3589,9 @@ select.gform-input,
 }
 
 .fest-card-banner {
-  padding: 1.75rem 1.5rem;
+  padding: 1.15rem 1.25rem;
   position: relative;
-  min-height: 150px;
+  min-height: 110px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -3609,7 +3609,7 @@ select.gform-input,
   backdrop-filter: blur(8px);
   font-size: 0.72rem;
   font-weight: 700;
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: 999px;
   color: #38bdf8;
   border: 1px solid rgba(56, 189, 248, 0.3);
@@ -3620,20 +3620,20 @@ select.gform-input,
   color: #0f172a;
   font-size: 0.72rem;
   font-weight: 800;
-  padding: 3px 10px;
+  padding: 2px 8px;
   border-radius: 999px;
 }
 
 .fest-card-title {
-  font-size: 1.35rem;
+  font-size: 1.15rem;
   font-weight: 800;
   color: #ffffff;
   line-height: 1.25;
-  margin-top: 0.75rem;
+  margin-top: 0.45rem;
 }
 
 .fest-card-body {
-  padding: 1.5rem;
+  padding: 1.15rem;
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -3644,25 +3644,54 @@ select.gform-input,
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 700;
   color: #818cf8;
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.45rem;
 }
 
 .fest-tagline {
-  font-size: 0.88rem;
+  font-size: 0.84rem;
   color: #cbd5e1;
   line-height: 1.5;
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.35rem;
+  word-break: break-word;
+}
+
+.fest-tagline.fest-tagline-clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fest-show-more-btn {
+  background: none;
+  border: none;
+  color: #818cf8;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: color 0.2s ease;
+}
+
+.fest-show-more-btn:hover {
+  color: #a5b4fc;
+  text-decoration: underline;
 }
 
 .fest-meta-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-  font-size: 0.82rem;
+  gap: 0.35rem;
+  margin-bottom: 0.85rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
 }
 
@@ -3675,24 +3704,37 @@ select.gform-input,
 .fest-events-pills {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-bottom: 1.5rem;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
 }
 
 .fest-event-mini-pill {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border-subtle);
-  font-size: 0.73rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  padding: 3px 8px;
+  padding: 2px 7px;
   border-radius: 6px;
   color: #94a3b8;
 }
 
 .fest-card-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.5rem;
   margin-top: auto;
+  align-items: center;
+}
+
+.btn-outline-danger {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+.btn-outline-danger:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: #ef4444;
+  color: #ffffff;
 }
 
 /* Event Card Deadline Pill */

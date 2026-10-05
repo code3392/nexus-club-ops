@@ -158,6 +158,17 @@ export class StateManager {
     return true;
   }
 
+  updateFest(festId, updatedFields) {
+    if (!this.state.fests) return null;
+    const idx = this.state.fests.findIndex(f => f.id === festId);
+    if (idx !== -1) {
+      this.state.fests[idx] = { ...this.state.fests[idx], ...updatedFields };
+      this.save();
+      return this.state.fests[idx];
+    }
+    return null;
+  }
+
   getEvents() {
     return this.state.events || [];
   }
