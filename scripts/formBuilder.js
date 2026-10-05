@@ -13,7 +13,7 @@ export class FormBuilderStudio {
       eventTitle: 'Annual Campus Hackathon 2026',
       headline: 'Annual Campus Hackathon 2026 Registration',
       description: 'Join the premier 24-hour innovation sprint. Build AI agents, smart tools, or creative prototypes with fellow innovators.',
-      festId: 'fest-techcarnival-2026',
+      festId: '',
       category: 'hackathon',
       clubName: 'Campus Tech Society',
       date: 'Nov 14 - 15, 2026',
@@ -66,7 +66,7 @@ export class FormBuilderStudio {
       eventTitle: event.title || '',
       headline: event.headline || event.title || '',
       description: event.description || '',
-      festId: event.festId || 'fest-techcarnival-2026',
+      festId: event.festId || '',
       category: event.category || 'tech',
       clubName: event.clubName || 'Campus Tech Society',
       date: event.date || '',
@@ -302,9 +302,10 @@ export class FormBuilderStudio {
 
           <div class="fb-grid-2">
             <div>
-              <label class="fb-label">Belonging Fest / Carnival</label>
+              <label class="fb-label">Belonging Fest / Festival (Optional)</label>
               <select id="fbMetaFest" class="fb-input" onchange="window.formStudio.updateMeta('festId', this.value)">
-                ${(db.getFests ? db.getFests() : []).map(f => `<option value="${f.id}" ${f.id === (this.currentSchema.festId || 'fest-techcarnival-2026') ? 'selected' : ''}>${f.title}</option>`).join('')}
+                <option value="">Independent / Standalone Event</option>
+                ${(db.getFests ? db.getFests() : []).map(f => `<option value="${f.id}" ${f.id === (this.currentSchema.festId || '') ? 'selected' : ''}>${f.title}</option>`).join('')}
               </select>
             </div>
             <div>
@@ -599,9 +600,9 @@ export class FormBuilderStudio {
     }
 
     const fests = db.getFests ? db.getFests() : [];
-    const fest = fests.find(f => f.id === this.currentSchema.festId) || fests[0];
-    const festId = fest ? fest.id : 'fest-techcarnival-2026';
-    const festName = fest ? fest.shortName : 'Tech Carnival 2026';
+    const fest = fests.find(f => f.id === this.currentSchema.festId);
+    const festId = fest ? fest.id : (this.currentSchema.festId || '');
+    const festName = fest ? (fest.shortName || fest.title) : (festId ? 'Custom Fest' : 'Independent Event');
 
     const gates = (this.currentSchema.gates && this.currentSchema.gates.length > 0)
       ? this.currentSchema.gates
@@ -619,7 +620,7 @@ export class FormBuilderStudio {
         festName: festName,
         clubName: clubName,
         category: this.currentSchema.category || 'tech',
-        date: this.currentSchema.date || 'Upcoming Fest Date',
+        date: this.currentSchema.date || 'Upcoming Date',
         venue: this.currentSchema.venue || 'Campus Central Auditorium',
         prizePool: this.currentSchema.prizePool || '$500',
         fee: this.currentSchema.fee || 0,
@@ -652,7 +653,7 @@ export class FormBuilderStudio {
         clubName: clubName,
         badge: 'Campus Event',
         tagline: this.currentSchema.headline || this.currentSchema.eventTitle,
-        date: this.currentSchema.date || 'Upcoming Fest Date',
+        date: this.currentSchema.date || 'Upcoming Date',
         venue: this.currentSchema.venue || 'Campus Central Auditorium',
         prizePool: this.currentSchema.prizePool || '$500',
         fee: this.currentSchema.fee || 0,

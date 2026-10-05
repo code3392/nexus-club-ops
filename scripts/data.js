@@ -1,6 +1,6 @@
 // Data Store & State Engine with LocalStorage Persistence
 // Designed for Modern Student Organizations & Smart Club Operations
-const STORAGE_KEY = 'NEXUS_CAMPUS_OPS_V5';
+const STORAGE_KEY = 'NEXUS_CAMPUS_OPS_V6';
 
 export const INITIAL_ORGANIZATION = {
   id: 'org-tech-guild',
@@ -13,53 +13,8 @@ export const INITIAL_ORGANIZATION = {
   badge: 'Official Student Organization'
 };
 
-export const INITIAL_FESTS = [
-  {
-    id: 'fest-techcarnival-2026',
-    title: 'International Tech Carnival 2026',
-    shortName: 'Tech Carnival 2026',
-    edition: '9th International Edition',
-    organization: 'Campus Tech Society',
-    status: 'Active / Registration Open',
-    date: 'October 24 - 26, 2026',
-    venue: 'Campus Central Auditorium & Main Arena',
-    tagline: 'The flagship collegiate and international technology carnival.',
-    description: 'Premier collegiate festival ready for your custom competitions and workshops.',
-    bannerGradient: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #06b6d4 100%)',
-    totalEvents: 0,
-    badge: 'Flagship Carnival'
-  },
-  {
-    id: 'fest-wintertech-2026',
-    title: 'Winter Tech Fest 2026',
-    shortName: 'Winter Tech Fest',
-    edition: 'Annual Winter Meet',
-    organization: 'Campus Tech Society',
-    status: 'Registration Open',
-    date: 'December 18 - 20, 2026',
-    venue: 'Science & IT Complex, Campus',
-    tagline: 'Annual deep-tech immersion, innovation sprint, and Olympiad quiz.',
-    description: 'Winter season festival container ready for hackathons and masterclasses.',
-    bannerGradient: 'linear-gradient(135deg, #0284c7 0%, #06b6d4 50%, #10b981 100%)',
-    totalEvents: 0,
-    badge: 'Winter Edition'
-  },
-  {
-    id: 'fest-freshers-2027',
-    title: 'Freshers Tech Fest 2027',
-    shortName: 'Freshers Tech Fest',
-    edition: 'Orientation Edition',
-    organization: 'Campus Tech Society',
-    status: 'Upcoming',
-    date: 'January 15 - 16, 2027',
-    venue: 'Campus IT Labs 1 & 2',
-    tagline: 'The welcoming gateway festival for aspiring coders & young innovators.',
-    description: 'Orientation festival container ready for beginner-friendly contests.',
-    bannerGradient: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 50%, #f59e0b 100%)',
-    totalEvents: 0,
-    badge: 'Freshers Gateway'
-  }
-];
+// All festivals removed by user request - empty initial list, user adds fests manually
+export const INITIAL_FESTS = [];
 
 export const INITIAL_CLUBS = [
   {
@@ -119,10 +74,23 @@ export class StateManager {
 
   loadState() {
     try {
+      ['NEXUS_CAMPUS_OPS_V1', 'NEXUS_CAMPUS_OPS_V2', 'NEXUS_CAMPUS_OPS_V3', 'NEXUS_CAMPUS_OPS_V4', 'NEXUS_CAMPUS_OPS_V5'].forEach(k => {
+        try { localStorage.removeItem(k); } catch (e) {}
+      });
+
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && Array.isArray(parsed.events)) {
+          if (Array.isArray(parsed.fests)) {
+            parsed.fests = parsed.fests.filter(f => 
+              f.id !== 'fest-techcarnival-2026' && 
+              f.id !== 'fest-wintertech-2026' && 
+              f.id !== 'fest-freshers-2027'
+            );
+          } else {
+            parsed.fests = [];
+          }
           return parsed;
         }
       }
@@ -132,7 +100,7 @@ export class StateManager {
 
     return {
       organization: INITIAL_ORGANIZATION,
-      fests: INITIAL_FESTS,
+      fests: [],
       clubs: INITIAL_CLUBS,
       events: INITIAL_EVENTS,
       registrations: INITIAL_REGISTRATIONS,
@@ -153,7 +121,7 @@ export class StateManager {
     localStorage.removeItem(STORAGE_KEY);
     this.state = {
       organization: INITIAL_ORGANIZATION,
-      fests: INITIAL_FESTS,
+      fests: [],
       clubs: INITIAL_CLUBS,
       events: INITIAL_EVENTS,
       registrations: INITIAL_REGISTRATIONS,
@@ -169,7 +137,7 @@ export class StateManager {
   }
 
   getFests() {
-    return this.state.fests || INITIAL_FESTS;
+    return this.state.fests || [];
   }
 
   getFest(id) {
@@ -181,6 +149,13 @@ export class StateManager {
     this.state.fests.unshift(festData);
     this.save();
     return festData;
+  }
+
+  deleteFest(festId) {
+    if (!this.state.fests) return false;
+    this.state.fests = this.state.fests.filter(f => f.id !== festId);
+    this.save();
+    return true;
   }
 
   getEvents() {

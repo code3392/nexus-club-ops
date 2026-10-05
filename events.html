@@ -89,20 +89,8 @@
 
         <!-- Event Showcase & Filter Anchor (Rulebook Section) -->
         <div id="arenaFilterAnchor" class="arena-filter-bar">
-          <div class="filter-pills-row" id="festFilterPillsRow">
-            <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-right:4px;">Fest:</span>
-            <button class="filter-pill active" data-fest="all" onclick="window.nexusApp.setFestFilter('all')">
-              🌟 All Fests
-            </button>
-            <button class="filter-pill" data-fest="fest-techcarnival-2026" onclick="window.nexusApp.setFestFilter('fest-techcarnival-2026')">
-              🏆 Tech Carnival 2026
-            </button>
-            <button class="filter-pill" data-fest="fest-wintertech-2026" onclick="window.nexusApp.setFestFilter('fest-wintertech-2026')">
-              ❄️ Winter Tech Fest
-            </button>
-            <button class="filter-pill" data-fest="fest-freshers-2027" onclick="window.nexusApp.setFestFilter('fest-freshers-2027')">
-              🌱 Freshers Tech Fest
-            </button>
+          <div class="filter-pills-row" id="festFilterPillsRow" style="display:none;">
+            <!-- Rendered dynamically by app.js if festivals are present -->
           </div>
 
           <div class="filter-pills-row" id="categoryFilterPillsRow">

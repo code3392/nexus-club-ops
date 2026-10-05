@@ -40,6 +40,7 @@ class NexusApp {
     window.adminCenter = new AdminCommandCenter('adminContainer');
 
     this.bindEvents();
+    this.renderFestFilterPills();
     this.renderFestDirectory();
     this.renderFestArena();
     this.updateHeroStats();
@@ -198,6 +199,27 @@ class NexusApp {
     const fests = db.getFests ? db.getFests() : [];
     const events = db.getEvents ? db.getEvents() : [];
 
+    if (fests.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state-card" style="grid-column: 1 / -1; padding: 2.5rem 1.5rem; text-align: center; background: rgba(15, 23, 42, 0.4); border: 1px dashed var(--border-subtle); border-radius: var(--radius-lg);">
+          <div style="font-size: 2.4rem; margin-bottom: 0.6rem;">🎪</div>
+          <h3 style="color: var(--text-main); font-size: 1.15rem; font-weight: 700; margin-bottom: 0.4rem;">No Festivals Scheduled</h3>
+          <p style="color: var(--text-muted); font-size: 0.85rem; max-width: 480px; margin: 0 auto 1.25rem auto;">
+            All previous festivals have been removed. You can create a new festival container or launch independent event registration forms.
+          </p>
+          <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="window.nexusApp.openCreateFestModal()">
+              ➕ Add New Festival
+            </button>
+            <button class="btn btn-primary btn-sm btn-glow" onclick="window.nexusApp.handleCreateFormClick()">
+              🛠️ Create Registration Form
+            </button>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
     container.innerHTML = fests.map(fest => {
       const festEvents = events.filter(e => e.festId === fest.id);
       const isSelected = this.activeFestFilter === fest.id;
@@ -254,6 +276,28 @@ class NexusApp {
         </div>
       `;
     }).join('');
+  }
+
+  renderFestFilterPills() {
+    const row = document.getElementById('festFilterPillsRow');
+    if (!row) return;
+    const fests = db.getFests ? db.getFests() : [];
+    if (fests.length === 0) {
+      row.style.display = 'none';
+      return;
+    }
+    row.style.display = 'flex';
+    row.innerHTML = `
+      <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-right:4px;">Fest:</span>
+      <button class="filter-pill ${this.activeFestFilter === 'all' ? 'active' : ''}" data-fest="all" onclick="window.nexusApp.setFestFilter('all')">
+        🌟 All Fests
+      </button>
+      ${fests.map(f => `
+        <button class="filter-pill ${this.activeFestFilter === f.id ? 'active' : ''}" data-fest="${f.id}" onclick="window.nexusApp.setFestFilter('${f.id}')">
+          🎪 ${f.shortName || f.title}
+        </button>
+      `).join('')}
+    `;
   }
 
   openFestDetails(festId) {
@@ -359,6 +403,92 @@ class NexusApp {
 
   resetFestFilter() {
     this.setFestFilter('all');
+  }
+
+  openCreateFestModal() {
+    sound.playClick();
+    if (!auth.currentUser) {
+      auth.requireAuth(() => this.openCreateFestModal(), 'Please sign in to create a new festival.');
+      return;
+    }
+    const modal = document.getElementById('globalModalContainer');
+    if (!modal) return;
+
+    modal.innerHTML = `
+      <div class="modal-backdrop" onclick="if(event.target===this) window.nexusApp.closeModal()">
+        <div class="modal-dialog" style="max-width: 520px;">
+          <div class="modal-header">
+            <h3>🎪 Create New Festival</h3>
+            <button class="modal-close-btn" onclick="window.nexusApp.closeModal()">✕</button>
+          </div>
+          <form class="modal-body" onsubmit="event.preventDefault(); window.nexusApp.handleSaveNewFest();" style="display:flex; flex-direction:column; gap:1rem;">
+            <div class="form-group">
+              <label class="form-label">Festival Title <span class="req">*</span></label>
+              <input type="text" id="newFestTitle" class="form-input" placeholder="e.g. National Robotics Fest 2026" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Short Name <span class="req">*</span></label>
+              <input type="text" id="newFestShortName" class="form-input" placeholder="e.g. Robotics Fest" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Edition / Season</label>
+              <input type="text" id="newFestEdition" class="form-input" placeholder="e.g. 1st Annual Edition" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Date & Timing</label>
+              <input type="text" id="newFestDate" class="form-input" placeholder="e.g. November 20-22, 2026" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Venue / Location</label>
+              <input type="text" id="newFestVenue" class="form-input" placeholder="e.g. Campus Central Auditorium" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tagline / Brief Description</label>
+              <textarea id="newFestDescription" class="form-textarea" placeholder="Brief tagline or description of this festival..." rows="2"></textarea>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:0.5rem;">
+              <button type="button" class="btn btn-secondary" onclick="window.nexusApp.closeModal()">Cancel</button>
+              <button type="submit" class="btn btn-primary btn-glow">Create Festival</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+  }
+
+  handleSaveNewFest() {
+    const title = document.getElementById('newFestTitle').value.trim();
+    const shortName = document.getElementById('newFestShortName').value.trim() || title;
+    const edition = document.getElementById('newFestEdition').value.trim() || 'Annual Edition';
+    const date = document.getElementById('newFestDate').value.trim() || 'TBA';
+    const venue = document.getElementById('newFestVenue').value.trim() || 'Campus Grounds';
+    const description = document.getElementById('newFestDescription').value.trim() || '';
+
+    const newFest = {
+      id: 'fest-' + Date.now().toString(36),
+      title,
+      shortName,
+      edition,
+      organization: auth.currentUser ? auth.currentUser.name : 'Campus Society',
+      status: 'Active',
+      date,
+      venue,
+      tagline: description,
+      description,
+      bannerGradient: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #06b6d4 100%)',
+      totalEvents: 0,
+      badge: 'Official Fest'
+    };
+
+    db.addFest(newFest);
+    sound.playSuccess();
+    this.closeModal();
+    this.renderFestDirectory();
+    this.renderFestFilterPills();
+    this.updateHeroStats();
+    if (window.formStudio && window.formStudio.renderMetaFields) {
+      window.formStudio.renderMetaFields();
+    }
   }
 
   // ===================================================================
@@ -943,9 +1073,9 @@ class NexusApp {
       id: 'REG-' + Date.now().toString(36),
       ticketId,
       eventId: evt.id,
-      festId: evt.festId || 'fest-techcarnival-2026',
+      festId: evt.festId || '',
       eventTitle: evt.title,
-      festTitle: evt.festName || 'Tech Carnival 2026',
+      festTitle: evt.festName || (evt.festId ? 'Fest Event' : 'Standalone Event'),
       clubName: evt.clubName || 'Campus Tech Society',
       leadName: this.registrationDraft.leadName,
       leadEmail: this.registrationDraft.leadEmail,
