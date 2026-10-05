@@ -35,8 +35,8 @@ export class AdminCommandCenter {
             <div class="kpi-icon-wrap bg-indigo-subtle">👥</div>
             <div class="kpi-content">
               <div class="kpi-value">${totalRegs}</div>
-              <div class="kpi-label">Total Registered Attendees</div>
-              <div class="kpi-trend text-emerald">↑ +24% vs last fest edition</div>
+              <div class="kpi-label">Registered Attendees</div>
+              <div class="kpi-trend text-muted">Across ${events.length} events</div>
             </div>
           </div>
 
@@ -44,8 +44,8 @@ export class AdminCommandCenter {
             <div class="kpi-icon-wrap bg-emerald-subtle">💰</div>
             <div class="kpi-content">
               <div class="kpi-value">$${totalRevenue.toLocaleString()}</div>
-              <div class="kpi-label">Direct Ticket Revenue</div>
-              <div class="kpi-trend text-cyan">⚡ 0% payment fraud / chargebacks</div>
+              <div class="kpi-label">Total Revenue Collected</div>
+              <div class="kpi-trend text-muted">From paid event entries</div>
             </div>
           </div>
 
@@ -53,17 +53,17 @@ export class AdminCommandCenter {
             <div class="kpi-icon-wrap bg-cyan-subtle">🎟️</div>
             <div class="kpi-content">
               <div class="kpi-value">${checkInRate}%</div>
-              <div class="kpi-label">Gate Check-in Conversion</div>
-              <div class="kpi-trend text-emerald">${checkedInCount} of ${totalRegs} on campus</div>
+              <div class="kpi-label">Checked-In Rate</div>
+              <div class="kpi-trend text-emerald">${checkedInCount} of ${totalRegs} attendees</div>
             </div>
           </div>
 
           <div class="kpi-card">
-            <div class="kpi-icon-wrap bg-purple-subtle">🛡️</div>
+            <div class="kpi-icon-wrap bg-purple-subtle">⏳</div>
             <div class="kpi-content">
-              <div class="kpi-value">0</div>
-              <div class="kpi-label">Google Forms Dependencies</div>
-              <div class="kpi-trend text-emerald">100% In-House Operations</div>
+              <div class="kpi-value">${totalRegs - checkedInCount}</div>
+              <div class="kpi-label">Pending Gate Check-in</div>
+              <div class="kpi-trend text-muted">Expected at venue</div>
             </div>
           </div>
         </div>

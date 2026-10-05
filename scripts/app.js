@@ -38,7 +38,6 @@ class NexusApp {
 
     this.bindEvents();
     this.renderFestArena();
-    this.updateAnnouncementTicker();
     this.updateHeroStats();
 
     // Init submodules
@@ -127,33 +126,19 @@ class NexusApp {
   updateHeroStats() {
     const registrations = db.getRegistrations();
     const events = db.getEvents();
+    const clubs = db.getClubs();
     const totalRegs = registrations.length;
     const checkedIn = registrations.filter(r => r.checkedIn).length;
 
     const statRegEl = document.getElementById('heroStatRegs');
     const statEventsEl = document.getElementById('heroStatEvents');
-    const statRateEl = document.getElementById('heroStatRate');
+    const statCheckedEl = document.getElementById('heroStatChecked');
+    const statClubsEl = document.getElementById('heroStatClubs');
 
-    if (statRegEl) statRegEl.textContent = totalRegs.toLocaleString();
+    if (statRegEl) statRegEl.textContent = totalRegs.toString();
     if (statEventsEl) statEventsEl.textContent = events.length.toString();
-    if (statRateEl) {
-      const rate = totalRegs > 0 ? Math.round((checkedIn / totalRegs) * 100) : 0;
-      statRateEl.textContent = `${rate}%`;
-    }
-  }
-
-  updateAnnouncementTicker() {
-    const ticker = document.getElementById('heroAnnouncementTicker');
-    if (!ticker) return;
-    const anns = db.state.announcements || [];
-    if (anns.length === 0) return;
-
-    ticker.innerHTML = anns.map(a => `
-      <div class="ticker-item">
-        <span class="ticker-badge" style="color: ${a.color}; border-color: ${a.color}44;">● ${a.tag}</span>
-        <strong>${a.title}</strong>: ${a.message}
-      </div>
-    `).join(' • ');
+    if (statCheckedEl) statCheckedEl.textContent = checkedIn.toString();
+    if (statClubsEl) statClubsEl.textContent = clubs.length.toString();
   }
 
   updateCalculator() {

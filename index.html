@@ -23,58 +23,57 @@
     <header class="nav-header">
       <div class="nav-inner">
         <div class="brand-group" onclick="window.nexusApp.switchTab('arena')">
-          <div class="brand-symbol">⚡</div>
+          <div class="brand-symbol">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+              <polyline points="2 17 12 22 22 17"></polyline>
+              <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+          </div>
           <div class="brand-title-wrap">
-            <span class="brand-name">NEXUS OPS</span>
-            <span class="brand-badge">KILL THE FORMS // FEST OS</span>
+            <span class="brand-name">Nexus<span class="brand-accent">Ops</span></span>
           </div>
         </div>
 
         <!-- Mode Navigation Tabs -->
         <nav class="nav-tabs-bar" aria-label="Main Navigation">
-          <button class="nav-tab-btn active" data-tab="arena">
-            <span>🎪</span> Fest Arena
-          </button>
-          <button class="nav-tab-btn" data-tab="studio">
-            <span>🛠️</span> Form Studio
-          </button>
-          <button class="nav-tab-btn" data-tab="scanner">
-            <span>⚡</span> Gate Scanner
-          </button>
-          <button class="nav-tab-btn" data-tab="admin">
-            <span>📊</span> Command Center
-          </button>
+          <button class="nav-tab-btn active" data-tab="arena">Events</button>
+          <button class="nav-tab-btn" data-tab="studio">Form Builder</button>
+          <button class="nav-tab-btn" data-tab="scanner">Gate Scanner</button>
+          <button class="nav-tab-btn" data-tab="admin">Dashboard</button>
         </nav>
 
-        <!-- Right Quick Actions -->
+        <!-- Right Actions -->
         <div class="nav-actions-right">
           <button class="search-trigger-btn" onclick="window.nexusApp.toggleCommandPalette()" title="Press Ctrl+K">
-            <span>🔍 Search</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <span>Search</span>
             <span class="kbd-shortcut">Ctrl+K</span>
           </button>
 
-          <button id="soundToggleBtn" class="util-btn" title="Toggle Sound FX">
-            🔊 Sound FX
-          </button>
-
-          <button id="resetDataBtn" class="util-btn" title="Restore Default Mock State">
-            🔄 Demo Reset
-          </button>
+          <!-- Settings Dropdown -->
+          <div class="nav-tools-dropdown">
+            <button class="util-btn icon-only-btn" id="navToolsBtn" onclick="document.getElementById('navToolsMenu').classList.toggle('hidden')" title="Preferences">
+              ⚙️
+            </button>
+            <div id="navToolsMenu" class="user-dropdown-menu hidden" style="width: 170px;">
+              <button class="dropdown-item" id="soundToggleBtn">
+                🔊 Sound FX
+              </button>
+              <button class="dropdown-item text-danger" id="resetDataBtn">
+                🔄 Reset Demo Data
+              </button>
+            </div>
+          </div>
 
           <!-- Authentication Profile & Sign-In Slot -->
           <div id="navAuthSlot"></div>
         </div>
       </div>
     </header>
-
-    <!-- Live Campus Announcement Ticker Strip -->
-    <div class="ticker-strip">
-      <span class="ticker-label">🔴 LIVE CAMPUS FEED:</span>
-      <div class="ticker-marquee" id="heroAnnouncementTicker">
-        <!-- Dynamically injected announcements -->
-        Loading live fest broadcasts...
-      </div>
-    </div>
 
     <!-- Main Views Container -->
     <main class="main-content">
@@ -107,27 +106,27 @@
             </button>
           </div>
 
-          <!-- Hero Telemetry Bar -->
+          <!-- Real Dynamic Stats Bar -->
           <div class="hero-telemetry-bar">
             <div class="telemetry-card">
-              <div class="t-number" id="heroStatRegs">4,820</div>
+              <div class="t-number" id="heroStatRegs">5</div>
               <div class="t-label">Registered Attendees</div>
-              <div class="t-tag text-emerald">↑ Live Synced</div>
-            </div>
-            <div class="telemetry-card">
-              <div class="t-number">0.4s</div>
-              <div class="t-label">Gate Check-in Time</div>
-              <div class="t-tag text-cyan">⚡ Fast QR scan</div>
-            </div>
-            <div class="telemetry-card">
-              <div class="t-number">100%</div>
-              <div class="t-label">Verified Passes</div>
-              <div class="t-tag text-emerald">🛡️ No fake receipts</div>
+              <div class="t-tag text-muted">Database records</div>
             </div>
             <div class="telemetry-card">
               <div class="t-number" id="heroStatEvents">6</div>
               <div class="t-label">Active Events</div>
-              <div class="t-tag text-amber">🏆 Open Registration</div>
+              <div class="t-tag text-muted">Currently hosted</div>
+            </div>
+            <div class="telemetry-card">
+              <div class="t-number" id="heroStatChecked">3</div>
+              <div class="t-label">Checked In</div>
+              <div class="t-tag text-emerald">Verified at gate</div>
+            </div>
+            <div class="telemetry-card">
+              <div class="t-number" id="heroStatClubs">4</div>
+              <div class="t-label">Host Clubs</div>
+              <div class="t-tag text-muted">Student societies</div>
             </div>
           </div>
         </div>

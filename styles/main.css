@@ -107,38 +107,45 @@ body {
 }
 
 .brand-symbol {
-  width: 38px;
-  height: 38px;
-  border-radius: var(--radius-sm);
-  background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 900;
-  font-size: 1.15rem;
-  box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.35);
 }
 
 .brand-title-wrap {
   display: flex;
-  flex-direction: column;
+  align-items: center;
 }
 
 .brand-name {
   font-weight: 800;
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   letter-spacing: -0.02em;
-  background: linear-gradient(to right, #ffffff, #c7d2fe);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #ffffff;
 }
 
-.brand-badge {
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: #38bdf8;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+.brand-accent {
+  color: #818cf8;
+  font-weight: 500;
+  margin-left: 2px;
+}
+
+.nav-tools-dropdown {
+  position: relative;
+}
+
+.icon-only-btn {
+  padding: 0.45rem 0.6rem;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .nav-tabs-bar {
@@ -308,51 +315,6 @@ body {
   0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
   70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
   100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-}
-
-/* ==========================================================================
-   TICKER BAR
-   ========================================================================== */
-
-.ticker-strip {
-  background: rgba(15, 23, 42, 0.85);
-  border-bottom: 1px solid var(--border-subtle);
-  padding: 0.4rem 1.5rem;
-  font-size: 0.8rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  overflow: hidden;
-}
-
-.ticker-label {
-  font-weight: 700;
-  color: var(--accent-indigo);
-  text-transform: uppercase;
-  font-size: 0.72rem;
-  letter-spacing: 0.05em;
-  white-space: nowrap;
-}
-
-.ticker-marquee {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: var(--text-muted);
-}
-
-.ticker-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.ticker-badge {
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 1px 6px;
-  border-radius: 4px;
-  border: 1px solid;
 }
 
 /* ==========================================================================
@@ -3194,18 +3156,26 @@ body {
 
 .btn-toggle-pw {
   position: absolute;
-  right: 0.6rem;
+  right: 0.65rem;
   background: transparent;
   border: none;
   cursor: pointer;
-  font-size: 1rem;
-  opacity: 0.6;
-  transition: opacity 0.2s;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 4px;
+  border-radius: 4px;
+  transition: color 0.2s, background 0.2s;
 }
 
 .btn-toggle-pw:hover {
-  opacity: 1;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.btn-toggle-pw svg {
+  display: block;
 }
 
 .pw-match-msg {
