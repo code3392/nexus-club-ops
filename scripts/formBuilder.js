@@ -9,7 +9,7 @@ export class FormBuilderStudio {
     this.currentSchema = {
       eventTitle: 'RoboWars 2026: Sumo Bot Championship',
       category: 'robotics',
-      clubId: 'club-robotics',
+      clubName: 'Autonomous Robotics Guild',
       date: 'Nov 02, 2026',
       venue: 'Robotics Central Arena',
       prizePool: '$1,800',
@@ -152,13 +152,11 @@ export class FormBuilderStudio {
                 oninput="window.formStudio.updateMeta('eventTitle', this.value)">
             </div>
             <div>
-              <label class="fb-label">Organizing Club</label>
-              <select id="fbMetaClub" class="fb-input" onchange="window.formStudio.updateMeta('clubId', this.value)">
-                <option value="club-robotics">Autonomous Robotics Guild</option>
-                <option value="club-turing">Turing Computer Society</option>
-                <option value="club-soundwave">SoundWave Arts & Music</option>
-                <option value="club-ecell">E-Cell Entrepreneurship Hub</option>
-              </select>
+              <label class="fb-label">Organization / Club Name</label>
+              <input type="text" id="fbMetaClub" class="fb-input" 
+                placeholder="e.g. IEEE Student Branch, ACM, Debate Society" 
+                value="${this.currentSchema.clubName || ''}"
+                oninput="window.formStudio.updateMeta('clubName', this.value)">
             </div>
             <div>
               <label class="fb-label">Seat Capacity Limit</label>
@@ -273,7 +271,7 @@ export class FormBuilderStudio {
           </div>
 
           <div class="phone-app-header">
-            <div class="phone-event-badge">${this.currentSchema.category.toUpperCase()}</div>
+            <div class="phone-event-badge">${(this.currentSchema.clubName || 'STUDENT ORGANIZATION').toUpperCase()}</div>
             <div class="phone-event-title">${this.currentSchema.eventTitle}</div>
             <div class="phone-event-meta">
               <span>🎟️ Capacity: ${this.currentSchema.capacity} slots</span>
@@ -323,25 +321,40 @@ export class FormBuilderStudio {
   deployForm() {
     sound.playPassUnlocked();
 
-    const clubs = db.getClubs();
-    const club = clubs.find(c => c.id === this.currentSchema.clubId) || clubs[0];
+    const clubName = (this.currentSchema.clubName && this.currentSchema.clubName.trim())
+      ? this.currentSchema.clubName.trim()
+      : 'Campus Organization';
+    const clubId = 'club-' + clubName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'club-custom';
+
+    if (db.addClub) {
+      db.addClub({
+        id: clubId,
+        name: clubName,
+        badge: 'Campus Org',
+        color: '#6366f1',
+        lead: 'Student Lead',
+        icon: '🏛️',
+        activeEvents: 1,
+        members: 50
+      });
+    }
 
     const newEvent = {
       id: 'evt-' + Date.now().toString(36),
-      clubId: this.currentSchema.clubId,
-      title: this.currentSchema.eventTitle,
-      category: this.currentSchema.category,
-      clubName: club.name,
-      badge: 'Student Club Event',
+      clubId: clubId,
+      title: this.currentSchema.eventTitle || 'Untitled Event',
+      category: this.currentSchema.category || 'tech',
+      clubName: clubName,
+      badge: 'Campus Event',
       tagline: 'Custom form deployed via Nexus Form Studio.',
       date: this.currentSchema.date || 'Upcoming Fest Date',
       venue: this.currentSchema.venue || 'Campus Central Auditorium',
       prizePool: this.currentSchema.prizePool || '$500',
-      fee: this.currentSchema.fee,
+      fee: this.currentSchema.fee || 0,
       isTeam: this.currentSchema.isTeam,
       minTeam: 2,
       maxTeam: 4,
-      capacity: this.currentSchema.capacity,
+      capacity: this.currentSchema.capacity || 50,
       registeredCount: 0,
       status: 'hot',
       gradient: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
@@ -349,7 +362,7 @@ export class FormBuilderStudio {
     };
 
     db.addEvent(newEvent);
-    db.addAnnouncement('New Event Published!', `${newEvent.title} is now open for registration on the fest portal.`, 'New Event', '#06b6d4');
+    db.addAnnouncement('New Event Published!', `"${newEvent.title}" by ${newEvent.clubName} is now open for registration on the fest portal.`, 'New Event', '#06b6d4');
 
     // Show toast
     const toast = document.createElement('div');

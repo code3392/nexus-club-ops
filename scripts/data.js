@@ -448,6 +448,13 @@ export class StateManager {
     return this.state.clubs;
   }
 
+  addClub(clubData) {
+    if (!this.state.clubs.some(c => c.name.toLowerCase() === clubData.name.toLowerCase())) {
+      this.state.clubs.push(clubData);
+      this.save();
+    }
+  }
+
   getRegistrations() {
     return this.state.registrations;
   }
