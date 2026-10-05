@@ -383,14 +383,13 @@ class NexusApp {
 
     const user = auth.currentUser;
     this.currentRegEvent = event;
-    this.regStep = 1;
     this.registrationDraft = {
       leadName: user ? user.name : '',
       leadEmail: user ? user.email : '',
       leadPhone: '',
       collegeRoll: user ? (user.rollNo || '') : '',
       teamName: '',
-      teamMembers: [{ name: user ? user.name : '', role: 'Team Captain / Lead' }],
+      teamMembers: [{ name: user ? user.name : '', role: 'Leader' }],
       answers: {}
     };
 
@@ -402,258 +401,213 @@ class NexusApp {
     if (!modal) return;
     const evt = this.currentRegEvent;
 
-    let stepContent = '';
+    // Custom dynamic questions
+    const customFieldsHtml = (evt.customFields || []).map(f => {
+      let inputEl = '';
+      const savedVal = this.registrationDraft.answers[f.id] || '';
 
-    if (this.regStep === 1) {
-      // Step 1: Attendee / Team Lead Info
-      stepContent = `
-        <div class="reg-step-box">
-          <div class="step-indicator">Step 1 of 4: Primary Attendee Information</div>
-          <div class="form-grid-2">
-            <div class="form-group">
-              <label class="form-label">Full Name <span class="req">*</span></label>
-              <input type="text" id="regName" class="form-input" value="${this.registrationDraft.leadName}" placeholder="e.g. Alex Morgan" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Campus Email Address <span class="req">*</span></label>
-              <input type="email" id="regEmail" class="form-input" value="${this.registrationDraft.leadEmail}" placeholder="alex@campus.edu" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Student Roll / ID Number <span class="req">*</span></label>
-              <input type="text" id="regRoll" class="form-input" value="${this.registrationDraft.collegeRoll}" placeholder="2024-CS-042" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Phone Number (SMS Gate Pass) <span class="req">*</span></label>
-              <input type="tel" id="regPhone" class="form-input" value="${this.registrationDraft.leadPhone}" placeholder="+1 (555) 019-2834" required />
-            </div>
-          </div>
-        </div>
-      `;
-    } else if (this.regStep === 2) {
-      // Step 2: Team Roster (or skip if solo)
-      if (evt.isTeam) {
-        const membersHtml = this.registrationDraft.teamMembers.map((m, idx) => `
-          <div class="team-member-row">
-            <div class="tm-num">#${idx + 1}</div>
-            <input type="text" class="form-input tm-name" placeholder="Teammate Full Name" value="${m.name}"
-              onchange="window.nexusApp.updateTeammate(${idx}, 'name', this.value)" />
-            <input type="text" class="form-input tm-role" placeholder="Role (e.g. Frontend, Driver, Pitcher)" value="${m.role}"
-              onchange="window.nexusApp.updateTeammate(${idx}, 'role', this.value)" />
-            ${idx > 0 ? `<button class="btn-remove-tm" onclick="window.nexusApp.removeTeammate(${idx})">✕</button>` : ''}
-          </div>
-        `).join('');
-
-        stepContent = `
-          <div class="reg-step-box">
-            <div class="step-indicator">Step 2 of 4: Dynamic Team Roster Engine</div>
-            <p class="step-subtext">Eliminates Google Forms teammate chaos. Team lead generates ticket and assigns roster seats.</p>
-
-            <div class="form-group">
-              <label class="form-label">Team Codename / Organization <span class="req">*</span></label>
-              <input type="text" id="regTeamName" class="form-input" value="${this.registrationDraft.teamName}" placeholder="e.g. CyberValkyrie" required />
-            </div>
-
-            <div class="team-members-header">
-              <label class="form-label">Teammate Roster (${this.registrationDraft.teamMembers.length} / max ${evt.maxTeam})</label>
-              ${this.registrationDraft.teamMembers.length < evt.maxTeam ? `
-                <button type="button" class="btn btn-secondary btn-sm" onclick="window.nexusApp.addTeammate()">+ Add Teammate</button>
-              ` : ''}
-            </div>
-
-            <div class="team-members-list">
-              ${membersHtml}
-            </div>
+      if (f.type === 'select') {
+        inputEl = `
+          <select id="${f.id}" class="gform-input" onchange="window.nexusApp.updateAnswer('${f.id}', this.value)">
+            <option value="">Choose</option>
+            ${(f.options || []).map(opt => `<option value="${opt}" ${savedVal === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+          </select>
+        `;
+      } else if (f.type === 'radio') {
+        inputEl = `
+          <div class="gform-radios">
+            ${(f.options || []).map(opt => `
+              <label class="gform-radio-option">
+                <input type="radio" name="${f.id}" value="${opt}" ${savedVal === opt ? 'checked' : ''}
+                  onchange="window.nexusApp.updateAnswer('${f.id}', this.value)" />
+                <span>${opt}</span>
+              </label>
+            `).join('')}
           </div>
         `;
       } else {
-        // Solo event notice
-        stepContent = `
-          <div class="reg-step-box">
-            <div class="step-indicator">Step 2 of 4: Solo Entry Confirmation</div>
-            <div class="solo-confirmation-card">
-              <div class="sc-icon">👤</div>
-              <h4>Individual Participation Confirmed</h4>
-              <p>This event is designed for individual solo creators. Your entry badge will be issued directly to your primary student ID.</p>
-            </div>
-          </div>
+        inputEl = `
+          <input type="${f.type === 'url' ? 'url' : 'text'}" id="${f.id}" class="gform-input" 
+            placeholder="Your answer" value="${savedVal}"
+            oninput="window.nexusApp.updateAnswer('${f.id}', this.value)" />
         `;
       }
-    } else if (this.regStep === 3) {
-      // Step 3: Event-specific custom fields from the dynamic schema
-      const customInputs = (evt.customFields || []).map(f => {
-        let inputEl = '';
-        const savedVal = this.registrationDraft.answers[f.id] || '';
 
-        if (f.type === 'select') {
-          inputEl = `
-            <select id="${f.id}" class="form-input" onchange="window.nexusApp.updateAnswer('${f.id}', this.value)">
-              <option value="">Select an option...</option>
-              ${(f.options || []).map(opt => `<option value="${opt}" ${savedVal === opt ? 'selected' : ''}>${opt}</option>`).join('')}
-            </select>
-          `;
-        } else if (f.type === 'radio') {
-          inputEl = `
-            <div class="form-radios">
-              ${(f.options || []).map(opt => `
-                <label class="radio-label">
-                  <input type="radio" name="${f.id}" value="${opt}" ${savedVal === opt ? 'checked' : ''}
-                    onchange="window.nexusApp.updateAnswer('${f.id}', this.value)" />
-                  <span>${opt}</span>
-                </label>
-              `).join('')}
-            </div>
-          `;
-        } else {
-          inputEl = `
-            <input type="${f.type === 'url' ? 'url' : 'text'}" id="${f.id}" class="form-input" 
-              placeholder="${f.placeholder || ''}" value="${savedVal}"
-              oninput="window.nexusApp.updateAnswer('${f.id}', this.value)" />
-          `;
-        }
+      return `
+        <div class="gform-card">
+          <label class="gform-question-title">
+            ${f.label} ${f.required ? '<span class="req">*</span>' : ''}
+          </label>
+          ${inputEl}
+        </div>
+      `;
+    }).join('');
 
-        return `
-          <div class="form-group">
-            <label class="form-label">${f.label} ${f.required ? '<span class="req">*</span>' : ''}</label>
-            ${inputEl}
+    // Team members if team event
+    let teamSectionHtml = '';
+    if (evt.isTeam) {
+      const membersRows = this.registrationDraft.teamMembers.map((m, idx) => `
+        <div class="gform-tm-row">
+          <input type="text" class="gform-input tm-name" placeholder="Teammate ${idx + 1} Name" value="${m.name}"
+            onchange="window.nexusApp.updateTeammate(${idx}, 'name', this.value)" />
+          ${idx > 0 ? `<button type="button" class="btn-remove-tm" onclick="window.nexusApp.removeTeammate(${idx})">✕</button>` : ''}
+        </div>
+      `).join('');
+
+      teamSectionHtml = `
+        <div class="gform-card">
+          <label class="gform-question-title">Team Name <span class="req">*</span></label>
+          <input type="text" id="regTeamName" class="gform-input" value="${this.registrationDraft.teamName}" placeholder="Your answer" required />
+        </div>
+
+        <div class="gform-card">
+          <div class="gform-card-header-flex">
+            <label class="gform-question-title">Team Members (${this.registrationDraft.teamMembers.length}/${evt.maxTeam})</label>
+            ${this.registrationDraft.teamMembers.length < evt.maxTeam ? `
+              <button type="button" class="btn-text-action" onclick="window.nexusApp.addTeammate()">+ Add member</button>
+            ` : ''}
           </div>
-        `;
-      }).join('');
-
-      stepContent = `
-        <div class="reg-step-box">
-          <div class="step-indicator">Step 3 of 4: Event-Specific Requirements</div>
-          <p class="step-subtext">Dynamic questions powered by Nexus Form Engine.</p>
-          <div class="custom-fields-stack">
-            ${customInputs}
+          <div class="gform-tm-list">
+            ${membersRows}
           </div>
         </div>
       `;
-    } else if (this.regStep === 4) {
-      // Step 4: Verification & Payment (if paid) / Instant Confirmation
-      if (evt.fee > 0) {
-        stepContent = `
-          <div class="reg-step-box">
-            <div class="step-indicator">Step 4 of 4: Anti-Fraud Automated Payment</div>
-            <div class="payment-mock-container">
-              <div class="pm-qr-col">
-                <div class="pm-qr-placeholder">
-                  <div class="pm-qr-symbol">⚡</div>
-                  <div class="pm-upi-id">campus-ops@upi</div>
-                  <div class="pm-amount">$${evt.fee}.00 USD</div>
-                </div>
-              </div>
-              <div class="pm-info-col">
-                <div class="pm-badge">ZERO SCREENSHOT FRAUD</div>
-                <h4>Instant Gateway Simulation</h4>
-                <p>Google Forms forces treasurers to manually verify hundreds of blurry payment screenshots. Nexus Ops simulates immediate webhook verification.</p>
-                <div class="pm-action-box">
-                  <button type="button" class="btn btn-primary btn-glow btn-block" onclick="window.nexusApp.simulatePaymentSuccess()">
-                    💳 Authorize Demo Payment ($${evt.fee})
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-      } else {
-        stepContent = `
-          <div class="reg-step-box">
-            <div class="step-indicator">Step 4 of 4: Free Admission Tier</div>
-            <div class="free-tier-card">
-              <div class="ft-icon">🎟️</div>
-              <h4>Complimentary Student Pass</h4>
-              <p>This event is fully sponsored by <strong>${evt.clubName}</strong>. Zero payment required. Your cryptographic pass is ready to mint!</p>
-              <button type="button" class="btn btn-primary btn-glow btn-block" onclick="window.nexusApp.finishRegistration()">
-                ✨ Mint My Holographic E-Pass
-              </button>
-            </div>
-          </div>
-        `;
-      }
     }
 
     modal.innerHTML = `
       <div class="modal-backdrop" onclick="if(event.target===this) window.nexusApp.closeModal()">
-        <div class="modal-dialog modal-md">
-          <div class="modal-header">
-            <div>
-              <span class="modal-club-tag">${evt.title}</span>
-              <h2 class="modal-title">Smart Registration</h2>
+        <div class="gform-modal-dialog">
+          
+          <!-- Google Forms Style Header Card -->
+          <div class="gform-header-card" style="border-top-color: ${evt.category === 'hackathon' ? '#6366f1' : '#ec4899'};">
+            <div class="gform-header-badge">${evt.clubName}</div>
+            <h2 class="gform-title">${evt.title}</h2>
+            <p class="gform-desc">${evt.tagline || 'Please fill out this form to register for the event.'}</p>
+            <div class="gform-meta-row">
+              <span>📅 ${evt.date}</span>
+              <span>📍 ${evt.venue}</span>
+              <span>🎟️ ${evt.fee === 0 ? 'Free Entry' : '$' + evt.fee + ' Fee'}</span>
             </div>
-            <button class="modal-close-btn" onclick="window.nexusApp.closeModal()">✕</button>
+            <div class="gform-req-notice">* Indicates required question</div>
           </div>
 
-          <div class="modal-body">
-            <!-- Step Progress Track -->
-            <div class="step-progress-track">
-              <div class="step-node ${this.regStep >= 1 ? 'active' : ''}">1. Details</div>
-              <div class="step-node ${this.regStep >= 2 ? 'active' : ''}">2. Team</div>
-              <div class="step-node ${this.regStep >= 3 ? 'active' : ''}">3. Custom</div>
-              <div class="step-node ${this.regStep >= 4 ? 'active' : ''}">4. Mint Pass</div>
+          <form id="eventRegistrationForm" onsubmit="event.preventDefault(); window.nexusApp.submitRegistrationForm();">
+            <!-- Full Name -->
+            <div class="gform-card">
+              <label class="gform-question-title">Full Name <span class="req">*</span></label>
+              <input type="text" id="regName" class="gform-input" value="${this.registrationDraft.leadName}" placeholder="Your answer" required />
             </div>
 
-            ${stepContent}
-          </div>
+            <!-- Email -->
+            <div class="gform-card">
+              <label class="gform-question-title">Campus Email Address <span class="req">*</span></label>
+              <input type="email" id="regEmail" class="gform-input" value="${this.registrationDraft.leadEmail}" placeholder="Your answer" required />
+            </div>
 
-          <div class="modal-footer">
-            ${this.regStep > 1 && this.regStep < 4 ? `
-              <button class="btn btn-secondary" onclick="window.nexusApp.prevStep()">&larr; Back</button>
-            ` : `
-              <button class="btn btn-secondary" onclick="window.nexusApp.closeModal()">Cancel</button>
-            `}
-            ${this.regStep < 4 ? `
-              <button class="btn btn-primary" onclick="window.nexusApp.nextStep()">Next Step &rarr;</button>
-            ` : ''}
-          </div>
+            <!-- Student ID / Roll -->
+            <div class="gform-card">
+              <label class="gform-question-title">Student Roll / ID Number <span class="req">*</span></label>
+              <input type="text" id="regRoll" class="gform-input" value="${this.registrationDraft.collegeRoll}" placeholder="Your answer" required />
+            </div>
+
+            <!-- Phone -->
+            <div class="gform-card">
+              <label class="gform-question-title">Phone Number</label>
+              <input type="tel" id="regPhone" class="gform-input" value="${this.registrationDraft.leadPhone}" placeholder="Your answer" />
+            </div>
+
+            <!-- Team Section if applicable -->
+            ${teamSectionHtml}
+
+            <!-- Dynamic Custom Event Questions -->
+            ${customFieldsHtml}
+
+            <!-- Submit Action Card -->
+            <div class="gform-actions-card">
+              <div class="gform-actions-left">
+                <button type="submit" class="btn btn-primary btn-glow btn-gform-submit">
+                  ${evt.fee > 0 ? `Pay $${evt.fee} & Submit` : 'Submit'}
+                </button>
+                <button type="button" class="btn-text-clear" onclick="window.nexusApp.clearRegistrationForm()">
+                  Clear form
+                </button>
+              </div>
+              <button type="button" class="btn-text-cancel" onclick="window.nexusApp.closeModal()">
+                Cancel
+              </button>
+            </div>
+          </form>
+
         </div>
       </div>
     `;
   }
 
-  nextStep() {
+  clearRegistrationForm() {
     sound.playClick();
-    if (this.regStep === 1) {
-      const name = document.getElementById('regName')?.value.trim();
-      const email = document.getElementById('regEmail')?.value.trim();
-      const roll = document.getElementById('regRoll')?.value.trim();
-      const phone = document.getElementById('regPhone')?.value.trim();
-
-      if (!name || !email || !roll) {
-        alert('Please fill in required fields: Name, Campus Email, and Student ID.');
-        return;
-      }
-      this.registrationDraft.leadName = name;
-      this.registrationDraft.leadEmail = email;
-      this.registrationDraft.collegeRoll = roll;
-      this.registrationDraft.leadPhone = phone;
-      if (this.registrationDraft.teamMembers[0]) {
-        this.registrationDraft.teamMembers[0].name = name;
-      }
-    } else if (this.regStep === 2) {
-      if (this.currentRegEvent.isTeam) {
-        const teamName = document.getElementById('regTeamName')?.value.trim();
-        if (!teamName) {
-          alert('Please provide a team codename.');
-          return;
-        }
-        this.registrationDraft.teamName = teamName;
-      }
-    }
-
-    this.regStep++;
+    this.registrationDraft = {
+      leadName: '',
+      leadEmail: '',
+      leadPhone: '',
+      collegeRoll: '',
+      teamName: '',
+      teamMembers: [{ name: '', role: 'Leader' }],
+      answers: {}
+    };
     this.renderRegistrationModal();
   }
 
-  prevStep() {
+  submitRegistrationForm() {
     sound.playClick();
-    this.regStep--;
-    this.renderRegistrationModal();
+    const evt = this.currentRegEvent;
+    const name = document.getElementById('regName')?.value.trim();
+    const email = document.getElementById('regEmail')?.value.trim();
+    const roll = document.getElementById('regRoll')?.value.trim();
+    const phone = document.getElementById('regPhone')?.value.trim();
+
+    if (!name || !email || !roll) {
+      alert('Please fill out all required fields.');
+      return;
+    }
+
+    if (evt.isTeam) {
+      const teamName = document.getElementById('regTeamName')?.value.trim();
+      if (!teamName) {
+        alert('Please enter your Team Name.');
+        return;
+      }
+      this.registrationDraft.teamName = teamName;
+    }
+
+    this.registrationDraft.leadName = name;
+    this.registrationDraft.leadEmail = email;
+    this.registrationDraft.collegeRoll = roll;
+    this.registrationDraft.leadPhone = phone;
+    if (this.registrationDraft.teamMembers[0]) {
+      this.registrationDraft.teamMembers[0].name = name;
+    }
+
+    // Check custom required fields
+    for (const f of (evt.customFields || [])) {
+      if (f.required && !this.registrationDraft.answers[f.id]) {
+        const val = document.getElementById(f.id)?.value.trim();
+        if (!val) {
+          alert(`Please answer: "${f.label}"`);
+          return;
+        }
+        this.registrationDraft.answers[f.id] = val;
+      }
+    }
+
+    // Direct Pass Generation
+    const txnId = evt.fee > 0 ? ('TXN-' + Math.floor(1000000000 + Math.random() * 9000000000)) : null;
+    this.finishRegistration(txnId);
   }
 
   addTeammate() {
     sound.playClick();
     if (this.registrationDraft.teamMembers.length < this.currentRegEvent.maxTeam) {
-      this.registrationDraft.teamMembers.push({ name: '', role: 'Engineer / Member' });
+      this.registrationDraft.teamMembers.push({ name: '', role: 'Member' });
       this.renderRegistrationModal();
     }
   }

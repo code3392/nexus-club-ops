@@ -102,7 +102,7 @@ export class FormBuilderStudio {
       if (f.type === 'select' || f.type === 'radio') {
         optionsEditor = `
           <div class="fb-field-options">
-            <label class="fb-sublabel">Options (comma separated):</label>
+            <label class="fb-sublabel">Options (comma separated)</label>
             <input type="text" class="fb-input" value="${(f.options || []).join(', ')}"
               onchange="window.formStudio.updateOptions('${f.id}', this.value)" />
           </div>
@@ -112,20 +112,20 @@ export class FormBuilderStudio {
       return `
         <div class="fb-field-card" data-id="${f.id}">
           <div class="fb-field-card-header">
-            <div class="fb-field-drag-badge">#${idx + 1} • ${f.type.toUpperCase()}</div>
-            <button class="fb-btn-remove" onclick="window.formStudio.removeField('${f.id}')" title="Delete Field">
-              ✕ Remove
+            <span class="fb-field-drag-badge">Question ${idx + 1} • ${f.type.toUpperCase()}</span>
+            <button class="fb-btn-remove" onclick="window.formStudio.removeField('${f.id}')" title="Delete">
+              ✕ Delete
             </button>
           </div>
           <div class="fb-field-body">
             <div class="fb-row">
               <div class="fb-col">
-                <label class="fb-sublabel">Field Question / Label</label>
+                <label class="fb-sublabel">Question</label>
                 <input type="text" class="fb-input" value="${f.label}" 
                   oninput="window.formStudio.updateField('${f.id}', 'label', this.value)" />
               </div>
               <div class="fb-col fb-col-check">
-                <label class="fb-sublabel">Mandatory</label>
+                <label class="fb-sublabel">Required</label>
                 <label class="fb-toggle-switch">
                   <input type="checkbox" ${f.required ? 'checked' : ''} 
                     onchange="window.formStudio.updateField('${f.id}', 'required', this.checked)">
@@ -143,7 +143,7 @@ export class FormBuilderStudio {
       <div class="fb-studio-wrapper">
         <div class="fb-meta-section">
           <div class="fb-section-title">
-            <span class="icon">⚙️</span> Fest Event Details & Quota Engine
+            <span>📝 Event Details</span>
           </div>
           <div class="fb-grid-2">
             <div>
@@ -152,7 +152,7 @@ export class FormBuilderStudio {
                 oninput="window.formStudio.updateMeta('eventTitle', this.value)">
             </div>
             <div>
-              <label class="fb-label">Host Club</label>
+              <label class="fb-label">Organizing Club</label>
               <select id="fbMetaClub" class="fb-input" onchange="window.formStudio.updateMeta('clubId', this.value)">
                 <option value="club-robotics">Autonomous Robotics Guild</option>
                 <option value="club-turing">Turing Computer Society</option>
@@ -161,10 +161,9 @@ export class FormBuilderStudio {
               </select>
             </div>
             <div>
-              <label class="fb-label">Max Seat Capacity (Automated Lock)</label>
+              <label class="fb-label">Seat Capacity Limit</label>
               <input type="number" class="fb-input" value="${this.currentSchema.capacity}" min="5" max="500"
                 oninput="window.formStudio.updateMeta('capacity', parseInt(this.value) || 50)">
-              <span class="fb-hint">Eliminates Google Forms overbooking by auto-closing at this limit</span>
             </div>
             <div>
               <label class="fb-label">Entry Fee ($0 for Free)</label>
@@ -174,12 +173,12 @@ export class FormBuilderStudio {
             <div>
               <label class="fb-label">Registration Type</label>
               <select class="fb-input" onchange="window.formStudio.updateMeta('isTeam', this.value === 'true')">
-                <option value="true" ${this.currentSchema.isTeam ? 'selected' : ''}>Team Registration (With Dynamic Roster)</option>
-                <option value="false" ${!this.currentSchema.isTeam ? 'selected' : ''}>Individual / Solo Entry</option>
+                <option value="true" ${this.currentSchema.isTeam ? 'selected' : ''}>Team</option>
+                <option value="false" ${!this.currentSchema.isTeam ? 'selected' : ''}>Individual / Solo</option>
               </select>
             </div>
             <div>
-              <label class="fb-label">Prize Pool / Rewards</label>
+              <label class="fb-label">Prize / Rewards</label>
               <input type="text" class="fb-input" value="${this.currentSchema.prizePool}"
                 oninput="window.formStudio.updateMeta('prizePool', this.value)">
             </div>
@@ -189,14 +188,14 @@ export class FormBuilderStudio {
         <div class="fb-fields-section">
           <div class="fb-fields-header">
             <div class="fb-section-title">
-              <span class="icon">📋</span> Custom Form Schema (${this.currentSchema.fields.length} Fields)
+              <span>Questions (${this.currentSchema.fields.length})</span>
             </div>
             <div class="fb-add-field-bar">
-              <span class="fb-add-label">+ Add Component:</span>
-              <button class="fb-chip" onclick="window.formStudio.addField('text')">Text</button>
+              <span class="fb-add-label">+ Add Question:</span>
+              <button class="fb-chip" onclick="window.formStudio.addField('text')">Short Answer</button>
               <button class="fb-chip" onclick="window.formStudio.addField('select')">Dropdown</button>
-              <button class="fb-chip" onclick="window.formStudio.addField('radio')">Single Choice</button>
-              <button class="fb-chip" onclick="window.formStudio.addField('url')">URL / Portfolio</button>
+              <button class="fb-chip" onclick="window.formStudio.addField('radio')">Multiple Choice</button>
+              <button class="fb-chip" onclick="window.formStudio.addField('url')">Link / URL</button>
             </div>
           </div>
 
@@ -207,9 +206,8 @@ export class FormBuilderStudio {
 
         <div class="fb-deploy-box">
           <button class="btn btn-primary btn-glow btn-lg" onclick="window.formStudio.deployForm()">
-            🚀 Publish Event to Fest Portal
+            Publish Form
           </button>
-          <span class="fb-deploy-note">Instantly deploys with zero Google Forms dependencies and automated QR passes.</span>
         </div>
       </div>
     `;
