@@ -809,9 +809,9 @@ class NexusApp {
 
       if (f.type === 'select') {
         inputEl = `
-          <select id="${f.id}" class="gform-input" ${isExpired ? 'disabled' : ''} onchange="window.nexusApp.updateAnswer('${f.id}', this.value)">
-            <option value="">Choose an option...</option>
-            ${(f.options || []).map(opt => `<option value="${opt}" ${savedVal === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+          <select id="${f.id}" class="gform-input gform-select" ${isExpired ? 'disabled' : ''} onchange="window.nexusApp.updateAnswer('${f.id}', this.value)">
+            <option value="" style="background-color: #0f172a; color: #94a3b8;">Choose an option...</option>
+            ${(f.options || []).map(opt => `<option value="${opt}" style="background-color: #0f172a; color: #f8fafc;" ${savedVal === opt ? 'selected' : ''}>${opt}</option>`).join('')}
           </select>
         `;
       } else if (f.type === 'radio') {

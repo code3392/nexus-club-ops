@@ -240,7 +240,8 @@ export class FormBuilderStudio {
           <div class="fb-field-options">
             <label class="fb-sublabel">Options (comma separated)</label>
             <input type="text" class="fb-input" value="${(f.options || []).join(', ')}"
-              onchange="window.formStudio.updateOptions('${f.id}', this.value)" />
+              placeholder="e.g. Option Alpha, Option Beta, Option Gamma"
+              oninput="window.formStudio.updateOptions('${f.id}', this.value)" />
           </div>
         `;
       }
@@ -472,8 +473,8 @@ export class FormBuilderStudio {
       if (f.type === 'select') {
         inputMarkup = `
           <select class="phone-input">
-            <option value="">Select option...</option>
-            ${(f.options || []).map(opt => `<option>${opt}</option>`).join('')}
+            <option value="" style="background-color: #0f172a; color: #94a3b8;">Select option...</option>
+            ${(f.options || []).map(opt => `<option style="background-color: #0f172a; color: #f8fafc;">${opt}</option>`).join('')}
           </select>
         `;
       } else if (f.type === 'radio') {

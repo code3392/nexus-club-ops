@@ -3,6 +3,7 @@
    ========================================================================== */
 
 :root {
+  color-scheme: dark;
   --bg-primary: #090d16;
   --bg-secondary: #0f172a;
   --bg-card: rgba(18, 26, 44, 0.72);
@@ -41,6 +42,30 @@
 
 input, textarea, select, button {
   font-family: inherit;
+  color-scheme: dark;
+}
+
+select {
+  color-scheme: dark;
+  background-color: #0f172a;
+  color: var(--text-main);
+}
+
+option {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+select option {
+  background-color: #0f172a;
+  color: #f8fafc;
+  padding: 6px 10px;
+}
+
+select option:checked,
+select option:hover {
+  background-color: #1e293b;
+  color: #ffffff;
 }
 
 body {
@@ -3382,6 +3407,20 @@ body {
   font-size: 0.9rem;
   font-family: inherit;
   transition: all 0.2s;
+  color-scheme: dark;
+}
+
+select.gform-input,
+.gform-select {
+  background-color: #0f172a;
+  color: #f8fafc;
+  cursor: pointer;
+}
+
+.gform-input option,
+.gform-select option {
+  background-color: #0f172a;
+  color: #f8fafc;
 }
 
 .gform-input:focus {
