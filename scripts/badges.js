@@ -103,7 +103,11 @@ export function renderHolographicBadge(reg) {
       ${teamInfo}
 
       <div class="badge-attendee-section">
-        <div class="badge-avatar">${reg.leadName.charAt(0)}</div>
+        <div class="badge-avatar" style="overflow:hidden; display:flex; align-items:center; justify-content:center;">
+          ${(reg.leadAvatar && (reg.leadAvatar.startsWith('data:image') || reg.leadAvatar.startsWith('http') || reg.leadAvatar.startsWith('blob:')))
+            ? `<img src="${reg.leadAvatar}" alt="${reg.leadName}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />`
+            : (reg.leadAvatar || (reg.leadName ? reg.leadName.charAt(0).toUpperCase() : '👤'))}
+        </div>
         <div class="badge-attendee-details">
           <div class="badge-attendee-name">${reg.leadName}</div>
           <div class="badge-attendee-roll">${reg.collegeRoll || 'STUDENT ID: VERIFIED'}</div>

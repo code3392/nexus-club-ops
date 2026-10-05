@@ -11,9 +11,11 @@ export class AdminCommandCenter {
     this.currentFestFilter = 'all';
     this.currentStatusFilter = 'all';
     this.searchQuery = '';
+    this.pendingAvatar = null;
   }
 
   init() {
+    auth.addAuthListener(() => this.render());
     this.render();
   }
 
@@ -32,6 +34,9 @@ export class AdminCommandCenter {
 
     this.container.innerHTML = `
       <div class="admin-dashboard-wrap">
+        <!-- User Profile & Account Settings Section -->
+        ${this.renderUserProfileSection()}
+
         <!-- Top Stats Row -->
         <div class="admin-kpi-grid">
           <div class="kpi-card">
@@ -727,5 +732,292 @@ export class AdminCommandCenter {
 
       legendY += 40;
     });
+  }
+
+  // ===================================================================
+  // USER PROFILE & ACCOUNT SETTINGS (Dashboard Management)
+  // ===================================================================
+
+  renderUserProfileSection() {
+    const user = auth.currentUser;
+
+    if (!user) {
+      return `
+        <div class="admin-profile-card unauth-profile-card" id="dashboardUserProfileCard">
+          <div class="unauth-profile-inner">
+            <div class="unauth-profile-icon">👤</div>
+            <div class="unauth-profile-text">
+              <h3 style="font-size:1.25rem; font-weight:800; color:#fff; margin-bottom:0.35rem;">Personalize Your Profile & Digital Passes</h3>
+              <p style="color:var(--text-muted); font-size:0.9rem; line-height:1.5;">Sign in with Google or create an account to customize your profile name, picture, campus ID, phone, department, and contact information across NexusOps.</p>
+            </div>
+            <button class="btn btn-primary btn-glow btn-lg" onclick="window.authSystem.openAuthModal('signin')">
+              👤 Sign In / Create Account &rarr;
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    const currentAvatar = this.pendingAvatar !== null ? this.pendingAvatar : user.avatar;
+    const isImg = currentAvatar && (currentAvatar.startsWith('data:image') || currentAvatar.startsWith('http') || currentAvatar.startsWith('blob:'));
+    const avatarPreviewHTML = isImg
+      ? `<img src="${currentAvatar}" alt="${user.name}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />`
+      : `<div style="font-size:2.8rem; line-height:1; display:flex; align-items:center; justify-content:center; width:100%; height:100%;">${currentAvatar || user.name.charAt(0).toUpperCase()}</div>`;
+
+    return `
+      <div class="admin-profile-card" id="dashboardUserProfileCard">
+        <div class="profile-card-header">
+          <div class="profile-header-left">
+            <div class="profile-section-badge">
+              <span class="badge-dot pulse"></span>
+              <span>${user.provider === 'google' ? 'Google Verified Account' : 'Campus Member Account'}</span>
+            </div>
+            <h2 class="profile-card-title">👤 My Profile & Account Settings</h2>
+            <p class="profile-card-sub">Edit your profile name, picture, and contact details. Reflected automatically across your passes, registrations, and forms.</p>
+          </div>
+          <div class="profile-header-right">
+            <span class="sync-status-tag">⚡ Live Sync Enabled</span>
+          </div>
+        </div>
+
+        <div class="profile-editor-layout">
+          <!-- Left Column: Picture / Avatar Manager -->
+          <div class="profile-avatar-col">
+            <div class="profile-avatar-preview-box" id="dashboardAvatarPreview">
+              ${avatarPreviewHTML}
+            </div>
+            <div class="avatar-title-label">${user.name}</div>
+            <div class="avatar-role-label">${user.provider === 'google' ? 'Google Account' : 'Registered Member'}</div>
+
+            <div class="avatar-actions-wrap">
+              <label class="btn btn-sm btn-primary btn-glow btn-block" style="cursor:pointer; margin-bottom:0.5rem;">
+                📷 Upload Photo File
+                <input type="file" id="dashboardPhotoFileInput" accept="image/*" style="display:none;" onchange="window.adminCenter.handleProfilePhotoUpload(event)" />
+              </label>
+
+              <div class="url-input-wrap mb-2">
+                <input type="url" id="dashboardPhotoUrlInput" class="form-input form-input-sm" 
+                  placeholder="Or paste image link (https://...)" 
+                  value="${(currentAvatar && currentAvatar.startsWith('http')) ? currentAvatar : ''}"
+                  oninput="window.adminCenter.handleProfilePhotoUrlChange(this.value)" />
+              </div>
+
+              <div class="avatar-presets-grid">
+                <span class="presets-caption">Or choose an avatar:</span>
+                <div class="presets-emoji-list">
+                  ${['👨‍💻', '👩‍💻', '🚀', '⚡', '🤖', '🎓', '🌟', '🦊', '🎨', '🦁', '💡', '🏆'].map(emoji => `
+                    <button type="button" class="btn-emoji-pick-sm" onclick="window.adminCenter.selectProfileAvatarEmoji('${emoji}')" title="Pick ${emoji}">
+                      ${emoji}
+                    </button>
+                  `).join('')}
+                </div>
+              </div>
+
+              <button type="button" class="btn btn-sm btn-secondary btn-block mt-2" onclick="window.adminCenter.useInitialsAvatar()">
+                Use Initials (${user.name ? user.name.charAt(0).toUpperCase() : 'U'})
+              </button>
+            </div>
+          </div>
+
+          <!-- Right Column: Personal Information & Contact Inputs -->
+          <div class="profile-fields-col">
+            <form onsubmit="event.preventDefault(); window.adminCenter.saveProfileChanges();">
+              <div class="profile-fields-grid">
+                <div class="form-group">
+                  <label class="form-label">Full Name <span class="req">*</span></label>
+                  <input type="text" id="profName" class="form-input" value="${user.name || ''}" placeholder="e.g. Maya Chen" required />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Email Address <span class="req">*</span></label>
+                  <input type="email" id="profEmail" class="form-input" value="${user.email || ''}" placeholder="e.g. student@campus.edu" required />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Campus Student Roll / Member ID</label>
+                  <input type="text" id="profRoll" class="form-input" value="${user.rollNo || ''}" placeholder="e.g. 2024-CS-088" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Contact Phone Number</label>
+                  <input type="tel" id="profPhone" class="form-input" value="${user.phone || ''}" placeholder="e.g. +1 555-0199" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Department / Academic Major</label>
+                  <input type="text" id="profDept" class="form-input" value="${user.department || ''}" placeholder="e.g. Computer Science & Software Engineering" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Organization / Club / Institution</label>
+                  <input type="text" id="profOrg" class="form-input" value="${user.organization || ''}" placeholder="e.g. Campus Tech Society" />
+                </div>
+              </div>
+
+              <div class="form-group mt-3">
+                <label class="form-label">Bio / Profile Description</label>
+                <textarea id="profBio" class="form-input" rows="2" placeholder="Brief tagline or description...">${user.bio || ''}</textarea>
+              </div>
+
+              <div class="profile-save-bar">
+                <button type="submit" class="btn btn-primary btn-glow btn-lg">
+                  💾 Save Profile Changes &rarr;
+                </button>
+                <button type="button" class="btn btn-secondary btn-lg" onclick="window.adminCenter.resetProfileChanges()">
+                  Discard Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  handleProfilePhotoUpload(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please choose an image file (PNG, JPG, WebP, etc.).');
+      return;
+    }
+
+    if (file.size > 3 * 1024 * 1024) {
+      alert('Image size exceeds 3MB. Please select a smaller photo.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.pendingAvatar = e.target.result;
+      const previewEl = document.getElementById('dashboardAvatarPreview');
+      if (previewEl) {
+        previewEl.innerHTML = `<img src="${this.pendingAvatar}" alt="Preview" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />`;
+      }
+      const urlInput = document.getElementById('dashboardPhotoUrlInput');
+      if (urlInput) urlInput.value = '';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  handleProfilePhotoUrlChange(url) {
+    url = url.trim();
+    if (!url) return;
+    this.pendingAvatar = url;
+    const previewEl = document.getElementById('dashboardAvatarPreview');
+    if (previewEl) {
+      previewEl.innerHTML = `<img src="${url}" alt="Preview" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" onerror="this.parentElement.textContent='👤'" />`;
+    }
+  }
+
+  selectProfileAvatarEmoji(emoji) {
+    sound.playClick();
+    this.pendingAvatar = emoji;
+    const previewEl = document.getElementById('dashboardAvatarPreview');
+    if (previewEl) {
+      previewEl.innerHTML = `<div style="font-size:2.8rem; line-height:1; display:flex; align-items:center; justify-content:center; width:100%; height:100%;">${emoji}</div>`;
+    }
+    const urlInput = document.getElementById('dashboardPhotoUrlInput');
+    if (urlInput) urlInput.value = '';
+  }
+
+  useInitialsAvatar() {
+    sound.playClick();
+    const name = document.getElementById('profName')?.value.trim() || 'User';
+    const initial = name.charAt(0).toUpperCase();
+    this.pendingAvatar = initial;
+    const previewEl = document.getElementById('dashboardAvatarPreview');
+    if (previewEl) {
+      previewEl.innerHTML = `<div style="font-size:2.5rem; font-weight:800; color:#fff; display:flex; align-items:center; justify-content:center; width:100%; height:100%;">${initial}</div>`;
+    }
+    const urlInput = document.getElementById('dashboardPhotoUrlInput');
+    if (urlInput) urlInput.value = '';
+  }
+
+  resetProfileChanges() {
+    sound.playClick();
+    this.pendingAvatar = null;
+    this.render();
+  }
+
+  saveProfileChanges() {
+    sound.playPassUnlocked();
+    const user = auth.currentUser;
+    if (!user) {
+      alert('Please sign in first.');
+      return;
+    }
+
+    const name = document.getElementById('profName')?.value.trim();
+    const email = document.getElementById('profEmail')?.value.trim();
+    const rollNo = document.getElementById('profRoll')?.value.trim();
+    const phone = document.getElementById('profPhone')?.value.trim();
+    const department = document.getElementById('profDept')?.value.trim();
+    const organization = document.getElementById('profOrg')?.value.trim();
+    const bio = document.getElementById('profBio')?.value.trim();
+
+    if (!name || !email) {
+      alert('Full Name and Email Address are required.');
+      return;
+    }
+
+    const newAvatar = this.pendingAvatar !== null ? this.pendingAvatar : (user.avatar || name.charAt(0).toUpperCase());
+
+    const updatedUser = {
+      ...user,
+      name,
+      email,
+      rollNo,
+      phone,
+      department,
+      organization,
+      bio,
+      avatar: newAvatar
+    };
+
+    // Update in auth system and localStorage
+    auth.saveUser(updatedUser);
+
+    // If Google account, update in saved accounts list
+    if (updatedUser.provider === 'google') {
+      auth.updateSavedGoogleAccount(updatedUser);
+    }
+
+    // Update existing registrations for this attendee in database
+    const regs = db.getRegistrations();
+    let updatedRegs = false;
+    regs.forEach(r => {
+      if (r.userId === updatedUser.id || r.leadEmail === user.email) {
+        r.leadName = updatedUser.name;
+        r.leadEmail = updatedUser.email;
+        if (updatedUser.phone) r.leadPhone = updatedUser.phone;
+        if (updatedUser.rollNo) r.collegeRoll = updatedUser.rollNo;
+        r.leadAvatar = newAvatar;
+        updatedRegs = true;
+      }
+    });
+    if (updatedRegs) {
+      db.saveRegistrations(regs);
+    }
+
+    this.pendingAvatar = null;
+    this.render();
+
+    // Show toast
+    if (window.nexusApp) {
+      window.nexusApp.showToast(`Profile updated! Name & picture refreshed.`);
+    } else {
+      alert('Profile updated successfully!');
+    }
+  }
+
+  scrollToProfile() {
+    const card = document.getElementById('dashboardUserProfileCard');
+    if (card) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      card.classList.add('highlight-pulse');
+      setTimeout(() => card.classList.remove('highlight-pulse'), 2000);
+    }
   }
 }

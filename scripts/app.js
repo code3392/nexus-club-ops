@@ -951,6 +951,8 @@ class NexusApp {
       leadEmail: this.registrationDraft.leadEmail,
       leadPhone: this.registrationDraft.leadPhone,
       collegeRoll: this.registrationDraft.collegeRoll,
+      leadAvatar: auth.currentUser ? auth.currentUser.avatar : '',
+      userId: auth.currentUser ? auth.currentUser.id : '',
       teamName: evt.isTeam ? this.registrationDraft.teamName : null,
       teamMembers: evt.isTeam ? this.registrationDraft.teamMembers.filter(m => m.name && m.name.trim()) : [],
       answers: this.registrationDraft.answers,
