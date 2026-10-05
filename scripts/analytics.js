@@ -2,6 +2,7 @@
 import { db } from './data.js';
 import { sound } from './sound.js';
 import { renderCertificateModal } from './certificates.js';
+import { auth } from './auth.js';
 
 export class AdminCommandCenter {
   constructor(containerId) {
@@ -116,6 +117,37 @@ export class AdminCommandCenter {
           </div>
         </div>
 
+        <!-- Requirement 8: Created Registration Forms Management Section -->
+        <div class="admin-table-card" style="margin-bottom: 2rem;">
+          <div class="table-card-header">
+            <div class="table-title-group">
+              <div class="table-title">📋 Created Registration Forms & Events (${events.length})</div>
+              <div class="table-subtitle">Edit schemas, configure gates, toggle form expiry, or cancel created registration forms</div>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="window.nexusApp.switchTab('studio')">
+              ➕ Create New Form
+            </button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="crm-table">
+              <thead>
+                <tr>
+                  <th>Event & Headline</th>
+                  <th>Host & Creator</th>
+                  <th>Configured Gates</th>
+                  <th>Capacity / Signups</th>
+                  <th>Form Status</th>
+                  <th>Manage Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${this.renderCreatedFormsRows(events)}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         <!-- Unified Participant CRM Table -->
         <div class="admin-table-card">
           <div class="table-card-header">
@@ -192,6 +224,112 @@ export class AdminCommandCenter {
         <span class="ann-msg">${ann.message}</span>
       </div>
     `).join('');
+  }
+
+  // Requirement 8: Render Created Forms Rows with Edit, Expire & Cancel Controls
+  renderCreatedFormsRows(events) {
+    if (!events || events.length === 0) {
+      return `
+        <tr>
+          <td colspan="6" style="text-align:center; padding: 2.5rem 1rem; color:var(--text-muted);">
+            <div style="font-size:2rem; margin-bottom:0.5rem;">📝</div>
+            <strong>No registration forms created yet.</strong>
+            <p style="font-size:0.85rem; margin-top:0.25rem;">Create your first event registration form with custom gates and expiry controls.</p>
+            <button class="btn btn-primary btn-sm" style="margin-top:0.75rem;" onclick="window.nexusApp.switchTab('studio')">
+              + Launch Registration Form
+            </button>
+          </td>
+        </tr>
+      `;
+    }
+
+    return events.map(evt => {
+      const isExpired = Boolean(evt.isExpired);
+      const gatesList = (evt.gates && evt.gates.length > 0)
+        ? evt.gates.map(g => `<span class="fest-event-mini-pill" style="font-size:0.75rem;">🚪 ${g.name}</span>`).join(' ')
+        : '<span class="text-muted">Standard Gate</span>';
+
+      return `
+        <tr>
+          <td>
+            <div style="font-weight: 700; color: #ffffff;">${evt.title}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">${evt.headline || evt.tagline || ''}</div>
+          </td>
+          <td>
+            <div style="font-size: 0.88rem; color: #c7d2fe;">${evt.clubName || 'Campus Org'}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">By: ${evt.creatorName || evt.createdBy || 'Campus Member'}</div>
+          </td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:4px; max-width:240px;">
+              ${gatesList}
+            </div>
+          </td>
+          <td>
+            <div style="font-weight: 600;">${evt.registeredCount || 0} / ${evt.capacity}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">${evt.isTeam ? `Team (${evt.minTeam}-${evt.maxTeam})` : 'Solo'}</div>
+          </td>
+          <td>
+            <span class="badge ${isExpired ? 'status-cancelled' : 'status-approved'}" style="font-size:0.75rem;">
+              ${isExpired ? '🔴 EXPIRED' : '🟢 ACTIVE'}
+            </span>
+          </td>
+          <td>
+            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+              <button class="btn btn-secondary btn-sm" onclick="window.adminCenter.editForm('${evt.id}')" title="Edit Form Questions & Gates">
+                ✏️ Edit
+              </button>
+              <button class="btn btn-sm ${isExpired ? 'btn-primary' : 'btn-secondary'}" 
+                onclick="window.adminCenter.toggleEventExpiry('${evt.id}')" 
+                title="${isExpired ? 'Reopen Registrations' : 'Expire Registrations'}">
+                ${isExpired ? '🟢 Reopen' : '⏰ Expire'}
+              </button>
+              <button class="btn btn-danger btn-sm" onclick="window.adminCenter.cancelCreatedForm('${evt.id}')" title="Cancel & Delete Event">
+                🚫 Cancel
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Requirement 8: Edit created form in Form Studio
+  editForm(eventId) {
+    if (window.formStudio) {
+      window.formStudio.loadEventForEditing(eventId);
+    }
+    if (window.nexusApp) {
+      window.nexusApp.switchTab('studio');
+    }
+  }
+
+  // Requirement 6: Expiry button that can be edited by organizer
+  toggleEventExpiry(eventId) {
+    const event = (db.getEvents ? db.getEvents() : []).find(e => e.id === eventId);
+    if (!event) return;
+    event.isExpired = !event.isExpired;
+    db.save();
+    this.render();
+    if (window.nexusApp) {
+      window.nexusApp.renderFestArena();
+      window.nexusApp.updateHeroStats();
+    }
+    this.showToast(`Form for "${event.title}" is now ${event.isExpired ? 'EXPIRED' : 'ACTIVE'}.`);
+  }
+
+  // Requirement 8: Cancel created form from dashboard
+  cancelCreatedForm(eventId) {
+    const event = (db.getEvents ? db.getEvents() : []).find(e => e.id === eventId);
+    if (!event) return;
+    if (confirm(`Are you sure you want to cancel and delete "${event.title}"? This cannot be undone.`)) {
+      db.deleteEvent(eventId);
+      this.render();
+      if (window.nexusApp) {
+        window.nexusApp.renderFestArena();
+        window.nexusApp.updateHeroStats();
+      }
+      this.showToast(`Cancelled and removed registration form "${event.title}".`);
+    }
   }
 
   renderTableRows(regs) {

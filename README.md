@@ -57,7 +57,7 @@ The platform enables attendees to browse official festivals, inspect event sched
 - **Emergency Broadcast Engine:** Push urgent bulletins across festival screens and attendee passes.
 
 ### ⚡ Creative Bonus Features
-- **0.4s Web Audio QR Gate Scanner:** Sub-second entrance verification with custom synthesized audio chimes for valid passes, duplicate detection alarms, and invalid pass alerts.
+- **Fast QR Gate Scanner:** Sub-second entrance verification with creator-authorized ticket validation, duplicate detection, and invalid pass protection.
 - **Interactive Form Builder Studio:** Allows club leads to create new custom event registration schemas with a live mobile phone simulator preview.
 - **3D Holographic Pass Generator:** Interactive card physics with iridescent foil gradients, tamper-resistant SHA-256 security signatures, and print mode.
 - **Pure Canvas Constellation Background:** Interactive animated node network reacting to cursor coordinates.
@@ -67,7 +67,7 @@ The platform enables attendees to browse official festivals, inspect event sched
 ## 4. Tech Stack
 - **Frontend Architecture:** Vanilla JavaScript (ES2022 Modules), Semantic HTML5, and Modern CSS3 (CSS Variables, Flexbox, Grid, Backdrop Filters).
 - **Zero Heavy Frameworks:** Eliminates virtual DOM overhead, delivering 60 FPS animations and instant page loads.
-- **Audio Synthesis:** Web Audio API (`AudioContext` and `OscillatorNode`) for synthesized gate sound effects and micro-interactions.
+- **Client-Side Security:** Built-in cryptographic hash verification and creator-restricted scanning permissions.
 - **Visuals & Charts:** HTML5 Canvas 2D API for particle network background and velocity trajectory charts.
 - **Offline Data Engine:** Reactive `StateManager` leveraging `localStorage` for complete offline state persistence.
 - **Local Web Server:** Lightweight, zero-dependency Node.js HTTP server (`serve.js`).

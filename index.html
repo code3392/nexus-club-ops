@@ -54,20 +54,7 @@
             <span>Search</span>
           </button>
 
-          <!-- Settings Dropdown -->
-          <div class="nav-tools-dropdown">
-            <button class="util-btn icon-only-btn" id="navToolsBtn" onclick="document.getElementById('navToolsMenu').classList.toggle('hidden')" title="Preferences">
-              ⚙️
-            </button>
-            <div id="navToolsMenu" class="user-dropdown-menu hidden" style="width: 170px;">
-              <button class="dropdown-item" id="soundToggleBtn">
-                🔊 Sound FX
-              </button>
-              <button class="dropdown-item text-danger" id="resetDataBtn">
-                🔄 Reset Demo Data
-              </button>
-            </div>
-          </div>
+
 
           <!-- Authentication Profile & Sign-In Slot -->
           <div id="navAuthSlot"></div>
@@ -104,7 +91,7 @@
             <button class="btn btn-secondary btn-lg" onclick="window.nexusApp.openMyRegistrationsModal()">
               🎟️ My Passes / Registrations
             </button>
-            <button class="btn btn-secondary btn-lg" onclick="window.nexusApp.switchTab('studio')">
+            <button class="btn btn-secondary btn-lg" onclick="window.nexusApp.handleCreateFormClick()">
               🛠️ Form Studio
             </button>
           </div>
@@ -117,17 +104,17 @@
               <div class="t-tag text-muted">Campus Tech Hub</div>
             </div>
             <div class="telemetry-card">
-              <div class="t-number" id="heroStatEvents">9</div>
+              <div class="t-number" id="heroStatEvents">0</div>
               <div class="t-label">Active Contests</div>
               <div class="t-tag text-muted">Currently hosted</div>
             </div>
             <div class="telemetry-card">
-              <div class="t-number" id="heroStatRegs">5</div>
+              <div class="t-number" id="heroStatRegs">0</div>
               <div class="t-label">Registered Attendees</div>
               <div class="t-tag text-muted">Database records</div>
             </div>
             <div class="telemetry-card">
-              <div class="t-number" id="heroStatChecked">3</div>
+              <div class="t-number" id="heroStatChecked">0</div>
               <div class="t-label">Checked In</div>
               <div class="t-tag text-emerald">Verified at gate</div>
             </div>

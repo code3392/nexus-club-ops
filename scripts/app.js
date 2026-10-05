@@ -59,28 +59,19 @@ class NexusApp {
         const tab = e.currentTarget.dataset.tab;
         if (tab === 'myregs') {
           this.openMyRegistrationsModal();
+        } else if (tab === 'studio' && !auth.currentUser) {
+          auth.requireAuth(() => this.switchTab('studio'), 'Please sign in or create an account to build and publish registration forms.');
         } else {
           this.switchTab(tab);
         }
       });
     });
 
-    // Sound toggle button
-    const soundToggle = document.getElementById('soundToggleBtn');
-    if (soundToggle) {
-      soundToggle.addEventListener('click', () => {
-        const isMuted = sound.toggleMute();
-        soundToggle.innerHTML = isMuted ? '🔇 Muted' : '🔊 Sound FX';
-        soundToggle.classList.toggle('muted', isMuted);
-      });
-    }
-
-    // Reset data button
+    // Reset data button (if present)
     const resetBtn = document.getElementById('resetDataBtn');
     if (resetBtn) {
       resetBtn.addEventListener('click', () => {
         if (confirm('Reset to initial platform demo state? All initial fests, events, and registrations will be restored.')) {
-          sound.playClick();
           db.resetToDefault();
           location.reload();
         }
@@ -109,7 +100,19 @@ class NexusApp {
     }
   }
 
+  handleCreateFormClick() {
+    if (!auth.currentUser) {
+      auth.requireAuth(() => this.switchTab('studio'), 'Please sign in or create an account to build and publish registration forms.');
+      return;
+    }
+    this.switchTab('studio');
+  }
+
   switchTab(tabId) {
+    if (tabId === 'studio' && !auth.currentUser) {
+      auth.requireAuth(() => this.switchTab('studio'), 'Please sign in or create an account to build and publish registration forms.');
+      return;
+    }
     this.currentTab = tabId;
     document.querySelectorAll('.nav-tab-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.tab === tabId);
@@ -123,6 +126,9 @@ class NexusApp {
     if (tabId === 'arena') {
       this.renderFestDirectory();
       this.renderFestArena();
+    } else if (tabId === 'studio') {
+      window.formStudio.renderStudio();
+      window.formStudio.renderPhonePreview();
     } else if (tabId === 'scanner') {
       window.gateScanner.render();
     } else if (tabId === 'admin') {
@@ -218,7 +224,9 @@ class NexusApp {
               </div>
 
               <div class="fest-events-pills">
-                ${festEvents.map(e => `<span class="fest-event-mini-pill">${e.title}</span>`).join('')}
+                ${festEvents.length > 0
+                  ? festEvents.map(e => `<span class="fest-event-mini-pill">${e.title}</span>`).join('')
+                  : '<span style="font-size:0.75rem; color:var(--text-muted);">Ready for your custom events</span>'}
               </div>
             </div>
 
@@ -277,7 +285,7 @@ class NexusApp {
             </h4>
 
             <div class="fest-events-scroll-list">
-              ${festEvents.map(evt => {
+              ${festEvents.length > 0 ? festEvents.map(evt => {
                 const isFull = evt.registeredCount >= evt.capacity || evt.status === 'closed';
                 return `
                   <div class="fest-event-tile" onclick="window.nexusApp.closeModal(); window.nexusApp.openEventDetails('${evt.id}')">
@@ -294,7 +302,15 @@ class NexusApp {
                     </div>
                   </div>
                 `;
-              }).join('')}
+              }).join('') : `
+                <div style="padding: 2rem; text-align: center; color: var(--text-muted);">
+                  <div style="font-size: 1.8rem; margin-bottom: 0.5rem;">📝</div>
+                  <p>No events added to this festival yet.</p>
+                  <button class="btn btn-primary btn-sm" style="margin-top:0.5rem;" onclick="window.nexusApp.closeModal(); window.nexusApp.handleCreateFormClick();">
+                    + Add an Event in Form Studio
+                  </button>
+                </div>
+              `}
             </div>
           </div>
 
@@ -358,6 +374,22 @@ class NexusApp {
         (e.prizePool && e.prizePool.toLowerCase().includes(q)) ||
         (e.venue && e.venue.toLowerCase().includes(q))
       );
+    }
+
+    if (events.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state-card" style="grid-column: 1 / -1; padding: 4rem 2rem; text-align: center; background: var(--bg-card); border-radius: 16px; border: 1px dashed var(--border-color); margin: 1.5rem 0;">
+          <div style="font-size: 3.5rem; margin-bottom: 1rem;">🎪</div>
+          <h3 style="font-size: 1.5rem; color: #ffffff; margin-bottom: 0.5rem;">No Events or Registration Forms Created Yet</h3>
+          <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; max-width: 550px; margin: 0 auto 1.5rem;">
+            Ready to launch your student organization's competitions, workshops, or fests? Build your custom registration form with tailored gates, team size limits, and instant holographic passes.
+          </p>
+          <button class="btn btn-primary btn-glow btn-lg" onclick="window.nexusApp.handleCreateFormClick()">
+            ➕ Launch Your First Registration Form &rarr;
+          </button>
+        </div>
+      `;
+      return;
     }
 
     if (filtered.length === 0) {
@@ -563,9 +595,22 @@ class NexusApp {
   // ===================================================================
 
   startRegistration(eventId) {
-    sound.playClick();
+    // Requirement 2: User must login or sign up to register
+    if (!auth.currentUser) {
+      this.closeModal();
+      auth.requireAuth(() => this.startRegistration(eventId), 'You must sign in or create an account to register for events.');
+      return;
+    }
+
     const event = db.getEvents().find(e => e.id === eventId);
     if (!event) return;
+
+    // Requirement 6: Check form expiry
+    const isExpired = Boolean(event.isExpired) || (event.expiryDate && new Date(event.expiryDate) < new Date());
+    if (isExpired) {
+      alert(`Registration for "${event.title}" has expired or been closed by the organizer.`);
+      return;
+    }
 
     if (event.registeredCount >= event.capacity || event.status === 'closed') {
       alert(`Registration for "${event.title}" is currently closed because the capacity limit (${event.capacity} seats) has been reached.`);
@@ -574,13 +619,21 @@ class NexusApp {
 
     const user = auth.currentUser;
     this.currentRegEvent = event;
+
+    // Requirement 9: Pre-populate minimum team members
+    const minTeam = event.isTeam ? (event.minTeam || 2) : 1;
+    const initialMembers = [{ name: user ? user.name : '', role: 'Leader' }];
+    while (initialMembers.length < minTeam) {
+      initialMembers.push({ name: '', role: 'Member' });
+    }
+
     this.registrationDraft = {
       leadName: user ? user.name : '',
       leadEmail: user ? user.email : '',
       leadPhone: '',
       collegeRoll: user ? (user.rollNo || '') : '',
       teamName: '',
-      teamMembers: [{ name: user ? user.name : '', role: 'Leader' }],
+      teamMembers: initialMembers,
       answers: {}
     };
 
@@ -592,6 +645,9 @@ class NexusApp {
     if (!modal) return;
     const evt = this.currentRegEvent;
 
+    // Requirement 6: Check form expiry
+    const isExpired = Boolean(evt.isExpired) || (evt.expiryDate && new Date(evt.expiryDate) < new Date());
+
     // Custom dynamic questions
     const customFieldsHtml = (evt.customFields || []).map(f => {
       let inputEl = '';
@@ -599,7 +655,7 @@ class NexusApp {
 
       if (f.type === 'select') {
         inputEl = `
-          <select id="${f.id}" class="gform-input" onchange="window.nexusApp.updateAnswer('${f.id}', this.value)">
+          <select id="${f.id}" class="gform-input" ${isExpired ? 'disabled' : ''} onchange="window.nexusApp.updateAnswer('${f.id}', this.value)">
             <option value="">Choose an option...</option>
             ${(f.options || []).map(opt => `<option value="${opt}" ${savedVal === opt ? 'selected' : ''}>${opt}</option>`).join('')}
           </select>
@@ -609,7 +665,7 @@ class NexusApp {
           <div class="gform-radios">
             ${(f.options || []).map(opt => `
               <label class="gform-radio-option">
-                <input type="radio" name="${f.id}" value="${opt}" ${savedVal === opt ? 'checked' : ''}
+                <input type="radio" name="${f.id}" value="${opt}" ${savedVal === opt ? 'checked' : ''} ${isExpired ? 'disabled' : ''}
                   onchange="window.nexusApp.updateAnswer('${f.id}', this.value)" />
                 <span>${opt}</span>
               </label>
@@ -619,7 +675,7 @@ class NexusApp {
       } else {
         inputEl = `
           <input type="${f.type === 'url' ? 'url' : 'text'}" id="${f.id}" class="gform-input" 
-            placeholder="${f.placeholder || 'Your answer'}" value="${savedVal}"
+            placeholder="${f.placeholder || 'Your answer'}" value="${savedVal}" ${isExpired ? 'disabled' : ''}
             oninput="window.nexusApp.updateAnswer('${f.id}', this.value)" />
         `;
       }
@@ -634,27 +690,30 @@ class NexusApp {
       `;
     }).join('');
 
-    // Team members if team event
+    // Requirement 9: Dynamic team members with customizable limits
     let teamSectionHtml = '';
     if (evt.isTeam) {
+      const minTeam = evt.minTeam || 2;
+      const maxTeam = evt.maxTeam || 4;
+
       const membersRows = this.registrationDraft.teamMembers.map((m, idx) => `
         <div class="gform-tm-row">
-          <input type="text" class="gform-input tm-name" placeholder="Teammate ${idx + 1} Full Name" value="${m.name}"
+          <input type="text" class="gform-input tm-name" placeholder="Teammate ${idx + 1} Full Name ${idx < minTeam ? '(Required)' : '(Optional)'}" value="${m.name}" ${isExpired ? 'disabled' : ''}
             onchange="window.nexusApp.updateTeammate(${idx}, 'name', this.value)" />
-          ${idx > 0 ? `<button type="button" class="btn-remove-tm" onclick="window.nexusApp.removeTeammate(${idx})">✕</button>` : ''}
+          ${idx >= minTeam && !isExpired ? `<button type="button" class="btn-remove-tm" onclick="window.nexusApp.removeTeammate(${idx})">✕</button>` : ''}
         </div>
       `).join('');
 
       teamSectionHtml = `
         <div class="gform-card">
           <label class="gform-question-title">Team Name <span class="req">*</span></label>
-          <input type="text" id="regTeamName" class="gform-input" value="${this.registrationDraft.teamName}" placeholder="e.g. NeuralKnights" required />
+          <input type="text" id="regTeamName" class="gform-input" value="${this.registrationDraft.teamName}" placeholder="e.g. NeuralKnights" ${isExpired ? 'disabled' : ''} required />
         </div>
 
         <div class="gform-card">
           <div class="gform-card-header-flex">
-            <label class="gform-question-title">Team Members (${this.registrationDraft.teamMembers.length}/${evt.maxTeam})</label>
-            ${this.registrationDraft.teamMembers.length < evt.maxTeam ? `
+            <label class="gform-question-title">Team Members (${this.registrationDraft.teamMembers.length}/${maxTeam}) • Required: ${minTeam}-${maxTeam}</label>
+            ${this.registrationDraft.teamMembers.length < maxTeam && !isExpired ? `
               <button type="button" class="btn-text-action" onclick="window.nexusApp.addTeammate()">+ Add member</button>
             ` : ''}
           </div>
@@ -669,42 +728,52 @@ class NexusApp {
       <div class="modal-backdrop" onclick="if(event.target===this) window.nexusApp.closeModal()">
         <div class="gform-modal-dialog">
           
-          <!-- Header Card -->
+          <!-- Requirement 7: Header Card with Headline & Description -->
           <div class="gform-header-card" style="border-top-color: #6366f1;">
-            <div class="gform-header-badge">${evt.festName || 'Tech Carnival 2026'} • ${evt.clubName}</div>
-            <h2 class="gform-title">${evt.title}</h2>
+            <div class="gform-header-badge">${evt.festName || 'Fest'} • ${evt.clubName || 'Student Org'}</div>
+            <h2 class="gform-title">${evt.headline || evt.title}</h2>
             <p class="gform-desc">${evt.description || evt.tagline}</p>
             <div class="gform-meta-row">
               <span>📅 ${evt.date}</span>
               <span>📍 ${evt.venue}</span>
               <span>🎟️ ${evt.fee === 0 ? 'Free Entry' : '$' + evt.fee + ' Fee'}</span>
+              ${evt.isTeam ? `<span>👥 Team (${evt.minTeam || 2}-${evt.maxTeam || 4} members)</span>` : '<span>👤 Solo Entry</span>'}
             </div>
             <div class="gform-req-notice">* Indicates required question</div>
           </div>
+
+          ${isExpired ? `
+            <div class="gform-card" style="border-left: 4px solid #ef4444; background: rgba(239, 68, 68, 0.1);">
+              <strong style="color: #f87171; font-size: 1.05rem;">⛔ REGISTRATION EXPIRED / CLOSED</strong>
+              <p style="color: #d1d5db; font-size: 0.88rem; margin-top: 0.25rem;">
+                The organizer has closed or expired registrations for this form. Submissions are no longer accepted.
+              </p>
+            </div>
+          ` : ''}
 
           <form id="eventRegistrationForm" onsubmit="event.preventDefault(); window.nexusApp.submitRegistrationForm();">
             <!-- Full Name -->
             <div class="gform-card">
               <label class="gform-question-title">Lead Attendee Full Name <span class="req">*</span></label>
-              <input type="text" id="regName" class="gform-input" value="${this.registrationDraft.leadName}" placeholder="e.g. Tanvir Hossain" required />
+              <input type="text" id="regName" class="gform-input" value="${this.registrationDraft.leadName}" placeholder="e.g. Tanvir Hossain" ${isExpired ? 'disabled' : ''} required />
             </div>
 
             <!-- Email -->
             <div class="gform-card">
               <label class="gform-question-title">Email Address <span class="req">*</span></label>
-              <input type="email" id="regEmail" class="gform-input" value="${this.registrationDraft.leadEmail}" placeholder="e.g. tanvir.h@campus.edu" required />
+              <input type="email" id="regEmail" class="gform-input" value="${this.registrationDraft.leadEmail}" placeholder="e.g. tanvir.h@campus.edu" ${isExpired ? 'disabled' : ''} required />
             </div>
 
             <!-- Student ID / Roll -->
             <div class="gform-card">
               <label class="gform-question-title">Student Roll / Institution ID <span class="req">*</span></label>
-              <input type="text" id="regRoll" class="gform-input" value="${this.registrationDraft.collegeRoll}" placeholder="e.g. 2024-CS-104" required />
+              <input type="text" id="regRoll" class="gform-input" value="${this.registrationDraft.collegeRoll}" placeholder="e.g. 2024-CS-104" ${isExpired ? 'disabled' : ''} required />
             </div>
 
             <!-- Phone -->
             <div class="gform-card">
               <label class="gform-question-title">Contact Phone Number</label>
-              <input type="tel" id="regPhone" class="gform-input" value="${this.registrationDraft.leadPhone}" placeholder="+880 1711-..." />
+              <input type="tel" id="regPhone" class="gform-input" value="${this.registrationDraft.leadPhone}" placeholder="+880 1711-..." ${isExpired ? 'disabled' : ''} />
             </div>
 
             <!-- Team Section if applicable -->
@@ -716,15 +785,17 @@ class NexusApp {
             <!-- Submit Action Card -->
             <div class="gform-actions-card">
               <div class="gform-actions-left">
-                <button type="submit" class="btn btn-primary btn-glow btn-gform-submit">
-                  ${evt.fee > 0 ? `Pay $${evt.fee} & Submit` : 'Submit Registration'}
+                <button type="submit" class="btn btn-primary btn-glow btn-gform-submit" ${isExpired ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>
+                  ${isExpired ? 'Registration Expired' : evt.fee > 0 ? `Pay $${evt.fee} & Submit` : 'Submit Registration'}
                 </button>
-                <button type="button" class="btn-text-clear" onclick="window.nexusApp.clearRegistrationForm()">
-                  Clear form
-                </button>
+                ${!isExpired ? `
+                  <button type="button" class="btn-text-clear" onclick="window.nexusApp.clearRegistrationForm()">
+                    Clear form
+                  </button>
+                ` : ''}
               </div>
               <button type="button" class="btn-text-cancel" onclick="window.nexusApp.closeModal()">
-                Cancel
+                Close
               </button>
             </div>
           </form>
@@ -735,17 +806,21 @@ class NexusApp {
   }
 
   addTeammate() {
-    sound.playClick();
-    if (this.currentRegEvent && this.registrationDraft.teamMembers.length < this.currentRegEvent.maxTeam) {
+    const maxTeam = this.currentRegEvent?.maxTeam || 4;
+    if (this.currentRegEvent && this.registrationDraft.teamMembers.length < maxTeam) {
       this.registrationDraft.teamMembers.push({ name: '', role: 'Member' });
       this.renderRegistrationModal();
     }
   }
 
   removeTeammate(idx) {
-    sound.playClick();
-    this.registrationDraft.teamMembers.splice(idx, 1);
-    this.renderRegistrationModal();
+    const minTeam = this.currentRegEvent?.minTeam || 1;
+    if (this.registrationDraft.teamMembers.length > minTeam) {
+      this.registrationDraft.teamMembers.splice(idx, 1);
+      this.renderRegistrationModal();
+    } else {
+      alert(`This event requires a minimum of ${minTeam} team member(s).`);
+    }
   }
 
   updateTeammate(idx, field, value) {
@@ -759,17 +834,34 @@ class NexusApp {
   }
 
   clearRegistrationForm() {
-    this.registrationDraft.leadName = '';
-    this.registrationDraft.leadEmail = '';
+    const user = auth.currentUser;
+    const minTeam = this.currentRegEvent?.isTeam ? (this.currentRegEvent.minTeam || 2) : 1;
+    const initialMembers = [{ name: user ? user.name : '', role: 'Leader' }];
+    while (initialMembers.length < minTeam) {
+      initialMembers.push({ name: '', role: 'Member' });
+    }
+
+    this.registrationDraft.leadName = user ? user.name : '';
+    this.registrationDraft.leadEmail = user ? user.email : '';
     this.registrationDraft.leadPhone = '';
-    this.registrationDraft.collegeRoll = '';
+    this.registrationDraft.collegeRoll = user ? (user.rollNo || '') : '';
     this.registrationDraft.teamName = '';
-    this.registrationDraft.teamMembers = [{ name: '', role: 'Leader' }];
+    this.registrationDraft.teamMembers = initialMembers;
     this.registrationDraft.answers = {};
     this.renderRegistrationModal();
   }
 
   submitRegistrationForm() {
+    const evt = this.currentRegEvent;
+    if (!evt) return;
+
+    // Check expiry
+    const isExpired = Boolean(evt.isExpired) || (evt.expiryDate && new Date(evt.expiryDate) < new Date());
+    if (isExpired) {
+      alert('This registration form has expired or been closed by the organizer.');
+      return;
+    }
+
     const nameInput = document.getElementById('regName');
     const emailInput = document.getElementById('regEmail');
     const rollInput = document.getElementById('regRoll');
@@ -788,9 +880,17 @@ class NexusApp {
       return;
     }
 
-    if (this.currentRegEvent.isTeam && (!teamInput || !teamInput.value.trim())) {
-      alert('Please enter a Team Name.');
-      return;
+    if (evt.isTeam) {
+      if (!teamInput || !teamInput.value.trim()) {
+        alert('Please enter a Team Name.');
+        return;
+      }
+      const minTeam = evt.minTeam || 1;
+      const filledMembers = this.registrationDraft.teamMembers.filter(m => m.name && m.name.trim());
+      if (filledMembers.length < minTeam) {
+        alert(`This event requires names for at least ${minTeam} team member(s).`);
+        return;
+      }
     }
 
     // Save draft
@@ -802,7 +902,7 @@ class NexusApp {
     if (teamInput) this.registrationDraft.teamName = teamInput.value.trim();
 
     // Check required custom questions
-    for (const f of (this.currentRegEvent.customFields || [])) {
+    for (const f of (evt.customFields || [])) {
       if (f.required && !this.registrationDraft.answers[f.id]) {
         alert(`Please complete the required question: "${f.label}"`);
         return;
@@ -814,7 +914,6 @@ class NexusApp {
   }
 
   finishRegistration(txnId = null) {
-    sound.playPassUnlocked();
     const evt = this.currentRegEvent;
     const catPrefix = evt.category ? evt.category.substring(0, 4).toUpperCase() : 'TECH';
     const ticketId = 'NX-' + catPrefix + '-' + Math.floor(1000 + Math.random() * 9000);
@@ -841,7 +940,10 @@ class NexusApp {
       registeredAt: new Date().toISOString(),
       checkedIn: false,
       gate: null,
-      passTier: evt.isTeam ? 'Team Pass' : 'VIP Pass'
+      passTier: evt.isTeam ? 'Team Pass' : 'VIP Pass',
+      // Requirement 1: Store event creator metadata on registration
+      createdBy: evt.createdBy || null,
+      creatorName: evt.creatorName || null
     };
 
     db.addRegistration(newReg);

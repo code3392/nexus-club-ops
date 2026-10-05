@@ -7,6 +7,28 @@ export class AuthSystem {
   constructor() {
     this.currentUser = this.loadUser();
     this.authMode = 'signin'; // 'signin' | 'signup'
+    this.pendingAuthCallback = null;
+    this.listeners = [];
+  }
+
+  addAuthListener(fn) {
+    if (typeof fn === 'function') this.listeners.push(fn);
+  }
+
+  notifyListeners(user) {
+    this.listeners.forEach(fn => {
+      try { fn(user); } catch (e) { console.error(e); }
+    });
+  }
+
+  requireAuth(callback, reasonMessage = 'Please sign in or create an account.') {
+    if (this.currentUser) {
+      if (typeof callback === 'function') callback(this.currentUser);
+      return true;
+    }
+    this.pendingAuthCallback = callback;
+    this.openAuthModal('signin', reasonMessage);
+    return false;
   }
 
   loadUser() {
@@ -29,6 +51,12 @@ export class AuthSystem {
       localStorage.removeItem(AUTH_STORAGE_KEY);
     }
     this.renderNavAuth();
+    this.notifyListeners(user);
+    if (user && this.pendingAuthCallback) {
+      const cb = this.pendingAuthCallback;
+      this.pendingAuthCallback = null;
+      try { cb(user); } catch (e) { console.error(e); }
+    }
   }
 
   init() {
@@ -88,9 +116,10 @@ export class AuthSystem {
     }
   }
 
-  openAuthModal(mode = 'signin') {
+  openAuthModal(mode = 'signin', reasonMessage = '') {
     sound.playClick();
     this.authMode = mode;
+    this.lastReasonMessage = reasonMessage;
     const modalContainer = document.getElementById('globalModalContainer');
     if (!modalContainer) return;
 
@@ -111,6 +140,13 @@ export class AuthSystem {
             </div>
             <button class="modal-close-btn" onclick="window.authSystem.closeModal()">✕</button>
           </div>
+
+          ${reasonMessage ? `
+            <div style="background: rgba(99, 102, 241, 0.12); border-bottom: 1px solid rgba(99, 102, 241, 0.25); padding: 0.85rem 1.5rem; font-size: 0.85rem; color: #c7d2fe; display: flex; align-items: center; gap: 0.6rem;">
+              <span>🔐</span>
+              <span><strong>Login Required:</strong> ${reasonMessage}</span>
+            </div>
+          ` : ''}
 
           <div class="auth-dialog-body" id="authDialogBody">
             ${this.renderAuthForm()}
