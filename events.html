@@ -22,16 +22,46 @@
     <!-- Navigation Header -->
     <header class="nav-header">
       <div class="nav-inner">
-        <div class="brand-group" onclick="window.location.href='index.html'" style="cursor:pointer;">
-          <div class="brand-symbol">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-              <polyline points="2 17 12 22 22 17"></polyline>
-              <polyline points="2 12 12 17 22 12"></polyline>
-            </svg>
+        <!-- Left Cluster: More Button & Brand -->
+        <div class="nav-left-cluster">
+          <div class="nav-more-dropdown-wrap">
+            <button class="nav-more-btn" onclick="window.nexusApp.toggleMoreDropdown(event)" title="Quick Menu">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+              <span>More</span>
+              <span style="font-size: 0.72rem; opacity: 0.8;">▾</span>
+            </button>
+            <div id="navMoreDropdown" class="nav-more-dropdown-menu hidden">
+              <div class="dropdown-header">
+                <span style="font-size: 0.72rem; font-weight: 700; color: #a855f7; text-transform: uppercase; letter-spacing: 0.05em;">Quick Navigation</span>
+              </div>
+              <a href="index.html" class="dropdown-item">🏠 Home Arena</a>
+              <a href="events.html" class="dropdown-item">🎪 All Festivals & Events</a>
+              <button class="dropdown-item" onclick="window.nexusApp.openMyRegistrationsModal(); window.nexusApp.toggleMoreDropdown()">🎟️ My Passes / Registrations</button>
+              <button class="dropdown-item" onclick="window.nexusApp.handleCreateFormClick(); window.nexusApp.toggleMoreDropdown()">🛠️ Form Builder Studio</button>
+              <a href="index.html?tab=scanner" class="dropdown-item">⚡ Gate QR Scanner</a>
+              <a href="index.html?tab=admin" class="dropdown-item">📊 Operations Dashboard</a>
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item" onclick="window.nexusApp.toggleCommandPalette(); window.nexusApp.toggleMoreDropdown()">🔍 Command Palette (Ctrl+K)</button>
+            </div>
           </div>
-          <div class="brand-title-wrap">
-            <span class="brand-name">Nexus<span class="brand-accent">Ops</span></span>
+
+          <div class="brand-group" onclick="window.location.href='index.html'" style="cursor:pointer;">
+            <div class="brand-symbol">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <span class="brand-status-dot"></span>
+            </div>
+            <div class="brand-title-wrap">
+              <span class="brand-name">Nexus<span class="brand-accent">Ops</span></span>
+              <span class="brand-subtext">Smart Campus Operations</span>
+            </div>
           </div>
         </div>
 
@@ -47,13 +77,21 @@
 
         <!-- Right Actions -->
         <div class="nav-actions-right">
-          <button class="search-trigger-btn" onclick="window.nexusApp.toggleCommandPalette()" title="Search">
+          <button class="search-trigger-btn" onclick="window.nexusApp.toggleCommandPalette()" title="Search (Ctrl+K)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
             <span>Search</span>
           </button>
+
+          <!-- Helpline / Quick Hotline Pill matching reference screenshot -->
+          <a href="tel:999" class="nav-emergency-btn" title="Campus Security & Emergency Hotline">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+            </svg>
+            <span>999</span>
+          </a>
 
           <!-- Authentication Profile & Sign-In Slot -->
           <div id="navAuthSlot"></div>
