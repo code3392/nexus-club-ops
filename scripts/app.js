@@ -44,6 +44,27 @@ class NexusApp {
     this.renderFestArena();
     this.updateHeroStats();
 
+    // Check URL parameters for direct deep-linking
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    if (tabParam) {
+      if (tabParam === 'studio' && !auth.currentUser) {
+        auth.requireAuth(() => this.switchTab('studio'), 'Please sign in or create an account to access Form Studio.');
+      } else {
+        this.switchTab(tabParam);
+      }
+    }
+
+    const festParam = urlParams.get('fest');
+    if (festParam) {
+      this.setFestFilter(festParam);
+    }
+
+    const catParam = urlParams.get('category');
+    if (catParam) {
+      this.setFilter(catParam);
+    }
+
     // Init submodules
     window.authSystem.init();
     window.formStudio.init();
@@ -93,13 +114,32 @@ class NexusApp {
 
   handleCreateFormClick() {
     if (!auth.currentUser) {
-      auth.requireAuth(() => this.switchTab('studio'), 'Please sign in or create an account to build and publish registration forms.');
+      auth.requireAuth(() => {
+        if (window.location.pathname.endsWith('events.html') || window.location.pathname.endsWith('/events')) {
+          window.location.href = 'index.html?tab=studio';
+        } else {
+          this.switchTab('studio');
+        }
+      }, 'Please sign in or create an account to build and publish registration forms.');
       return;
     }
-    this.switchTab('studio');
+    if (window.location.pathname.endsWith('events.html') || window.location.pathname.endsWith('/events')) {
+      window.location.href = 'index.html?tab=studio';
+    } else {
+      this.switchTab('studio');
+    }
   }
 
   switchTab(tabId) {
+    if (window.location.pathname.endsWith('events.html') || window.location.pathname.endsWith('/events')) {
+      if (tabId === 'arena') {
+        window.location.href = 'index.html';
+      } else {
+        window.location.href = `index.html?tab=${tabId}`;
+      }
+      return;
+    }
+
     if (tabId === 'studio' && !auth.currentUser) {
       auth.requireAuth(() => this.switchTab('studio'), 'Please sign in or create an account to build and publish registration forms.');
       return;
@@ -206,8 +246,8 @@ class NexusApp {
               <button class="btn btn-primary btn-sm btn-block" onclick="window.nexusApp.openFestDetails('${fest.id}')">
                 🎪 Select Fest & View Schedule &rarr;
               </button>
-              <button class="btn btn-secondary btn-sm" onclick="window.nexusApp.setFestFilter('${fest.id}')" title="Filter events below to this fest">
-                Filter
+              <button class="btn btn-secondary btn-sm" onclick="window.nexusApp.navigateToFestEvents('${fest.id}')" title="View events in this fest">
+                Events &rarr;
               </button>
             </div>
           </div>
@@ -288,13 +328,22 @@ class NexusApp {
 
           <div class="modal-footer" style="padding:1rem 2rem; border-top:1px solid var(--border-subtle); display:flex; justify-content:space-between;">
             <button class="btn btn-secondary" onclick="window.nexusApp.closeModal()">Close</button>
-            <button class="btn btn-primary btn-glow" onclick="window.nexusApp.closeModal(); window.nexusApp.setFestFilter('${fest.id}')">
-              Filter Directory to this Fest &rarr;
+            <button class="btn btn-primary btn-glow" onclick="window.nexusApp.closeModal(); window.nexusApp.navigateToFestEvents('${fest.id}')">
+              View Events in this Fest &rarr;
             </button>
           </div>
         </div>
       </div>
     `;
+  }
+
+  navigateToFestEvents(festId) {
+    sound.playClick();
+    if (document.getElementById('eventsGridContainer')) {
+      this.setFestFilter(festId);
+    } else {
+      window.location.href = `events.html?fest=${encodeURIComponent(festId)}`;
+    }
   }
 
   setFestFilter(festId) {
@@ -1227,7 +1276,8 @@ class NexusApp {
     const fests = db.getFests ? db.getFests() : [];
 
     const items = [
-      { type: 'NAV', title: '🎪 Fest Directory (Browse Festivals)', action: () => this.switchTab('arena') },
+      { type: 'NAV', title: '🏠 Home / Landing Page', action: () => this.switchTab('arena') },
+      { type: 'NAV', title: '🎪 Browse Events & Contests', action: () => { window.location.href = 'events.html'; } },
       { type: 'NAV', title: '🎟️ My Passes / Manage Registrations', action: () => this.openMyRegistrationsModal() },
       { type: 'NAV', title: '🛠️ Form Studio (Build Custom Forms)', action: () => this.switchTab('studio') },
       { type: 'NAV', title: '⚡ Gate Check-in QR Scanner', action: () => this.switchTab('scanner') },
@@ -1236,7 +1286,6 @@ class NexusApp {
         type: 'FEST',
         title: `Festival: ${f.title}`,
         action: () => {
-          this.switchTab('arena');
           this.openFestDetails(f.id);
         }
       })),
@@ -1244,7 +1293,6 @@ class NexusApp {
         type: 'EVENT',
         title: `Register: ${e.title} (${e.festName || e.clubName})`,
         action: () => {
-          this.switchTab('arena');
           this.openEventDetails(e.id);
         }
       }))

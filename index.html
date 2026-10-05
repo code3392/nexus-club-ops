@@ -37,7 +37,8 @@
 
         <!-- Mode Navigation Tabs -->
         <nav class="nav-tabs-bar" aria-label="Main Navigation">
-          <button class="nav-tab-btn active" data-tab="arena">🎪 Fest Directory</button>
+          <button class="nav-tab-btn active" data-tab="arena">🏠 Home</button>
+          <a href="events.html" class="nav-tab-btn">🎪 Browse Events</a>
           <button class="nav-tab-btn" data-tab="myregs" onclick="window.nexusApp.openMyRegistrationsModal()">🎟️ My Passes</button>
           <button class="nav-tab-btn" data-tab="studio">🛠️ Form Builder</button>
           <button class="nav-tab-btn" data-tab="scanner">⚡ Gate Scanner</button>
@@ -81,9 +82,9 @@
           </h1>
 
           <div class="hero-cta-row">
-            <button class="btn btn-primary btn-glow btn-lg" onclick="document.getElementById('festsDirectorySection').scrollIntoView({ behavior: 'smooth' })">
-              🎪 Browse Fests & Contests
-            </button>
+            <a href="events.html" class="btn btn-primary btn-glow btn-lg">
+              🎪 Browse All Events &rarr;
+            </a>
             <button class="btn btn-secondary btn-lg" onclick="window.nexusApp.openMyRegistrationsModal()">
               🎟️ My Passes / Registrations
             </button>
@@ -125,9 +126,9 @@
               <p>Universal Festival Directory • Select any festival to view schedules, venues, and registered contests.</p>
             </div>
             <div class="sh-actions">
-              <button class="btn btn-secondary btn-sm" onclick="window.nexusApp.resetFestFilter()">
-                🌟 View All Events Across Fests
-              </button>
+              <a href="events.html" class="btn btn-secondary btn-sm">
+                🌟 View All Events Across Fests &rarr;
+              </a>
             </div>
           </div>
 
@@ -136,61 +137,20 @@
           </div>
         </div>
 
-
-        <!-- Event Showcase & Filter Anchor -->
-        <div id="arenaFilterAnchor" class="arena-filter-bar">
-          <div class="filter-pills-row" id="festFilterPillsRow">
-            <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-right:4px;">Fest:</span>
-            <button class="filter-pill active" data-fest="all" onclick="window.nexusApp.setFestFilter('all')">
-              🌟 All Fests
-            </button>
-            <button class="filter-pill" data-fest="fest-techcarnival-2026" onclick="window.nexusApp.setFestFilter('fest-techcarnival-2026')">
-              🏆 Tech Carnival 2026
-            </button>
-            <button class="filter-pill" data-fest="fest-wintertech-2026" onclick="window.nexusApp.setFestFilter('fest-wintertech-2026')">
-              ❄️ Winter Tech Fest
-            </button>
-            <button class="filter-pill" data-fest="fest-freshers-2027" onclick="window.nexusApp.setFestFilter('fest-freshers-2027')">
-              🌱 Freshers Tech Fest
-            </button>
+        <!-- Dedicated Event Directory Callout on Landing Page (Hyperlink Button) -->
+        <div class="events-cta-banner">
+          <div class="ecb-content">
+            <div class="ecb-badge">🎪 Live Contest Directory</div>
+            <h3 class="ecb-title">Explore All Contests, Hackathons & Workshops</h3>
+            <p class="ecb-desc">
+              Looking for upcoming campus competitions? Filter by festival or track, check available seat quotas in real-time, and get your digital pass.
+            </p>
           </div>
-
-          <div class="filter-pills-row" id="categoryFilterPillsRow">
-            <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-right:4px;">Category:</span>
-            <button class="filter-pill active" data-filter="all" onclick="window.nexusApp.setFilter('all')">
-              All Contests
-            </button>
-            <button class="filter-pill" data-filter="ai" onclick="window.nexusApp.setFilter('ai')">
-              🤖 AI & Web
-            </button>
-            <button class="filter-pill" data-filter="programming" onclick="window.nexusApp.setFilter('programming')">
-              💻 Programming
-            </button>
-            <button class="filter-pill" data-filter="robotics" onclick="window.nexusApp.setFilter('robotics')">
-              ⚙️ Robotics
-            </button>
-            <button class="filter-pill" data-filter="gaming" onclick="window.nexusApp.setFilter('gaming')">
-              🎮 Gaming
-            </button>
-            <button class="filter-pill" data-filter="hackathon" onclick="window.nexusApp.setFilter('hackathon')">
-              ⚡ Hackathon
-            </button>
-            <button class="filter-pill" data-filter="workshop" onclick="window.nexusApp.setFilter('workshop')">
-              📚 Workshops
-            </button>
-            <button class="filter-pill" data-filter="quiz" onclick="window.nexusApp.setFilter('quiz')">
-              🧠 Quiz
-            </button>
+          <div class="ecb-actions">
+            <a href="events.html" class="btn btn-primary btn-glow btn-lg">
+              Explore Events & Contests &rarr;
+            </a>
           </div>
-
-          <input type="text" id="eventSearchInput" class="events-search-input" 
-            placeholder="Search contests, fests, rules, prizes, or venues..." 
-            oninput="window.nexusApp.handleSearch(this.value)" />
-        </div>
-
-        <!-- Dynamic Events Grid -->
-        <div id="eventsGridContainer" class="events-grid">
-          <!-- Populated dynamically by app.js -->
         </div>
       </section>
 

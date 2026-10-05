@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Events & Contests Showcase — NEXUS CLUB OPS</title>
+  <meta name="description" content="Explore, filter, and register for university contests, hackathons, and workshops. Instant holographic passes with 0.4s gate check-in.">
+
+  <!-- Inter and JetBrains Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+
+  <!-- Interactive Constellation Network Canvas Background -->
+  <canvas id="networkCanvas"></canvas>
+
+  <div class="app-wrapper">
+    <!-- Navigation Header -->
+    <header class="nav-header">
+      <div class="nav-inner">
+        <div class="brand-group" onclick="window.location.href='index.html'" style="cursor:pointer;">
+          <div class="brand-symbol">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+              <polyline points="2 17 12 22 22 17"></polyline>
+              <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+          </div>
+          <div class="brand-title-wrap">
+            <span class="brand-name">Nexus<span class="brand-accent">Ops</span></span>
+          </div>
+        </div>
+
+        <!-- Mode Navigation Tabs -->
+        <nav class="nav-tabs-bar" aria-label="Main Navigation">
+          <a href="index.html" class="nav-tab-btn">🏠 Home</a>
+          <a href="events.html" class="nav-tab-btn active">🎪 Browse Events</a>
+          <button class="nav-tab-btn" data-tab="myregs" onclick="window.nexusApp.openMyRegistrationsModal()">🎟️ My Passes</button>
+          <a href="index.html?tab=studio" class="nav-tab-btn">🛠️ Form Builder</a>
+          <a href="index.html?tab=scanner" class="nav-tab-btn">⚡ Gate Scanner</a>
+          <a href="index.html?tab=admin" class="nav-tab-btn">📊 Dashboard</a>
+        </nav>
+
+        <!-- Right Actions -->
+        <div class="nav-actions-right">
+          <button class="search-trigger-btn" onclick="window.nexusApp.toggleCommandPalette()" title="Search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <span>Search</span>
+          </button>
+
+          <!-- Authentication Profile & Sign-In Slot -->
+          <div id="navAuthSlot"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Events Showcase Content -->
+    <main class="main-content">
+      <section id="tabView-arena" class="tab-view-section active">
+        
+        <!-- Dedicated Header for Events Directory -->
+        <div class="events-page-header">
+          <div class="events-header-badge">
+            <span class="live-pulse"></span>
+            <span>Universal Event Directory</span>
+          </div>
+          <h1 class="events-page-title">
+            Contests, Hackathons & <span class="gradient-text">Workshops</span>
+          </h1>
+          <p class="events-page-desc">
+            Explore collegiate and international competitions, check real-time seat availability, and register with instant cryptographic passes.
+          </p>
+          <div class="events-header-actions">
+            <button class="btn btn-primary btn-glow" onclick="window.nexusApp.handleCreateFormClick()">
+              ➕ Launch New Registration Form
+            </button>
+            <a href="index.html" class="btn btn-secondary">
+              &larr; Back to Home
+            </a>
+          </div>
+        </div>
+
+        <!-- Event Showcase & Filter Anchor (Rulebook Section) -->
+        <div id="arenaFilterAnchor" class="arena-filter-bar">
+          <div class="filter-pills-row" id="festFilterPillsRow">
+            <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-right:4px;">Fest:</span>
+            <button class="filter-pill active" data-fest="all" onclick="window.nexusApp.setFestFilter('all')">
+              🌟 All Fests
+            </button>
+            <button class="filter-pill" data-fest="fest-techcarnival-2026" onclick="window.nexusApp.setFestFilter('fest-techcarnival-2026')">
+              🏆 Tech Carnival 2026
+            </button>
+            <button class="filter-pill" data-fest="fest-wintertech-2026" onclick="window.nexusApp.setFestFilter('fest-wintertech-2026')">
+              ❄️ Winter Tech Fest
+            </button>
+            <button class="filter-pill" data-fest="fest-freshers-2027" onclick="window.nexusApp.setFestFilter('fest-freshers-2027')">
+              🌱 Freshers Tech Fest
+            </button>
+          </div>
+
+          <div class="filter-pills-row" id="categoryFilterPillsRow">
+            <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-right:4px;">Category:</span>
+            <button class="filter-pill active" data-filter="all" onclick="window.nexusApp.setFilter('all')">
+              All Contests
+            </button>
+            <button class="filter-pill" data-filter="ai" onclick="window.nexusApp.setFilter('ai')">
+              🤖 AI & Web
+            </button>
+            <button class="filter-pill" data-filter="programming" onclick="window.nexusApp.setFilter('programming')">
+              💻 Programming
+            </button>
+            <button class="filter-pill" data-filter="robotics" onclick="window.nexusApp.setFilter('robotics')">
+              ⚙️ Robotics
+            </button>
+            <button class="filter-pill" data-filter="gaming" onclick="window.nexusApp.setFilter('gaming')">
+              🎮 Gaming
+            </button>
+            <button class="filter-pill" data-filter="hackathon" onclick="window.nexusApp.setFilter('hackathon')">
+              ⚡ Hackathon
+            </button>
+            <button class="filter-pill" data-filter="workshop" onclick="window.nexusApp.setFilter('workshop')">
+              📚 Workshops
+            </button>
+            <button class="filter-pill" data-filter="quiz" onclick="window.nexusApp.setFilter('quiz')">
+              🧠 Quiz
+            </button>
+          </div>
+
+          <input type="text" id="eventSearchInput" class="events-search-input" 
+            placeholder="Search contests, fests, rules, prizes, or venues..." 
+            oninput="window.nexusApp.handleSearch(this.value)" />
+        </div>
+
+        <!-- Dynamic Events Grid -->
+        <div id="eventsGridContainer" class="events-grid">
+          <!-- Populated dynamically by app.js -->
+        </div>
+
+      </section>
+    </main>
+
+    <!-- Global Modal Container for Registration, Holographic Badges & Certificates -->
+    <div id="globalModalContainer"></div>
+
+    <!-- Quick Command Palette Modal (Ctrl+K) -->
+    <div id="commandPaletteModal" class="command-palette-modal hidden" onclick="if(event.target===this) window.nexusApp.closeCommandPalette()">
+      <div class="command-palette-card">
+        <div class="cp-input-wrap">
+          <span class="cp-icon">⚡</span>
+          <input type="text" id="commandPaletteInput" class="cp-input" placeholder="Type to search events, switch views, or register..."
+            oninput="window.nexusApp.renderCommandPaletteItems(this.value)" />
+          <span class="kbd-shortcut">ESC</span>
+        </div>
+        <div class="cp-list" id="commandPaletteList"></div>
+      </div>
+    </div>
+
+    <!-- Application Footer -->
+    <footer class="app-footer">
+      <div class="footer-inner">
+        <div class="brand-group" onclick="window.location.href='index.html'" style="cursor:pointer;">
+          <div class="brand-symbol">⚡</div>
+          <span class="brand-name">NEXUS CLUB OPS</span>
+        </div>
+        <p class="footer-tagline">
+          Built for student communities, technical societies, and collegiate fests. Eradicate Google Forms and fragmented spreadsheets forever.
+        </p>
+        <div class="footer-badges">
+          <span class="f-badge">🔒 SHA-256 Crypto Passes</span>
+          <span class="f-badge">⚡ Sub-Second Web Audio Scanner</span>
+          <span class="f-badge">📱 Live Mobile Schema Studio</span>
+          <span class="f-badge">🏆 Verifiable Certificate Dispenser</span>
+          <span class="f-badge">💾 Offline LocalStorage Engine</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Application Bootstrap -->
+  <script type="module" src="scripts/app.js"></script>
+</body>
+</html>
