@@ -6,6 +6,7 @@ import { FormBuilderStudio } from './formBuilder.js';
 import { GateScannerTerminal } from './scanner.js';
 import { AdminCommandCenter } from './analytics.js';
 import { renderHolographicBadge } from './badges.js';
+import { auth } from './auth.js';
 
 class NexusApp {
   constructor() {
@@ -30,6 +31,7 @@ class NexusApp {
     this.canvas = new NetworkCanvas('networkCanvas');
 
     // Sub-modules
+    window.authSystem = auth;
     window.formStudio = new FormBuilderStudio('fbStudioContainer', 'fbPhonePreview');
     window.gateScanner = new GateScannerTerminal('scannerContainer');
     window.adminCenter = new AdminCommandCenter('adminContainer');
@@ -40,6 +42,7 @@ class NexusApp {
     this.updateHeroStats();
 
     // Init submodules
+    window.authSystem.init();
     window.formStudio.init();
     window.gateScanner.init();
     window.adminCenter.init();
@@ -378,15 +381,16 @@ class NexusApp {
     const event = db.getEvents().find(e => e.id === eventId);
     if (!event) return;
 
+    const user = auth.currentUser;
     this.currentRegEvent = event;
     this.regStep = 1;
     this.registrationDraft = {
-      leadName: '',
-      leadEmail: '',
+      leadName: user ? user.name : '',
+      leadEmail: user ? user.email : '',
       leadPhone: '',
-      collegeRoll: '',
+      collegeRoll: user ? (user.rollNo || '') : '',
       teamName: '',
-      teamMembers: [{ name: '', role: 'Team Captain / Lead' }],
+      teamMembers: [{ name: user ? user.name : '', role: 'Team Captain / Lead' }],
       answers: {}
     };
 
