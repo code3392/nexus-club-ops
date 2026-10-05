@@ -205,7 +205,7 @@ class NexusApp {
           <div style="font-size: 2.4rem; margin-bottom: 0.6rem;">🎪</div>
           <h3 style="color: var(--text-main); font-size: 1.15rem; font-weight: 700; margin-bottom: 0.4rem;">No Festivals Scheduled</h3>
           <p style="color: var(--text-muted); font-size: 0.85rem; max-width: 480px; margin: 0 auto 1.25rem auto;">
-            All previous festivals have been removed. You can create a new festival container or launch independent event registration forms.
+            Create a new festival container or launch independent event registration forms.
           </p>
           <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
             <button class="btn btn-secondary btn-sm" onclick="window.nexusApp.openCreateFestModal()">
