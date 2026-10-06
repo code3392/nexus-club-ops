@@ -286,13 +286,13 @@ export class AdminCommandCenter {
         <tr>
           <td>
             <div style="font-weight: 700; color: #ffffff; font-size: 0.95rem;">${f.title}</div>
-            <div style="font-size: 0.78rem; color: #818cf8; font-weight:600;">${f.edition || 'Annual Edition'}</div>
+            <div style="font-size: 0.78rem; color: #ffffff; font-weight:600;">${f.edition || 'Annual Edition'}</div>
             <div style="font-size: 0.78rem; color: var(--text-muted); max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${(f.description || f.tagline || '').replace(/"/g, '&quot;')}">
               ${f.description || f.tagline || ''}
             </div>
           </td>
           <td>
-            <div style="font-size: 0.88rem; color: #c7d2fe;">${f.organization || 'Campus Society'}</div>
+            <div style="font-size: 0.88rem; color: #d4d4d8;">${f.organization || 'Campus Society'}</div>
             <div style="font-size: 0.75rem; color: var(--text-muted);">${f.shortName || f.title}</div>
           </td>
           <td>
@@ -300,13 +300,13 @@ export class AdminCommandCenter {
             <div style="font-size: 0.76rem; color: var(--text-muted);">📍 ${f.venue || 'Campus'}</div>
           </td>
           <td>
-            <span class="fest-event-mini-pill" style="font-size:0.75rem; color:#38bdf8;">
+            <span class="fest-event-mini-pill" style="font-size:0.75rem; color:#ffffff;">
               ${festEvents.length} Contests / Events
             </span>
           </td>
           <td>
             <span class="badge status-approved" style="font-size:0.75rem;">
-              🟢 ${f.status || 'Active'}
+              ⚪ ${f.status || 'Active'}
             </span>
           </td>
           <td>
@@ -357,7 +357,7 @@ export class AdminCommandCenter {
             <div style="font-size: 0.8rem; color: var(--text-muted);">${evt.headline || evt.tagline || ''}</div>
           </td>
           <td>
-            <div style="font-size: 0.88rem; color: #c7d2fe;">${evt.clubName || 'Campus Org'}</div>
+            <div style="font-size: 0.88rem; color: #d4d4d8;">${evt.clubName || 'Campus Org'}</div>
             <div style="font-size: 0.75rem; color: var(--text-muted);">By: ${evt.creatorName || evt.createdBy || 'Campus Member'}</div>
           </td>
           <td>
@@ -706,7 +706,7 @@ export class AdminCommandCenter {
       ctx.lineTo(width - padding.right, y);
       ctx.stroke();
 
-      ctx.fillStyle = 'rgba(148, 163, 184, 0.6)';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
       ctx.font = '10px Inter, sans-serif';
       ctx.textAlign = 'right';
       ctx.fillText(Math.round(maxVal - (maxVal / 4) * i), padding.left - 8, y + 3);
@@ -721,8 +721,8 @@ export class AdminCommandCenter {
 
     // Area fill gradient
     const gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
-    gradient.addColorStop(0, 'rgba(99, 102, 241, 0.4)');
-    gradient.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.22)');
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
 
     ctx.beginPath();
     ctx.moveTo(points[0].x, points[0].y);
@@ -747,7 +747,7 @@ export class AdminCommandCenter {
       const cx = (prev.x + cur.x) / 2;
       ctx.bezierCurveTo(cx, prev.y, cx, cur.y, cur.x, cur.y);
     }
-    ctx.strokeStyle = '#6366f1';
+    ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 3;
     ctx.stroke();
 
@@ -757,12 +757,12 @@ export class AdminCommandCenter {
       ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
       ctx.fillStyle = '#ffffff';
       ctx.fill();
-      ctx.strokeStyle = '#4f46e5';
+      ctx.strokeStyle = '#000000';
       ctx.lineWidth = 2;
       ctx.stroke();
 
       // X Labels
-      ctx.fillStyle = 'rgba(148, 163, 184, 0.7)';
+      ctx.fillStyle = 'rgba(163, 163, 163, 0.8)';
       ctx.font = '9px Inter, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(labels[i], p.x, height - 12);
@@ -780,10 +780,10 @@ export class AdminCommandCenter {
     ctx.clearRect(0, 0, width, height);
 
     const clubData = [
-      { name: 'Turing (Tech)', count: 127, color: '#6366f1' },
-      { name: 'SoundWave (Music)', count: 61, color: '#ec4899' },
-      { name: 'Robotics Guild', count: 48, color: '#10b981' },
-      { name: 'E-Cell (Startups)', count: 35, color: '#f59e0b' }
+      { name: 'Turing (Tech)', count: 127, color: '#ffffff' },
+      { name: 'SoundWave (Music)', count: 61, color: '#d4d4d8' },
+      { name: 'Robotics Guild', count: 48, color: '#a1a1aa' },
+      { name: 'E-Cell (Startups)', count: 35, color: '#71717a' }
     ];
 
     const total = clubData.reduce((acc, c) => acc + c.count, 0);
@@ -813,7 +813,7 @@ export class AdminCommandCenter {
     ctx.textBaseline = 'middle';
     ctx.fillText(`${total}`, centerX, centerY - 6);
 
-    ctx.fillStyle = 'rgba(148, 163, 184, 0.7)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
     ctx.font = '10px Inter, sans-serif';
     ctx.fillText('Attendees', centerX, centerY + 12);
 
@@ -837,7 +837,7 @@ export class AdminCommandCenter {
 
       // Percentage
       const pct = Math.round((c.count / total) * 100);
-      ctx.fillStyle = 'rgba(148, 163, 184, 0.7)';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
       ctx.font = '11px Inter, sans-serif';
       ctx.fillText(`${c.count} (${pct}%)`, legendX + 12, legendY + 22);
 

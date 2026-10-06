@@ -192,11 +192,11 @@ export class FormBuilderStudio {
     let authNotice = '';
     if (!currentUser) {
       authNotice = `
-        <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+        <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
           <div style="display:flex; align-items:center; gap:0.75rem;">
             <span style="font-size:1.5rem;">🔐</span>
             <div>
-              <strong style="color:#f87171; display:block; font-size:0.95rem;">Sign In Required to Create Forms</strong>
+              <strong style="color:#ffffff; display:block; font-size:0.95rem;">Sign In Required to Create Forms</strong>
               <span style="color:#d1d5db; font-size:0.85rem;">You must be logged in so only you can scan and manage registrations for your events.</span>
             </div>
           </div>
@@ -208,11 +208,11 @@ export class FormBuilderStudio {
     }
 
     const editBanner = this.editingEventId ? `
-      <div style="background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.4); border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
+      <div style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
         <div style="display:flex; align-items:center; gap:0.75rem;">
           <span style="font-size:1.4rem;">✏️</span>
           <div>
-            <strong style="color:#a5b4fc; font-size:1rem;">Editing Form: ${this.currentSchema.eventTitle}</strong>
+            <strong style="color:#ffffff; font-size:1rem;">Editing Form: ${this.currentSchema.eventTitle}</strong>
             <span style="display:block; color:#9ca3af; font-size:0.82rem;">Updates will take effect immediately across attendee registration and gates.</span>
           </div>
         </div>
@@ -222,7 +222,7 @@ export class FormBuilderStudio {
 
     const gatesHtml = (this.currentSchema.gates || []).map((g, idx) => `
       <div class="fb-gate-row" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.6rem;">
-        <span style="font-size: 0.82rem; font-weight: 700; color: #818cf8; width: 65px;">Gate ${idx + 1}:</span>
+        <span style="font-size: 0.82rem; font-weight: 700; color: #ffffff; width: 65px;">Gate ${idx + 1}:</span>
         <input type="text" class="fb-input" style="flex: 1;" value="${g.name}" 
           placeholder="e.g. Main Auditorium Entrance"
           oninput="window.formStudio.updateGate('${g.id}', this.value)" />
@@ -521,7 +521,7 @@ export class FormBuilderStudio {
               <span>💵 ${this.currentSchema.fee === 0 ? 'Free Entry' : '$' + this.currentSchema.fee}</span>
             </div>
             ${this.currentSchema.isExpired ? `
-              <div style="background:#ef4444; color:#fff; font-size:0.7rem; font-weight:700; padding:3px 8px; border-radius:4px; margin-top:5px; text-align:center;">
+              <div style="background:#ffffff; color:#000000; font-size:0.7rem; font-weight:800; padding:3px 8px; border-radius:4px; margin-top:5px; text-align:center;">
                 ⛔ REGISTRATION EXPIRED
               </div>
             ` : ''}
@@ -592,7 +592,7 @@ export class FormBuilderStudio {
         id: clubId,
         name: clubName,
         badge: 'Campus Org',
-        color: '#6366f1',
+        color: '#ffffff',
         lead: currentUser.name,
         icon: '🏛️',
         activeEvents: 1,
@@ -667,7 +667,7 @@ export class FormBuilderStudio {
         isExpired: Boolean(this.currentSchema.isExpired),
         expiryDate: this.currentSchema.expiryDate || '',
         gates: gates,
-        gradient: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
+        gradient: 'linear-gradient(135deg, #262626 0%, #171717 50%, #0a0a0a 100%)',
         customFields: this.currentSchema.fields,
         // Requirement 1 & 10: Store creator info
         createdBy: currentUser.email,
@@ -676,7 +676,7 @@ export class FormBuilderStudio {
       };
 
       db.addEvent(newEvent);
-      db.addAnnouncement('New Event Published!', `"${newEvent.title}" by ${newEvent.clubName} is now live with customizable gates and automated quota.`, 'New Event', '#06b6d4');
+      db.addAnnouncement('New Event Published!', `"${newEvent.title}" by ${newEvent.clubName} is now live with customizable gates and automated quota.`, 'New Event', '#ffffff');
 
       this.showToast('Event & Form Published!', `"${newEvent.title}" is now live in the Fest Directory.`);
 

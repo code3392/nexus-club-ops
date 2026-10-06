@@ -201,7 +201,7 @@ class NexusApp {
 
     if (fests.length === 0) {
       container.innerHTML = `
-        <div class="empty-state-card" style="grid-column: 1 / -1; padding: 2.5rem 1.5rem; text-align: center; background: rgba(15, 23, 42, 0.4); border: 1px dashed var(--border-subtle); border-radius: var(--radius-lg);">
+        <div class="empty-state-card" style="grid-column: 1 / -1; padding: 2.5rem 1.5rem; text-align: center; background: rgba(18, 18, 18, 0.5); border: 1px dashed var(--border-subtle); border-radius: var(--radius-lg);">
           <div style="font-size: 2.4rem; margin-bottom: 0.6rem;">🎪</div>
           <h3 style="color: var(--text-main); font-size: 1.15rem; font-weight: 700; margin-bottom: 0.4rem;">No Festivals Scheduled</h3>
           <p style="color: var(--text-muted); font-size: 0.85rem; max-width: 480px; margin: 0 auto 1.25rem auto;">
@@ -371,7 +371,7 @@ class NexusApp {
                 return `
                   <div class="fest-event-tile" onclick="window.nexusApp.closeModal(); window.nexusApp.openEventDetails('${evt.id}')">
                     <div>
-                      <span class="event-category-chip" style="color:#818cf8;">${evt.category.toUpperCase()}</span>
+                      <span class="event-category-chip" style="color:#ffffff;">${evt.category.toUpperCase()}</span>
                       <div class="fet-title">${evt.title}</div>
                       <div style="font-size:0.78rem; color:#94a3b8; line-height:1.4;">${evt.tagline}</div>
                     </div>
@@ -502,7 +502,7 @@ class NexusApp {
       venue,
       tagline: description,
       description,
-      bannerGradient: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #06b6d4 100%)',
+      bannerGradient: 'linear-gradient(135deg, #262626 0%, #171717 50%, #0a0a0a 100%)',
       totalEvents: 0,
       badge: 'Official Fest'
     };
@@ -723,7 +723,7 @@ class NexusApp {
           <div class="event-card-banner" style="background: ${evt.gradient};">
             <div class="banner-top-row">
               <span class="event-club-badge">${evt.festName || evt.clubName}</span>
-              ${isCreator ? '<span class="event-club-badge" style="background:rgba(99,102,241,0.3); border:1px solid rgba(129,140,248,0.5);">👑 Your Event</span>' : ''}
+              ${isCreator ? '<span class="event-club-badge" style="background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.4); color:#ffffff;">👑 Your Event</span>' : ''}
               <span class="event-tier-badge">${evt.fee === 0 ? 'FREE ENTRY' : '$' + evt.fee + ' FEE'}</span>
             </div>
             <div class="event-banner-content">
@@ -767,7 +767,7 @@ class NexusApp {
                 </span>
               </div>
               <div class="capacity-meter-track">
-                <div class="capacity-meter-fill" style="width: ${pct}%; background: ${pct >= 100 ? '#ef4444' : pct > 80 ? '#f59e0b' : '#6366f1'};"></div>
+                <div class="capacity-meter-fill" style="width: ${pct}%; background: #ffffff;"></div>
               </div>
             </div>
 
@@ -865,7 +865,7 @@ class NexusApp {
                 <h4>Schedule, Venue & Deadline</h4>
                 <p>📍 <strong>Venue:</strong> ${event.venue}</p>
                 <p>⏰ <strong>Event Time:</strong> ${event.date}</p>
-                <p>⏳ <strong>Registration Deadline:</strong> <span style="color:#fbbf24; font-weight:700;">${event.deadline || 'Oct 23, 2026 • 11:59 PM'}</span></p>
+                <p>⏳ <strong>Registration Deadline:</strong> <span style="color:#ffffff; font-weight:700;">${event.deadline || 'Oct 23, 2026 • 11:59 PM'}</span></p>
 
                 ${event.rules ? `
                   <h4>Contest Rules & Submission</h4>
@@ -966,8 +966,8 @@ class NexusApp {
       if (f.type === 'select') {
         inputEl = `
           <select id="${f.id}" class="gform-input gform-select" ${isExpired ? 'disabled' : ''} onchange="window.nexusApp.updateAnswer('${f.id}', this.value)">
-            <option value="" style="background-color: #0f172a; color: #94a3b8;">Choose an option...</option>
-            ${(f.options || []).map(opt => `<option value="${opt}" style="background-color: #0f172a; color: #f8fafc;" ${savedVal === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+            <option value="" style="background-color: #000000; color: #a1a1aa;">Choose an option...</option>
+            ${(f.options || []).map(opt => `<option value="${opt}" style="background-color: #000000; color: #ffffff;" ${savedVal === opt ? 'selected' : ''}>${opt}</option>`).join('')}
           </select>
         `;
       } else if (f.type === 'radio') {
@@ -1039,7 +1039,7 @@ class NexusApp {
         <div class="gform-modal-dialog">
           
           <!-- Requirement 7: Header Card with Headline & Description -->
-          <div class="gform-header-card" style="border-top-color: #6366f1;">
+          <div class="gform-header-card" style="border-top-color: #ffffff;">
             <div class="gform-header-badge">${evt.festName || 'Fest'} • ${evt.clubName || 'Student Org'}</div>
             <h2 class="gform-title">${evt.headline || evt.title}</h2>
             <p class="gform-desc">${evt.description || evt.tagline}</p>
@@ -1053,8 +1053,8 @@ class NexusApp {
           </div>
 
           ${isExpired ? `
-            <div class="gform-card" style="border-left: 4px solid #ef4444; background: rgba(239, 68, 68, 0.1);">
-              <strong style="color: #f87171; font-size: 1.05rem;">⛔ REGISTRATION EXPIRED / CLOSED</strong>
+            <div class="gform-card" style="border-left: 4px solid #ffffff; background: rgba(255, 255, 255, 0.06);">
+              <strong style="color: #ffffff; font-size: 1.05rem;">⛔ REGISTRATION EXPIRED / CLOSED</strong>
               <p style="color: #d1d5db; font-size: 0.88rem; margin-top: 0.25rem;">
                 The organizer has closed or expired registrations for this form. Submissions are no longer accepted.
               </p>

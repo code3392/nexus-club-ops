@@ -58,7 +58,7 @@ export function generateSvgQr(dataString, size = 160) {
   for (let r = 0; r < matrixSize; r++) {
     for (let c = 0; c < matrixSize; c++) {
       if (grid[r][c] === 1) {
-        rects += `<rect x="${(c * cellSize).toFixed(2)}" y="${(r * cellSize).toFixed(2)}" width="${cellSize.toFixed(2)}" height="${cellSize.toFixed(2)}" rx="1" fill="#0f172a" />`;
+        rects += `<rect x="${(c * cellSize).toFixed(2)}" y="${(r * cellSize).toFixed(2)}" width="${cellSize.toFixed(2)}" height="${cellSize.toFixed(2)}" rx="1" fill="#000000" />`;
       }
     }
   }
@@ -68,7 +68,7 @@ export function generateSvgQr(dataString, size = 160) {
       <rect width="${size}" height="${size}" fill="#ffffff" rx="10"/>
       ${rects}
       <!-- Security Center Logo Badge -->
-      <circle cx="${size / 2}" cy="${size / 2}" r="${size * 0.12}" fill="#6366f1" />
+      <circle cx="${size / 2}" cy="${size / 2}" r="${size * 0.12}" fill="#000000" />
       <text x="${size / 2}" y="${size / 2 + 4}" font-family="sans-serif" font-weight="900" font-size="10" fill="#ffffff" text-anchor="middle">NEX</text>
     </svg>
   `;

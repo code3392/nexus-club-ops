@@ -35,7 +35,7 @@ export class NetworkCanvas {
 
   initParticles() {
     this.particles = [];
-    const colors = ['rgba(99, 102, 241,', 'rgba(139, 92, 246,', 'rgba(14, 165, 233,', 'rgba(236, 72, 153,'];
+    const colors = ['rgba(255, 255, 255,', 'rgba(220, 220, 225,', 'rgba(180, 180, 190,', 'rgba(255, 255, 255,'];
     for (let i = 0; i < this.maxParticles; i++) {
       this.particles.push({
         x: Math.random() * this.width,
@@ -65,7 +65,7 @@ export class NetworkCanvas {
 
     // Subtle background mesh grid
     const gridSize = 60;
-    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.015)';
+    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)';
     this.ctx.lineWidth = 1;
     this.ctx.beginPath();
     for (let x = 0; x < this.width; x += gridSize) {
@@ -111,11 +111,11 @@ export class NetworkCanvas {
         const maxDist = 130;
 
         if (dist2 < maxDist) {
-          const lineAlpha = (1 - dist2 / maxDist) * 0.22;
+          const lineAlpha = (1 - dist2 / maxDist) * 0.18;
           this.ctx.beginPath();
           this.ctx.moveTo(p.x, p.y);
           this.ctx.lineTo(p2.x, p2.y);
-          this.ctx.strokeStyle = `rgba(129, 140, 248, ${lineAlpha})`;
+          this.ctx.strokeStyle = `rgba(255, 255, 255, ${lineAlpha})`;
           this.ctx.lineWidth = 0.8;
           this.ctx.stroke();
         }
@@ -123,11 +123,11 @@ export class NetworkCanvas {
 
       // Connect to mouse if near
       if (dist < this.mouse.radius) {
-        const mouseAlpha = (1 - dist / this.mouse.radius) * 0.35;
+        const mouseAlpha = (1 - dist / this.mouse.radius) * 0.3;
         this.ctx.beginPath();
         this.ctx.moveTo(p.x, p.y);
         this.ctx.lineTo(this.mouse.x, this.mouse.y);
-        this.ctx.strokeStyle = `rgba(236, 72, 153, ${mouseAlpha})`;
+        this.ctx.strokeStyle = `rgba(255, 255, 255, ${mouseAlpha})`;
         this.ctx.lineWidth = 1;
         this.ctx.stroke();
       }

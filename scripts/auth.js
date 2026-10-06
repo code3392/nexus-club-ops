@@ -87,7 +87,7 @@ export class AuthSystem {
           <div id="userDropdownMenu" class="user-dropdown-menu hidden">
             <div class="dropdown-header">
               <div style="display:flex; align-items:center; gap:0.65rem; margin-bottom:0.4rem;">
-                <div class="user-avatar-medium" style="width:36px; height:36px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg, #6366f1, #06b6d4); font-weight:800; color:#fff; flex-shrink:0;">
+                <div class="user-avatar-medium" style="width:36px; height:36px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#ffffff; font-weight:800; color:#000000; flex-shrink:0;">
                   ${avatarHTML}
                 </div>
                 <div style="overflow:hidden;">
@@ -173,7 +173,7 @@ export class AuthSystem {
           </div>
 
           ${reasonMessage ? `
-            <div style="background: rgba(99, 102, 241, 0.12); border-bottom: 1px solid rgba(99, 102, 241, 0.25); padding: 0.85rem 1.5rem; font-size: 0.85rem; color: #c7d2fe; display: flex; align-items: center; gap: 0.6rem;">
+            <div style="background: rgba(255, 255, 255, 0.08); border-bottom: 1px solid rgba(255, 255, 255, 0.15); padding: 0.85rem 1.5rem; font-size: 0.85rem; color: #ffffff; display: flex; align-items: center; gap: 0.6rem;">
               <span>🔐</span>
               <span><strong>Login Required:</strong> ${reasonMessage}</span>
             </div>
@@ -432,7 +432,7 @@ export class AuthSystem {
                 }).join('')}
 
                 <div class="google-account-item google-add-account" onclick="window.authSystem.openGoogleAccountModal(true)">
-                  <div class="google-acc-avatar" style="background:rgba(99,102,241,0.15); color:#a5b4fc; font-size:1.1rem;">➕</div>
+                  <div class="google-acc-avatar" style="background:rgba(255,255,255,0.1); color:#ffffff; font-size:1.1rem;">➕</div>
                   <div class="google-acc-details">
                     <div class="google-acc-name" style="font-weight:700; color:var(--text-main);">Use another Google account</div>
                     <div class="google-acc-email">Sign in with your own custom name & picture</div>

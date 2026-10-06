@@ -21,7 +21,7 @@ export const INITIAL_CLUBS = [
     id: 'club-tech-society',
     name: 'Campus Tech Society',
     badge: 'Tech & AI',
-    color: '#6366f1',
+    color: '#ffffff',
     lead: 'Executive Committee',
     icon: '⚡',
     activeEvents: 0,
@@ -31,7 +31,7 @@ export const INITIAL_CLUBS = [
     id: 'club-robotics',
     name: 'Campus Robotics Guild',
     badge: 'Hardware & Mechatronics',
-    color: '#10b981',
+    color: '#e5e5e5',
     lead: 'Robotics Wing',
     icon: '🤖',
     activeEvents: 0,
@@ -41,7 +41,7 @@ export const INITIAL_CLUBS = [
     id: 'club-programming',
     name: 'Competitive Programming Society',
     badge: 'Algorithms & Olympiads',
-    color: '#3b82f6',
+    color: '#d4d4d4',
     lead: 'CP Wing',
     icon: '💻',
     activeEvents: 0,
@@ -62,7 +62,7 @@ export const INITIAL_ANNOUNCEMENTS = [
     title: 'NexusOps Portal Active',
     message: 'Welcome to Smart Club Operations. Create your first event and registration form in the Form Builder.',
     tag: 'Notice',
-    color: '#6366f1'
+    color: '#ffffff'
   }
 ];
 
@@ -392,7 +392,7 @@ export class StateManager {
     };
   }
 
-  addAnnouncement(title, message, tag = 'Broadcast', color = '#6366f1') {
+  addAnnouncement(title, message, tag = 'Broadcast', color = '#ffffff') {
     if (!this.state.announcements) this.state.announcements = [];
     const ann = {
       id: 'ann-' + Date.now(),
