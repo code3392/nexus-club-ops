@@ -23,7 +23,7 @@ export const INITIAL_CLUBS = [
     badge: 'Tech & AI',
     color: '#ffffff',
     lead: 'Executive Committee',
-    icon: '⚡',
+    icon: 'TS',
     activeEvents: 0,
     members: 850
   },
@@ -33,7 +33,7 @@ export const INITIAL_CLUBS = [
     badge: 'Hardware & Mechatronics',
     color: '#e5e5e5',
     lead: 'Robotics Wing',
-    icon: '🤖',
+    icon: 'RG',
     activeEvents: 0,
     members: 320
   },
@@ -43,7 +43,7 @@ export const INITIAL_CLUBS = [
     badge: 'Algorithms & Olympiads',
     color: '#d4d4d4',
     lead: 'CP Wing',
-    icon: '💻',
+    icon: 'CP',
     activeEvents: 0,
     members: 410
   }

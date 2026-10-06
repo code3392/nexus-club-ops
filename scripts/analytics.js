@@ -41,7 +41,7 @@ export class AdminCommandCenter {
         <!-- Top Stats Row -->
         <div class="admin-kpi-grid">
           <div class="kpi-card">
-            <div class="kpi-icon-wrap bg-indigo-subtle">👥</div>
+            <div class="kpi-icon-wrap bg-indigo-subtle" style="font-weight:900; font-size:0.75rem; font-family:var(--font-mono);">USERS</div>
             <div class="kpi-content">
               <div class="kpi-value">${totalRegs}</div>
               <div class="kpi-label">Registered Attendees</div>
@@ -50,7 +50,7 @@ export class AdminCommandCenter {
           </div>
 
           <div class="kpi-card">
-            <div class="kpi-icon-wrap bg-emerald-subtle">💰</div>
+            <div class="kpi-icon-wrap bg-emerald-subtle" style="font-weight:900; font-size:0.75rem; font-family:var(--font-mono);">REV</div>
             <div class="kpi-content">
               <div class="kpi-value">$${totalRevenue.toLocaleString()}</div>
               <div class="kpi-label">Total Revenue Collected</div>
@@ -59,7 +59,7 @@ export class AdminCommandCenter {
           </div>
 
           <div class="kpi-card">
-            <div class="kpi-icon-wrap bg-cyan-subtle">🎟️</div>
+            <div class="kpi-icon-wrap bg-cyan-subtle" style="font-weight:900; font-size:0.75rem; font-family:var(--font-mono);">GATE</div>
             <div class="kpi-content">
               <div class="kpi-value">${checkInRate}%</div>
               <div class="kpi-label">Checked-In Rate</div>
@@ -68,7 +68,7 @@ export class AdminCommandCenter {
           </div>
 
           <div class="kpi-card">
-            <div class="kpi-icon-wrap bg-purple-subtle">⏳</div>
+            <div class="kpi-icon-wrap bg-purple-subtle" style="font-weight:900; font-size:0.75rem; font-family:var(--font-mono);">PEND</div>
             <div class="kpi-content">
               <div class="kpi-value">${totalRegs - checkedInCount}</div>
               <div class="kpi-label">Pending Gate Check-in</div>
@@ -81,7 +81,7 @@ export class AdminCommandCenter {
         <div class="admin-charts-grid">
           <div class="admin-chart-card">
             <div class="chart-header">
-              <div class="chart-title">📈 Registration & Check-in Trajectory</div>
+              <div class="chart-title">Registration & Check-in Trajectory</div>
               <span class="chart-pill">Live Timeline</span>
             </div>
             <div class="canvas-chart-container">
@@ -91,7 +91,7 @@ export class AdminCommandCenter {
 
           <div class="admin-chart-card">
             <div class="chart-header">
-              <div class="chart-title">🏛️ Club Quota & Attendance Share</div>
+              <div class="chart-title">Club Quota & Attendance Share</div>
               <span class="chart-pill">Active Clubs</span>
             </div>
             <div class="canvas-chart-container">
@@ -114,7 +114,7 @@ export class AdminCommandCenter {
             <input type="text" id="broadcastTitle" class="admin-input" placeholder="Announcement Headline (e.g. Robowars Round 2 starting at Arena B)" />
             <input type="text" id="broadcastMsg" class="admin-input flex-2" placeholder="Detailed bulletin or room update..." />
             <button class="btn btn-primary" onclick="window.adminCenter.sendBroadcast()">
-              📢 Push Broadcast
+              Push Broadcast
             </button>
           </div>
 
@@ -127,11 +127,11 @@ export class AdminCommandCenter {
         <div class="admin-table-card" style="margin-bottom: 2rem;">
           <div class="table-card-header">
             <div class="table-title-group">
-              <div class="table-title">🎪 Created Festivals & Operations (${fests.length})</div>
+              <div class="table-title">Created Festivals & Operations (${fests.length})</div>
               <div class="table-subtitle">Edit festival details, manage timelines, or remove created festival hubs</div>
             </div>
             <button class="btn btn-primary btn-sm" onclick="window.nexusApp.openCreateFestModal()">
-              ➕ Add New Festival
+              + Add New Festival
             </button>
           </div>
 
@@ -158,11 +158,11 @@ export class AdminCommandCenter {
         <div class="admin-table-card" style="margin-bottom: 2rem;">
           <div class="table-card-header">
             <div class="table-title-group">
-              <div class="table-title">📋 Created Registration Forms & Events (${events.length})</div>
+              <div class="table-title">Created Registration Forms & Events (${events.length})</div>
               <div class="table-subtitle">Edit schemas, configure gates, toggle form expiry, or cancel created registration forms</div>
             </div>
             <button class="btn btn-primary btn-sm" onclick="window.nexusApp.switchTab('studio')">
-              ➕ Create New Form
+              + Create New Form
             </button>
           </div>
 
@@ -217,7 +217,7 @@ export class AdminCommandCenter {
               </select>
 
               <button class="btn btn-secondary btn-sm" onclick="window.adminCenter.exportCSV()">
-                📥 Export Clean CSV
+                Export Clean CSV
               </button>
             </div>
           </div>
@@ -268,11 +268,11 @@ export class AdminCommandCenter {
       return `
         <tr>
           <td colspan="6" style="text-align:center; padding: 2.5rem 1rem; color:var(--text-muted);">
-            <div style="font-size:2rem; margin-bottom:0.5rem;">🎪</div>
+            <div style="font-size:1.5rem; font-weight:800; font-family:var(--font-mono); margin-bottom:0.5rem;">FESTIVALS</div>
             <strong>No festivals created yet.</strong>
             <p style="font-size:0.85rem; margin-top:0.25rem;">Create a festival umbrella container to host multiple contests, hackathons, and symposiums.</p>
             <button class="btn btn-primary btn-sm" style="margin-top:0.75rem;" onclick="window.nexusApp.openCreateFestModal()">
-              ➕ Add New Festival
+              + Add New Festival
             </button>
           </td>
         </tr>
@@ -296,8 +296,8 @@ export class AdminCommandCenter {
             <div style="font-size: 0.75rem; color: var(--text-muted);">${f.shortName || f.title}</div>
           </td>
           <td>
-            <div style="font-size: 0.84rem; color: #ffffff;">📅 ${f.date || 'TBA'}</div>
-            <div style="font-size: 0.76rem; color: var(--text-muted);">📍 ${f.venue || 'Campus'}</div>
+            <div style="font-size: 0.84rem; color: #ffffff;">Dates: ${f.date || 'TBA'}</div>
+            <div style="font-size: 0.76rem; color: var(--text-muted);">Venue: ${f.venue || 'Campus'}</div>
           </td>
           <td>
             <span class="fest-event-mini-pill" style="font-size:0.75rem; color:#ffffff;">
@@ -306,19 +306,19 @@ export class AdminCommandCenter {
           </td>
           <td>
             <span class="badge status-approved" style="font-size:0.75rem;">
-              ⚪ ${f.status || 'Active'}
+              ${f.status || 'Active'}
             </span>
           </td>
           <td>
             <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
               <button class="btn btn-secondary btn-sm" onclick="window.nexusApp.openEditFestModal('${f.id}')" title="Edit Festival details and info">
-                ✏️ Edit
+                Edit
               </button>
               <button class="btn btn-outline-danger btn-sm" onclick="window.nexusApp.deleteFest('${f.id}')" title="Delete & Remove Festival">
-                🗑️ Remove
+                Remove
               </button>
               <button class="btn btn-primary btn-sm btn-glow" onclick="window.nexusApp.switchTab('arena'); setTimeout(() => window.nexusApp.openFestDetails('${f.id}'), 120);" title="View Festival Arena">
-                🎪 View
+                View
               </button>
             </div>
           </td>
@@ -333,7 +333,7 @@ export class AdminCommandCenter {
       return `
         <tr>
           <td colspan="6" style="text-align:center; padding: 2.5rem 1rem; color:var(--text-muted);">
-            <div style="font-size:2rem; margin-bottom:0.5rem;">📝</div>
+            <div style="font-size:1.5rem; font-weight:800; font-family:var(--font-mono); margin-bottom:0.5rem;">FORMS</div>
             <strong>No registration forms created yet.</strong>
             <p style="font-size:0.85rem; margin-top:0.25rem;">Create your first event registration form with custom gates and expiry controls.</p>
             <button class="btn btn-primary btn-sm" style="margin-top:0.75rem;" onclick="window.nexusApp.switchTab('studio')">
@@ -347,7 +347,7 @@ export class AdminCommandCenter {
     return events.map(evt => {
       const isExpired = Boolean(evt.isExpired);
       const gatesList = (evt.gates && evt.gates.length > 0)
-        ? evt.gates.map(g => `<span class="fest-event-mini-pill" style="font-size:0.75rem;">🚪 ${g.name}</span>`).join(' ')
+        ? evt.gates.map(g => `<span class="fest-event-mini-pill" style="font-size:0.75rem;">${g.name}</span>`).join(' ')
         : '<span class="text-muted">Standard Gate</span>';
 
       return `
@@ -371,24 +371,24 @@ export class AdminCommandCenter {
           </td>
           <td>
             <span class="badge ${isExpired ? 'status-cancelled' : 'status-approved'}" style="font-size:0.75rem;">
-              ${isExpired ? '🔴 EXPIRED' : '🟢 ACTIVE'}
+              ${isExpired ? 'EXPIRED' : 'ACTIVE'}
             </span>
           </td>
           <td>
             <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
               <button class="btn btn-primary btn-sm btn-glow" onclick="window.nexusApp.startRegistration('${evt.id}')" title="Register / Participate in this event">
-                🎟️ Participate
+                Participate
               </button>
               <button class="btn btn-secondary btn-sm" onclick="window.adminCenter.editForm('${evt.id}')" title="Edit Form Questions & Gates">
-                ✏️ Edit
+                Edit
               </button>
               <button class="btn btn-sm ${isExpired ? 'btn-primary' : 'btn-secondary'}" 
                 onclick="window.adminCenter.toggleEventExpiry('${evt.id}')" 
                 title="${isExpired ? 'Reopen Registrations' : 'Expire Registrations'}">
-                ${isExpired ? '🟢 Reopen' : '⏰ Expire'}
+                ${isExpired ? 'Reopen' : 'Expire'}
               </button>
               <button class="btn btn-danger btn-sm" onclick="window.adminCenter.cancelCreatedForm('${evt.id}')" title="Cancel & Delete Event">
-                🚫 Cancel
+                Cancel
               </button>
             </div>
           </td>
@@ -500,11 +500,11 @@ export class AdminCommandCenter {
         <td>
           <select class="admin-status-dropdown ${statusClass}" 
             onchange="window.adminCenter.updateParticipantStatus('${r.ticketId}', this.value)">
-            <option value="Approved" ${status === 'Approved' ? 'selected' : ''}>✅ Approved</option>
-            <option value="Pending" ${status === 'Pending' ? 'selected' : ''}>⏳ Pending</option>
-            <option value="Waitlisted" ${status === 'Waitlisted' ? 'selected' : ''}>📋 Waitlisted</option>
-            <option value="Checked In" ${status === 'Checked In' ? 'selected' : ''}>🟢 Checked In</option>
-            <option value="Cancelled" ${status === 'Cancelled' ? 'selected' : ''}>❌ Cancelled</option>
+            <option value="Approved" ${status === 'Approved' ? 'selected' : ''}>Approved</option>
+            <option value="Pending" ${status === 'Pending' ? 'selected' : ''}>Pending</option>
+            <option value="Waitlisted" ${status === 'Waitlisted' ? 'selected' : ''}>Waitlisted</option>
+            <option value="Checked In" ${status === 'Checked In' ? 'selected' : ''}>Checked In</option>
+            <option value="Cancelled" ${status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
           </select>
         </td>
         <td>
@@ -514,16 +514,16 @@ export class AdminCommandCenter {
         </td>
         <td>
           <span class="badge ${r.checkedIn ? 'badge-checked' : 'badge-pending'}">
-            ${r.checkedIn ? '🟢 VERIFIED' : '🟡 AT GATE'}
+            ${r.checkedIn ? 'VERIFIED' : 'AT GATE'}
           </span>
         </td>
         <td>
           <div class="crm-actions">
             <button class="crm-btn" title="View Digital Pass" onclick="window.nexusApp.openBadgeModal('${r.ticketId}')">
-              🎫 Pass
+              Pass
             </button>
             <button class="crm-btn" title="Dispense Certificate" onclick="window.adminCenter.openCertificate('${r.ticketId}')">
-              🏆 Cert
+              Cert
             </button>
             <button class="crm-btn" title="Quick Toggle Check-in" onclick="window.adminCenter.toggleCheckIn('${r.ticketId}')">
               ${r.checkedIn ? 'Undo' : 'Check-in'}
@@ -581,7 +581,7 @@ export class AdminCommandCenter {
     const toast = document.createElement('div');
     toast.className = 'nexus-toast toast-success';
     toast.innerHTML = `
-      <div class="toast-icon">⚡</div>
+      <div class="toast-icon">OK</div>
       <div class="toast-content">
         <div class="toast-title">Organizer Management</div>
         <div class="toast-desc">${msg}</div>
@@ -856,13 +856,13 @@ export class AdminCommandCenter {
       return `
         <div class="admin-profile-card unauth-profile-card" id="dashboardUserProfileCard">
           <div class="unauth-profile-inner">
-            <div class="unauth-profile-icon">👤</div>
+            <div class="unauth-profile-icon">USER</div>
             <div class="unauth-profile-text">
               <h3 style="font-size:1.25rem; font-weight:800; color:#fff; margin-bottom:0.35rem;">Personalize Your Profile & Digital Passes</h3>
               <p style="color:var(--text-muted); font-size:0.9rem; line-height:1.5;">Sign in with Google or create an account to customize your profile name, picture, campus ID, phone, department, and contact information across NexusOps.</p>
             </div>
             <button class="btn btn-primary btn-glow btn-lg" onclick="window.authSystem.openAuthModal('signin')">
-              👤 Sign In / Create Account &rarr;
+              Sign In / Create Account &rarr;
             </button>
           </div>
         </div>
@@ -883,11 +883,11 @@ export class AdminCommandCenter {
               <span class="badge-dot pulse"></span>
               <span>${user.provider === 'google' ? 'Google Verified Account' : 'Campus Member Account'}</span>
             </div>
-            <h2 class="profile-card-title">👤 My Profile & Account Settings</h2>
+            <h2 class="profile-card-title">My Profile & Account Settings</h2>
             <p class="profile-card-sub">Edit your profile name, picture, and contact details. Reflected automatically across your passes, registrations, and forms.</p>
           </div>
           <div class="profile-header-right">
-            <span class="sync-status-tag">⚡ Live Sync Enabled</span>
+            <span class="sync-status-tag">Live Sync Enabled</span>
           </div>
         </div>
 
@@ -902,7 +902,7 @@ export class AdminCommandCenter {
 
             <div class="avatar-actions-wrap">
               <label class="btn btn-sm btn-primary btn-glow btn-block" style="cursor:pointer; margin-bottom:0.5rem;">
-                📷 Upload Photo File
+                Upload Photo File
                 <input type="file" id="dashboardPhotoFileInput" accept="image/*" style="display:none;" onchange="window.adminCenter.handleProfilePhotoUpload(event)" />
               </label>
 
@@ -914,11 +914,11 @@ export class AdminCommandCenter {
               </div>
 
               <div class="avatar-presets-grid">
-                <span class="presets-caption">Or choose an avatar:</span>
+                <span class="presets-caption">Or choose an avatar badge:</span>
                 <div class="presets-emoji-list">
-                  ${['👨‍💻', '👩‍💻', '🚀', '⚡', '🤖', '🎓', '🌟', '🦊', '🎨', '🦁', '💡', '🏆'].map(emoji => `
-                    <button type="button" class="btn-emoji-pick-sm" onclick="window.adminCenter.selectProfileAvatarEmoji('${emoji}')" title="Pick ${emoji}">
-                      ${emoji}
+                  ${['DEV', 'LEAD', 'VIP', 'PRO', 'TECH', 'CORE', 'ORG', 'AI', 'CP', 'LAB'].map(badge => `
+                    <button type="button" class="btn-emoji-pick-sm" style="font-size:0.75rem; font-weight:800; font-family:var(--font-mono);" onclick="window.adminCenter.selectProfileAvatarEmoji('${badge}')" title="Pick ${badge}">
+                      ${badge}
                     </button>
                   `).join('')}
                 </div>
@@ -972,7 +972,7 @@ export class AdminCommandCenter {
 
               <div class="profile-save-bar">
                 <button type="submit" class="btn btn-primary btn-glow btn-lg">
-                  💾 Save Profile Changes &rarr;
+                  Save Profile Changes &rarr;
                 </button>
                 <button type="button" class="btn btn-secondary btn-lg" onclick="window.adminCenter.resetProfileChanges()">
                   Discard Changes
@@ -1018,7 +1018,7 @@ export class AdminCommandCenter {
     this.pendingAvatar = url;
     const previewEl = document.getElementById('dashboardAvatarPreview');
     if (previewEl) {
-      previewEl.innerHTML = `<img src="${url}" alt="Preview" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" onerror="this.parentElement.textContent='👤'" />`;
+      previewEl.innerHTML = `<img src="${url}" alt="Preview" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" onerror="this.parentElement.textContent='U'" />`;
     }
   }
 

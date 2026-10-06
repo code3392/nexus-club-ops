@@ -39,7 +39,7 @@ export class GateScannerTerminal {
     if (!currentUser) {
       this.container.innerHTML = `
         <div class="empty-state-box" style="padding: 3.5rem 1.5rem; text-align: center; max-width: 540px; margin: 3rem auto; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color);">
-          <div style="font-size: 3.5rem; margin-bottom: 1rem;">🔐</div>
+          <div style="font-size: 1.5rem; font-weight:800; font-family:var(--font-mono); margin-bottom: 1rem;">GATE AUTH</div>
           <h3 style="font-size: 1.4rem; color: #ffffff; margin-bottom: 0.5rem;">Gate Scanner Operator Sign-In</h3>
           <p style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.6; margin-bottom: 1.5rem;">
             Security Policy: An organizer can scan tickets for events they launched only. Please sign in with your organizer account to operate checkpoint verification.
@@ -62,13 +62,13 @@ export class GateScannerTerminal {
     if (myEvents.length === 0) {
       this.container.innerHTML = `
         <div class="empty-state-box" style="padding: 3.5rem 1.5rem; text-align: center; max-width: 580px; margin: 3rem auto; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color);">
-          <div style="font-size: 3.5rem; margin-bottom: 1rem;">🎪</div>
+          <div style="font-size: 1.5rem; font-weight:800; font-family:var(--font-mono); margin-bottom: 1rem;">OPERATOR</div>
           <h3 style="font-size: 1.4rem; color: #ffffff; margin-bottom: 0.5rem;">No Events Launched by Your Account</h3>
           <p style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.6; margin-bottom: 1.5rem;">
             Per security rules, you can only scan attendee tickets for events that you launched. Create an event in the Form Builder to generate registrations and check in attendees.
           </p>
           <button class="btn btn-primary btn-glow btn-lg" onclick="window.nexusApp.switchTab('studio')">
-            ➕ Create & Launch an Event &rarr;
+            Create & Launch an Event &rarr;
           </button>
         </div>
       `;
@@ -140,11 +140,11 @@ export class GateScannerTerminal {
               <video id="scannerVideo" class="scanner-video" playsinline muted></video>
 
               <div class="viewfinder-overlay" id="viewfinderOverlay">
-                <div class="viewfinder-icon">📷</div>
+                <div class="viewfinder-icon">[CAMERA]</div>
                 <div class="viewfinder-text">Point camera at Attendee QR Badge</div>
                 <div class="viewfinder-sub">Scanning for: <strong>${activeEvent.title}</strong></div>
                 <button class="btn btn-sm btn-secondary" onclick="window.gateScanner.toggleCamera()">
-                  🎥 Toggle Live Webcam
+                  Toggle Live Webcam
                 </button>
               </div>
             </div>
@@ -156,7 +156,7 @@ export class GateScannerTerminal {
                   placeholder="Enter Ticket ID (e.g. NX-TECH-1234)" 
                   onkeydown="if(event.key==='Enter') window.gateScanner.processScan(this.value)" />
                 <button class="btn btn-primary" onclick="window.gateScanner.processManualInput()">
-                  ⚡ Check In
+                  Check In
                 </button>
               </div>
 
@@ -165,13 +165,13 @@ export class GateScannerTerminal {
                   <span class="chips-label">Recent Event Registrations:</span>
                   ${registrations.slice(0, 4).map(r => `
                     <button class="chip-btn" onclick="window.gateScanner.processScan('${r.ticketId}')">
-                      ${r.checkedIn ? '✓' : '▶'} ${r.leadName} (${r.ticketId})
+                      ${r.checkedIn ? '[OK]' : '>'} ${r.leadName} (${r.ticketId})
                     </button>
                   `).join('')}
                 </div>
               ` : `
                 <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.5rem;">
-                  ℹ️ No attendees registered for this event yet. As attendees register, their passes can be scanned here.
+                  No attendees registered for this event yet. As attendees register, their passes can be scanned here.
                 </div>
               `}
             </div>
@@ -214,7 +214,7 @@ export class GateScannerTerminal {
 
           <div class="scanner-log-card">
             <div class="scanner-log-header">
-              <div class="log-title">📋 Live Gate Activity Feed</div>
+              <div class="log-title">Live Gate Activity Feed</div>
               <span class="log-badge">${scanLogs.length} Scans</span>
             </div>
             <div class="scanner-log-list" id="scannerLogList">
@@ -233,13 +233,13 @@ export class GateScannerTerminal {
 
     return logs.slice(0, 15).map(log => {
       let statusClass = 'log-success';
-      let icon = '✅';
+      let icon = '[OK]';
       if (log.status === 'DUPLICATE') {
         statusClass = 'log-warning';
-        icon = '⚠️';
+        icon = '[WARN]';
       } else if (log.status === 'UNAUTHORIZED' || log.status === 'INVALID') {
         statusClass = 'log-danger';
-        icon = '⛔';
+        icon = '[DENIED]';
       }
 
       return `
@@ -303,7 +303,7 @@ export class GateScannerTerminal {
       resultBox.classList.add('result-success');
       resultBox.innerHTML = `
         <div class="res-head">
-          <div class="res-icon">✅</div>
+          <div class="res-icon" style="font-weight:900; font-family:var(--font-mono);">[OK]</div>
           <div>
             <div class="res-title">ENTRY AUTHORIZED</div>
             <div class="res-sub">Checked in at ${this.currentGate}</div>
@@ -315,7 +315,7 @@ export class GateScannerTerminal {
             <span><strong>Event:</strong> ${res.reg.eventTitle}</span>
             <span><strong>Pass:</strong> <span class="mono">${res.reg.ticketId}</span></span>
           </div>
-          ${res.reg.teamName ? `<div class="res-team-box">👥 Team: <strong>${res.reg.teamName}</strong> (${res.reg.teamMembers?.length || 1} members)</div>` : ''}
+          ${res.reg.teamName ? `<div class="res-team-box">Team: <strong>${res.reg.teamName}</strong> (${res.reg.teamMembers?.length || 1} members)</div>` : ''}
         </div>
       `;
     } else if (res.status === 'UNAUTHORIZED') {
@@ -323,7 +323,7 @@ export class GateScannerTerminal {
       resultBox.classList.add('result-error');
       resultBox.innerHTML = `
         <div class="res-head">
-          <div class="res-icon">⛔</div>
+          <div class="res-icon" style="font-weight:900; font-family:var(--font-mono);">[DENIED]</div>
           <div>
             <div class="res-title">SECURITY VIOLATION: UNAUTHORIZED SCANNER</div>
             <div class="res-sub">You can only scan passes for events that you launched</div>
@@ -341,7 +341,7 @@ export class GateScannerTerminal {
       resultBox.classList.add('result-warning');
       resultBox.innerHTML = `
         <div class="res-head">
-          <div class="res-icon">⚠️</div>
+          <div class="res-icon" style="font-weight:900; font-family:var(--font-mono);">[WARN]</div>
           <div>
             <div class="res-title">SECURITY WARNING: DUPLICATE ENTRY</div>
             <div class="res-sub">This pass has already been used!</div>
@@ -359,7 +359,7 @@ export class GateScannerTerminal {
       resultBox.classList.add('result-error');
       resultBox.innerHTML = `
         <div class="res-head">
-          <div class="res-icon">⛔</div>
+          <div class="res-icon" style="font-weight:900; font-family:var(--font-mono);">[DENIED]</div>
           <div>
             <div class="res-title">INVALID PASS / REJECTED</div>
             <div class="res-sub">Ticket does not exist in the database</div>

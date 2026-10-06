@@ -71,7 +71,7 @@ export class AuthSystem {
       const isImg = this.currentUser.avatar && (this.currentUser.avatar.startsWith('data:image') || this.currentUser.avatar.startsWith('http') || this.currentUser.avatar.startsWith('blob:'));
       const avatarHTML = isImg 
         ? `<img src="${this.currentUser.avatar}" alt="${this.currentUser.name}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />`
-        : (this.currentUser.avatar || (this.currentUser.name ? this.currentUser.name.charAt(0).toUpperCase() : '👤'));
+        : (this.currentUser.avatar || (this.currentUser.name ? this.currentUser.name.charAt(0).toUpperCase() : 'U'));
 
       slot.innerHTML = `
         <div class="auth-user-dropdown-wrap">
@@ -99,17 +99,17 @@ export class AuthSystem {
             </div>
             <div class="dropdown-divider"></div>
             <button class="dropdown-item" onclick="window.authSystem.goToDashboardProfile()">
-              👤 Edit Profile & Picture
+              Edit Profile & Picture
             </button>
             <button class="dropdown-item" onclick="window.nexusApp.openMyRegistrationsModal(); window.authSystem.toggleUserDropdown()">
-              🎟️ My Passes & Registrations
+              My Passes & Registrations
             </button>
             <button class="dropdown-item" onclick="window.nexusApp.switchTab('admin'); window.authSystem.toggleUserDropdown()">
-              📊 Dashboard & Events
+              Dashboard & Events
             </button>
             <div class="dropdown-divider"></div>
             <button class="dropdown-item text-danger" onclick="window.authSystem.logout()">
-              🚪 Sign Out
+              Sign Out
             </button>
           </div>
         </div>
@@ -117,7 +117,7 @@ export class AuthSystem {
     } else {
       slot.innerHTML = `
         <button class="btn btn-sm btn-primary btn-glow" onclick="window.authSystem.openAuthModal('signin')">
-          <span>👤 Sign In / Join</span>
+          <span>Sign In / Join</span>
         </button>
       `;
     }
@@ -169,12 +169,11 @@ export class AuthSystem {
                 Create Account
               </button>
             </div>
-            <button class="modal-close-btn" onclick="window.authSystem.closeModal()">✕</button>
+            <button class="modal-close-btn" onclick="window.authSystem.closeModal()">&times;</button>
           </div>
 
           ${reasonMessage ? `
             <div style="background: rgba(255, 255, 255, 0.08); border-bottom: 1px solid rgba(255, 255, 255, 0.15); padding: 0.85rem 1.5rem; font-size: 0.85rem; color: #ffffff; display: flex; align-items: center; gap: 0.6rem;">
-              <span>🔐</span>
               <span><strong>Login Required:</strong> ${reasonMessage}</span>
             </div>
           ` : ''}
@@ -331,10 +330,10 @@ export class AuthSystem {
     }
 
     if (pw === confirm) {
-      msgEl.textContent = '✓ Passwords match successfully';
+      msgEl.textContent = 'Passwords match successfully';
       msgEl.className = 'pw-match-msg match-success';
     } else {
-      msgEl.textContent = '✕ Passwords do not match';
+      msgEl.textContent = 'Passwords do not match';
       msgEl.className = 'pw-match-msg match-error';
     }
   }
@@ -408,7 +407,7 @@ export class AuthSystem {
             </div>
             <h3 class="google-modal-title">Sign in with Google</h3>
             <p class="google-modal-subtitle">${isCustom ? 'Enter your Google profile information to continue to <strong>NexusOps</strong>' : 'Choose an account to continue to <strong>NexusOps</strong>'}</p>
-            <button class="modal-close-btn" onclick="window.authSystem.closeModal()" style="position:absolute; top:1rem; right:1.25rem;">✕</button>
+            <button class="modal-close-btn" onclick="window.authSystem.closeModal()" style="position:absolute; top:1rem; right:1.25rem;">&times;</button>
           </div>
 
           <div class="google-modal-body">
@@ -426,13 +425,13 @@ export class AuthSystem {
                         <div class="google-acc-name">${acc.name}</div>
                         <div class="google-acc-email">${acc.email}</div>
                       </div>
-                      <button class="google-acc-del" onclick="event.stopPropagation(); window.authSystem.removeSavedGoogleAccount(${idx});" title="Remove account">✕</button>
+                      <button class="google-acc-del" onclick="event.stopPropagation(); window.authSystem.removeSavedGoogleAccount(${idx});" title="Remove account">&times;</button>
                     </div>
                   `;
                 }).join('')}
 
                 <div class="google-account-item google-add-account" onclick="window.authSystem.openGoogleAccountModal(true)">
-                  <div class="google-acc-avatar" style="background:rgba(255,255,255,0.1); color:#ffffff; font-size:1.1rem;">➕</div>
+                  <div class="google-acc-avatar" style="background:rgba(255,255,255,0.1); color:#ffffff; font-size:1.1rem;">+</div>
                   <div class="google-acc-details">
                     <div class="google-acc-name" style="font-weight:700; color:var(--text-main);">Use another Google account</div>
                     <div class="google-acc-email">Sign in with your own custom name & picture</div>
@@ -454,19 +453,19 @@ export class AuthSystem {
                 <div class="form-group">
                   <label class="form-label">Profile Picture / Avatar</label>
                   <div class="google-avatar-picker-wrap">
-                    <div class="google-avatar-preview" id="gAvatarPreview">👤</div>
+                    <div class="google-avatar-preview" id="gAvatarPreview">U</div>
                     <div class="google-avatar-controls">
                       <label class="btn btn-sm btn-secondary" style="cursor:pointer;">
-                        📷 Upload Photo
+                        Upload Photo
                         <input type="file" id="gPhotoFileInput" accept="image/*" style="display:none;" onchange="window.authSystem.handleGooglePhotoUpload(event)" />
                       </label>
                       <input type="url" id="gPhotoUrlInput" class="form-input form-input-sm" placeholder="Or paste image link" oninput="window.authSystem.handleGooglePhotoUrl(this.value)" />
                     </div>
                   </div>
                   <div class="preset-emojis-row">
-                    <span class="preset-label">Or pick an avatar:</span>
-                    ${['👨‍💻', '👩‍💻', '🚀', '⚡', '🤖', '🎓', '🌟', '🦊', '🎨', '🦁'].map(emoji => `
-                      <button type="button" class="btn-emoji-pick" onclick="window.authSystem.selectGoogleEmoji('${emoji}')">${emoji}</button>
+                    <span class="preset-label">Or pick a badge:</span>
+                    ${['DEV', 'LEAD', 'VIP', 'PRO', 'TECH', 'CORE', 'ORG', 'AI', 'CP', 'LAB'].map(badge => `
+                      <button type="button" class="btn-emoji-pick" style="font-size:0.75rem; font-weight:800; font-family:var(--font-mono);" onclick="window.authSystem.selectGoogleEmoji('${badge}')">${badge}</button>
                     `).join('')}
                   </div>
                 </div>
@@ -491,7 +490,7 @@ export class AuthSystem {
           </div>
 
           <div class="google-modal-footer">
-            <span class="google-security-badge">🔒 Instant Google Sign-In • Saved to your browser</span>
+            <span class="google-security-badge">Instant Google Sign-In • Saved to your browser</span>
           </div>
 
         </div>
@@ -529,7 +528,7 @@ export class AuthSystem {
     this.pendingGoogleAvatar = url;
     const preview = document.getElementById('gAvatarPreview');
     if (preview) {
-      preview.innerHTML = `<img src="${url}" alt="Preview" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" onerror="this.parentElement.textContent='👤'" />`;
+      preview.innerHTML = `<img src="${url}" alt="Preview" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" onerror="this.parentElement.textContent='U'" />`;
     }
   }
 
@@ -671,7 +670,7 @@ export class AuthSystem {
     const toast = document.createElement('div');
     toast.className = 'nexus-toast toast-success visible';
     toast.innerHTML = `
-      <div class="toast-icon">🔐</div>
+      <div class="toast-icon">OK</div>
       <div class="toast-content">
         <div class="toast-title">Authentication Verified</div>
         <div class="toast-desc">${message}</div>

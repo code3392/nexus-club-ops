@@ -202,17 +202,17 @@ class NexusApp {
     if (fests.length === 0) {
       container.innerHTML = `
         <div class="empty-state-card" style="grid-column: 1 / -1; padding: 2.5rem 1.5rem; text-align: center; background: rgba(18, 18, 18, 0.5); border: 1px dashed var(--border-subtle); border-radius: var(--radius-lg);">
-          <div style="font-size: 2.4rem; margin-bottom: 0.6rem;">🎪</div>
+          <div style="font-size: 1.5rem; font-weight:800; font-family:var(--font-mono); margin-bottom: 0.6rem; color:var(--text-muted);">[FESTIVALS]</div>
           <h3 style="color: var(--text-main); font-size: 1.15rem; font-weight: 700; margin-bottom: 0.4rem;">No Festivals Scheduled</h3>
           <p style="color: var(--text-muted); font-size: 0.85rem; max-width: 480px; margin: 0 auto 1.25rem auto;">
             Create a new festival container or launch independent event registration forms.
           </p>
           <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
             <button class="btn btn-secondary btn-sm" onclick="window.nexusApp.openCreateFestModal()">
-              ➕ Add New Festival
+              + Add New Festival
             </button>
             <button class="btn btn-primary btn-sm btn-glow" onclick="window.nexusApp.handleCreateFormClick()">
-              🛠️ Create Registration Form
+              Create Registration Form
             </button>
           </div>
         </div>
@@ -233,8 +233,8 @@ class NexusApp {
         <div class="event-card fest-card ${isSelected ? 'fest-card-selected' : ''}" data-id="${fest.id}">
           <div class="event-card-banner" style="background: ${fest.bannerGradient};">
             <div class="banner-top-row">
-              <span class="event-club-badge">🎪 ${fest.status || 'Active'}</span>
-              ${isCreator ? '<span class="event-club-badge" style="background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.4); color:#ffffff;">👑 Your Fest</span>' : ''}
+              <span class="event-club-badge">${fest.status || 'Active'}</span>
+              ${isCreator ? '<span class="event-club-badge" style="background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.4); color:#ffffff;">Your Fest</span>' : ''}
               <span class="event-tier-badge">${festEvents.length === 1 ? '1 CONTEST' : festEvents.length + ' CONTESTS'}</span>
             </div>
             <div class="event-banner-content">
@@ -256,24 +256,24 @@ class NexusApp {
             </div>
 
             <div style="margin-bottom:0.75rem;">
-              <span class="event-deadline-pill">📅 Dates: ${fest.date || 'TBA'}</span>
+              <span class="event-deadline-pill">Dates: ${fest.date || 'TBA'}</span>
             </div>
 
             <div class="event-details-grid">
               <div class="detail-item">
-                <span class="d-icon">🏛️</span>
+                <span class="d-icon">•</span>
                 <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${fest.organization || 'Campus Tech Society'}">${fest.organization || 'Campus Tech Society'}</span>
               </div>
               <div class="detail-item">
-                <span class="d-icon">📍</span>
+                <span class="d-icon">•</span>
                 <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${fest.venue || 'Campus Venue'}">${fest.venue || 'Campus Venue'}</span>
               </div>
               <div class="detail-item">
-                <span class="d-icon">🏆</span>
+                <span class="d-icon">•</span>
                 <span>${festEvents.length > 0 ? `${festEvents.length} Contests Active` : 'Open Entry'}</span>
               </div>
               <div class="detail-item">
-                <span class="d-icon">👥</span>
+                <span class="d-icon">•</span>
                 <span>Host: ${fest.lead ? fest.lead : (fest.organization ? fest.organization.split(' ')[0] : 'Campus')}</span>
               </div>
             </div>
@@ -282,7 +282,7 @@ class NexusApp {
             <div class="capacity-meter-box">
               <div class="capacity-meter-header">
                 <span>Contests: <strong>${festEvents.length} ${festEvents.length === 1 ? 'Contest' : 'Contests'} Active</strong></span>
-                <span class="slots-alert text-emerald">⚡ Live Fest</span>
+                <span class="slots-alert text-emerald">Live Fest</span>
               </div>
               <div class="capacity-meter-track">
                 <div class="capacity-meter-fill" style="width: ${festEvents.length > 0 ? '100' : '20'}%; background: #ffffff;"></div>
@@ -301,16 +301,16 @@ class NexusApp {
                   Details & Rules
                 </button>
                 <button class="btn btn-primary btn-sm btn-glow" style="flex: 1; white-space: nowrap;" onclick="window.nexusApp.openFestDetails('${fest.id}')">
-                  🎪 Select Fest &rarr;
+                  Select Fest &rarr;
                 </button>
               </div>
               ${isCreator ? `
                 <div style="display: flex; justify-content: flex-end; gap: 0.5rem; padding-top: 0.45rem; border-top: 1px dashed var(--border-subtle);">
                   <button class="btn btn-secondary btn-sm" style="padding: 0.3rem 0.65rem; font-size: 0.74rem;" onclick="window.nexusApp.openEditFestModal('${fest.id}')" title="Edit Festival Details">
-                    ✏️ Edit Fest
+                    Edit Fest
                   </button>
                   <button class="btn btn-outline-danger btn-sm" style="padding: 0.3rem 0.65rem; font-size: 0.74rem;" onclick="window.nexusApp.deleteFest('${fest.id}')" title="Delete Festival">
-                    🗑️ Delete Fest
+                    Delete Fest
                   </button>
                 </div>
               ` : ''}
@@ -347,11 +347,11 @@ class NexusApp {
     row.innerHTML = `
       <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-right:4px;">Fest:</span>
       <button class="filter-pill ${this.activeFestFilter === 'all' ? 'active' : ''}" data-fest="all" onclick="window.nexusApp.setFestFilter('all')">
-        🌟 All Fests
+        All Fests
       </button>
       ${fests.map(f => `
         <button class="filter-pill ${this.activeFestFilter === f.id ? 'active' : ''}" data-fest="${f.id}" onclick="window.nexusApp.setFestFilter('${f.id}')">
-          🎪 ${f.shortName || f.title}
+          ${f.shortName || f.title}
         </button>
       `).join('')}
     `;
@@ -379,14 +379,14 @@ class NexusApp {
               <h2 style="font-size:1.6rem; font-weight:800; color:#ffffff; margin:0.3rem 0;">${fest.title}</h2>
               <p style="color:rgba(255,255,255,0.9); font-size:0.92rem; max-width:680px;">${fest.description}</p>
             </div>
-            <button class="modal-close-btn" onclick="window.nexusApp.closeModal()" style="position:absolute; top:1.25rem; right:1.25rem;">✕</button>
+            <button class="modal-close-btn" onclick="window.nexusApp.closeModal()" style="position:absolute; top:1.25rem; right:1.25rem;">&times;</button>
           </div>
 
           <div style="padding:1.5rem 2rem;">
             <div class="modal-info-columns" style="margin-bottom:1.5rem;">
               <div>
-                <p>📍 <strong>Official Venue:</strong> ${fest.venue}</p>
-                <p>📅 <strong>Festival Dates:</strong> ${fest.date}</p>
+                <p><strong>Official Venue:</strong> ${fest.venue}</p>
+                <p><strong>Festival Dates:</strong> ${fest.date}</p>
               </div>
               <div style="text-align:right;">
                 <span class="badge badge-paid" style="font-size:0.8rem; padding:6px 12px;">Official Campus Event</span>
@@ -408,16 +408,16 @@ class NexusApp {
                       <div style="font-size:0.78rem; color:#94a3b8; line-height:1.4;">${evt.tagline}</div>
                     </div>
                     <div class="fet-meta">
-                      <span>🎟️ ${evt.fee === 0 ? 'Free Entry' : '$' + evt.fee}</span>
+                      <span>${evt.fee === 0 ? 'Free Entry' : '$' + evt.fee}</span>
                       <span class="${isFull ? 'text-rose' : 'text-emerald'}">
-                        ${isFull ? '🔴 Closed / Full' : `⚡ ${evt.capacity - evt.registeredCount} slots left`}
+                        ${isFull ? 'Closed / Full' : `${evt.capacity - evt.registeredCount} slots left`}
                       </span>
                     </div>
                   </div>
                 `;
               }).join('') : `
                 <div style="padding: 2rem; text-align: center; color: var(--text-muted);">
-                  <div style="font-size: 1.8rem; margin-bottom: 0.5rem;">📝</div>
+                  <div style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; color:var(--text-muted);">[NO EVENTS]</div>
                   <p>No events added to this festival yet.</p>
                   <button class="btn btn-primary btn-sm" style="margin-top:0.5rem;" onclick="window.nexusApp.closeModal(); window.nexusApp.handleCreateFormClick();">
                     + Add an Event in Form Studio
@@ -475,8 +475,8 @@ class NexusApp {
       <div class="modal-backdrop" onclick="if(event.target===this) window.nexusApp.closeModal()">
         <div class="modal-dialog" style="max-width: 520px;">
           <div class="modal-header">
-            <h3>🎪 Create New Festival</h3>
-            <button class="modal-close-btn" onclick="window.nexusApp.closeModal()">✕</button>
+            <h3>Create New Festival</h3>
+            <button class="modal-close-btn" onclick="window.nexusApp.closeModal()">&times;</button>
           </div>
           <form class="modal-body" onsubmit="event.preventDefault(); window.nexusApp.handleSaveNewFest();" style="display:flex; flex-direction:column; gap:1rem;">
             <div class="form-group">
@@ -570,8 +570,8 @@ class NexusApp {
       <div class="modal-backdrop" onclick="if(event.target===this) window.nexusApp.closeModal()">
         <div class="modal-dialog" style="max-width: 540px;">
           <div class="modal-header">
-            <h3>✏️ Edit Festival Details</h3>
-            <button class="modal-close-btn" onclick="window.nexusApp.closeModal()">✕</button>
+            <h3>Edit Festival Details</h3>
+            <button class="modal-close-btn" onclick="window.nexusApp.closeModal()">&times;</button>
           </div>
           <form class="modal-body" onsubmit="event.preventDefault(); window.nexusApp.handleUpdateFest('${fest.id}');" style="display:flex; flex-direction:column; gap:1rem;">
             <div class="form-group">
@@ -604,7 +604,7 @@ class NexusApp {
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem; flex-wrap:wrap; gap:0.5rem;">
               <button type="button" class="btn btn-outline-danger btn-sm" onclick="window.nexusApp.deleteFest('${fest.id}')">
-                🗑️ Delete Festival
+                Delete Festival
               </button>
               <div style="display:flex; gap:0.75rem;">
                 <button type="button" class="btn btn-secondary" onclick="window.nexusApp.closeModal()">Cancel</button>
@@ -718,13 +718,13 @@ class NexusApp {
     if (events.length === 0) {
       container.innerHTML = `
         <div class="empty-state-card" style="grid-column: 1 / -1; padding: 4rem 2rem; text-align: center; background: var(--bg-card); border-radius: 16px; border: 1px dashed var(--border-color); margin: 1.5rem 0;">
-          <div style="font-size: 3.5rem; margin-bottom: 1rem;">🎪</div>
+          <div style="font-size: 1.5rem; font-weight:800; font-family:var(--font-mono); margin-bottom: 1rem; color:var(--text-muted);">[EVENTS]</div>
           <h3 style="font-size: 1.5rem; color: #ffffff; margin-bottom: 0.5rem;">No Events or Registration Forms Created Yet</h3>
           <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; max-width: 550px; margin: 0 auto 1.5rem;">
             Ready to launch your student organization's competitions, workshops, or fests? Build your custom registration form with tailored gates, team size limits, and instant holographic passes.
           </p>
           <button class="btn btn-primary btn-glow btn-lg" onclick="window.nexusApp.handleCreateFormClick()">
-            ➕ Launch Your First Registration Form &rarr;
+            Launch Your First Registration Form &rarr;
           </button>
         </div>
       `;
@@ -734,7 +734,7 @@ class NexusApp {
     if (filtered.length === 0) {
       container.innerHTML = `
         <div class="empty-state-box">
-          <div class="empty-icon">🔍</div>
+          <div class="empty-icon" style="font-family:var(--font-mono); font-size:1rem; font-weight:700;">[SEARCH]</div>
           <h3>No events match your criteria</h3>
           <p>Try clearing filters or search keywords.</p>
           <button class="btn btn-secondary btn-sm" onclick="window.nexusApp.resetFilters()">Reset Filters</button>
@@ -755,7 +755,7 @@ class NexusApp {
           <div class="event-card-banner" style="background: ${evt.gradient};">
             <div class="banner-top-row">
               <span class="event-club-badge">${evt.festName || evt.clubName}</span>
-              ${isCreator ? '<span class="event-club-badge" style="background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.4); color:#ffffff;">👑 Your Event</span>' : ''}
+              ${isCreator ? '<span class="event-club-badge" style="background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.4); color:#ffffff;">Your Event</span>' : ''}
               <span class="event-tier-badge">${evt.fee === 0 ? 'FREE ENTRY' : '$' + evt.fee + ' FEE'}</span>
             </div>
             <div class="event-banner-content">
@@ -768,24 +768,24 @@ class NexusApp {
             <p class="event-tagline">${evt.tagline}</p>
 
             <div style="margin-bottom:0.75rem;">
-              <span class="event-deadline-pill">⏳ Deadline: ${evt.deadline || 'Oct 23, 2026 • 11:59 PM'}</span>
+              <span class="event-deadline-pill">Deadline: ${evt.deadline || 'Oct 23, 2026 • 11:59 PM'}</span>
             </div>
 
             <div class="event-details-grid">
               <div class="detail-item">
-                <span class="d-icon">📅</span>
+                <span class="d-icon">•</span>
                 <span>${evt.date}</span>
               </div>
               <div class="detail-item">
-                <span class="d-icon">📍</span>
+                <span class="d-icon">•</span>
                 <span>${evt.venue}</span>
               </div>
               <div class="detail-item">
-                <span class="d-icon">🏆</span>
+                <span class="d-icon">•</span>
                 <span>${evt.prizePool}</span>
               </div>
               <div class="detail-item">
-                <span class="d-icon">👥</span>
+                <span class="d-icon">•</span>
                 <span>${evt.isTeam ? `Teams (${evt.minTeam}-${evt.maxTeam} Members)` : 'Individual / Solo'}</span>
               </div>
             </div>
@@ -795,7 +795,7 @@ class NexusApp {
               <div class="capacity-meter-header">
                 <span>Quota: <strong>${evt.registeredCount} / ${evt.capacity} Filled</strong></span>
                 <span class="slots-alert ${slotsLeft <= 5 || isFull ? 'text-rose' : 'text-emerald'}">
-                  ${isFull ? '🔴 Capacity Reached' : `⚡ ${slotsLeft} slots remaining`}
+                  ${isFull ? 'Capacity Reached' : `${slotsLeft} slots remaining`}
                 </span>
               </div>
               <div class="capacity-meter-track">
@@ -809,7 +809,7 @@ class NexusApp {
               </button>
               <button class="btn btn-primary btn-sm ${isFull ? 'btn-disabled' : 'btn-glow'}" 
                 onclick="window.nexusApp.startRegistration('${evt.id}')" ${isFull ? 'disabled' : ''}>
-                ${isFull ? 'Quota Full (Closed)' : (isCreator ? '🎟️ Participate in Your Form &rarr;' : 'Register Now &rarr;')}
+                ${isFull ? 'Quota Full (Closed)' : (isCreator ? 'Participate in Your Form &rarr;' : 'Register Now &rarr;')}
               </button>
             </div>
           </div>
@@ -868,7 +868,7 @@ class NexusApp {
               <span class="modal-club-tag">${event.festName || 'Tech Carnival 2026'} • ${event.clubName}</span>
               <h2 class="modal-title">${event.title}</h2>
             </div>
-            <button class="modal-close-btn" onclick="window.nexusApp.closeModal()">✕</button>
+            <button class="modal-close-btn" onclick="window.nexusApp.closeModal()">&times;</button>
           </div>
 
           <div class="modal-body">
@@ -895,9 +895,9 @@ class NexusApp {
                 <p>${event.description || event.tagline}</p>
 
                 <h4>Schedule, Venue & Deadline</h4>
-                <p>📍 <strong>Venue:</strong> ${event.venue}</p>
-                <p>⏰ <strong>Event Time:</strong> ${event.date}</p>
-                <p>⏳ <strong>Registration Deadline:</strong> <span style="color:#ffffff; font-weight:700;">${event.deadline || 'Oct 23, 2026 • 11:59 PM'}</span></p>
+                <p><strong>Venue:</strong> ${event.venue}</p>
+                <p><strong>Event Time:</strong> ${event.date}</p>
+                <p><strong>Registration Deadline:</strong> <span style="color:#ffffff; font-weight:700;">${event.deadline || 'Oct 23, 2026 • 11:59 PM'}</span></p>
 
                 ${event.rules ? `
                   <h4>Contest Rules & Submission</h4>
@@ -907,13 +907,13 @@ class NexusApp {
 
               <div class="mic-right">
                 <div class="smart-features-card">
-                  <h5>🛡️ Smart Registration Controls</h5>
+                  <h5>Smart Registration Controls</h5>
                   <ul>
-                    <li>✓ <strong>Auto Quota Lock:</strong> Strict capacity of ${event.capacity} seats</li>
-                    <li>✓ <strong>${slotsLeft} Slots Remaining:</strong> ${isFull ? 'Waitlist Only' : 'Open for registration'}</li>
-                    <li>✓ <strong>Format:</strong> ${event.isTeam ? `Team of ${event.minTeam}-${event.maxTeam} members` : 'Individual solo registration'}</li>
-                    <li>✓ <strong>Credential:</strong> Instant cryptographic holographic pass</li>
-                    <li>✓ <strong>Gate:</strong> 0.4s audio check-in at venue entrance</li>
+                    <li><strong>Auto Quota Lock:</strong> Strict capacity of ${event.capacity} seats</li>
+                    <li><strong>${slotsLeft} Slots Remaining:</strong> ${isFull ? 'Waitlist Only' : 'Open for registration'}</li>
+                    <li><strong>Format:</strong> ${event.isTeam ? `Team of ${event.minTeam}-${event.maxTeam} members` : 'Individual solo registration'}</li>
+                    <li><strong>Credential:</strong> Instant cryptographic holographic pass</li>
+                    <li><strong>Gate:</strong> 0.4s audio check-in at venue entrance</li>
                   </ul>
                 </div>
               </div>
@@ -924,7 +924,7 @@ class NexusApp {
             <button class="btn btn-secondary" onclick="window.nexusApp.closeModal()">Close</button>
             <button class="btn btn-primary ${isFull ? 'btn-disabled' : 'btn-glow'}" 
               onclick="window.nexusApp.startRegistration('${event.id}')" ${isFull ? 'disabled' : ''}>
-              ${isFull ? 'Registration Closed (Capacity Reached)' : (auth.currentUser && event.createdBy && (event.createdBy.toLowerCase() === auth.currentUser.email.toLowerCase()) ? '🎟️ Participate / Register in Your Event &rarr;' : 'Proceed to Registration Form &rarr;')}
+              ${isFull ? 'Registration Closed (Capacity Reached)' : (auth.currentUser && event.createdBy && (event.createdBy.toLowerCase() === auth.currentUser.email.toLowerCase()) ? 'Participate / Register in Your Event &rarr;' : 'Proceed to Registration Form &rarr;')}
             </button>
           </div>
         </div>
@@ -1042,7 +1042,7 @@ class NexusApp {
         <div class="gform-tm-row">
           <input type="text" class="gform-input tm-name" placeholder="Teammate ${idx + 1} Full Name ${idx < minTeam ? '(Required)' : '(Optional)'}" value="${m.name}" ${isExpired ? 'disabled' : ''}
             onchange="window.nexusApp.updateTeammate(${idx}, 'name', this.value)" />
-          ${idx >= minTeam && !isExpired ? `<button type="button" class="btn-remove-tm" onclick="window.nexusApp.removeTeammate(${idx})">✕</button>` : ''}
+          ${idx >= minTeam && !isExpired ? `<button type="button" class="btn-remove-tm" onclick="window.nexusApp.removeTeammate(${idx})">&times;</button>` : ''}
         </div>
       `).join('');
 
@@ -1076,17 +1076,17 @@ class NexusApp {
             <h2 class="gform-title">${evt.headline || evt.title}</h2>
             <p class="gform-desc">${evt.description || evt.tagline}</p>
             <div class="gform-meta-row">
-              <span>📅 ${evt.date}</span>
-              <span>📍 ${evt.venue}</span>
-              <span>🎟️ ${evt.fee === 0 ? 'Free Entry' : '$' + evt.fee + ' Fee'}</span>
-              ${evt.isTeam ? `<span>👥 Team (${evt.minTeam || 2}-${evt.maxTeam || 4} members)</span>` : '<span>👤 Solo Entry</span>'}
+              <span>${evt.date}</span>
+              <span>${evt.venue}</span>
+              <span>${evt.fee === 0 ? 'Free Entry' : '$' + evt.fee + ' Fee'}</span>
+              ${evt.isTeam ? `<span>Team (${evt.minTeam || 2}-${evt.maxTeam || 4} members)</span>` : '<span>Solo Entry</span>'}
             </div>
             <div class="gform-req-notice">* Indicates required question</div>
           </div>
 
           ${isExpired ? `
             <div class="gform-card" style="border-left: 4px solid #ffffff; background: rgba(255, 255, 255, 0.06);">
-              <strong style="color: #ffffff; font-size: 1.05rem;">⛔ REGISTRATION EXPIRED / CLOSED</strong>
+              <strong style="color: #ffffff; font-size: 1.05rem;">REGISTRATION EXPIRED / CLOSED</strong>
               <p style="color: #d1d5db; font-size: 0.88rem; margin-top: 0.25rem;">
                 The organizer has closed or expired registrations for this form. Submissions are no longer accepted.
               </p>
@@ -1315,10 +1315,10 @@ class NexusApp {
         <div class="modal-dialog modal-badge-dialog">
           <div class="badge-modal-top">
             <div>
-              <h3>${isNewlyMinted ? '🎉 Registration Confirmed!' : '🎫 Holographic Campus Pass'}</h3>
+              <h3>${isNewlyMinted ? 'Registration Confirmed!' : 'Holographic Campus Pass'}</h3>
               <p>${isNewlyMinted ? 'Your pass is cryptographically locked and ready for gate check-in.' : 'Official Attendee Credential'}</p>
             </div>
-            <button class="modal-close-btn" onclick="window.nexusApp.closeModal()">✕</button>
+            <button class="modal-close-btn" onclick="window.nexusApp.closeModal()">&times;</button>
           </div>
 
           <div class="badge-render-area">
@@ -1327,13 +1327,13 @@ class NexusApp {
 
           <div class="badge-modal-controls">
             <button class="btn btn-primary" onclick="window.nexusApp.testGateScan('${reg.ticketId}')">
-              ⚡ Test Check-in at Gate
+              Test Check-in at Gate
             </button>
             <button class="btn btn-secondary" onclick="window.nexusApp.copyTicketId('${reg.ticketId}')">
-              📋 Copy Pass ID
+              Copy Pass ID
             </button>
             <button class="btn btn-secondary" onclick="window.print()">
-              🖨️ Print / Save Pass
+              Print / Save Pass
             </button>
           </div>
         </div>
@@ -1384,9 +1384,9 @@ class NexusApp {
           <div class="modal-header">
             <div>
               <span class="badge badge-paid">Attendee Self-Service</span>
-              <h2 class="modal-title" style="margin-top:0.25rem;">🎟️ My Registrations & Passes</h2>
+              <h2 class="modal-title" style="margin-top:0.25rem;">My Registrations & Passes</h2>
             </div>
-            <button class="modal-close-btn" onclick="window.nexusApp.closeModal()">✕</button>
+            <button class="modal-close-btn" onclick="window.nexusApp.closeModal()">&times;</button>
           </div>
 
           <div class="modal-body">
@@ -1400,7 +1400,7 @@ class NexusApp {
                 value="${query}" 
                 onkeydown="if(event.key==='Enter') window.nexusApp.lookupMyRegistrations(this.value)" />
               <button class="btn btn-primary" onclick="window.nexusApp.lookupMyRegistrations(document.getElementById('myRegsLookupInput').value)">
-                🔍 Find Passes
+                Find Passes
               </button>
             </div>
 
@@ -1430,7 +1430,7 @@ class NexusApp {
     if (!regs || regs.length === 0) {
       return `
         <div class="empty-state-box" style="padding:2rem 1rem;">
-          <div class="empty-icon">🎟️</div>
+          <div class="empty-icon" style="font-family:var(--font-mono); font-size:1rem; font-weight:700;">[PASSES]</div>
           <h4>No Registrations Found</h4>
           <p>We couldn't find any passes matching that email or Ticket ID. Try registering for an event first.</p>
           <button class="btn btn-primary btn-sm" onclick="window.nexusApp.closeModal(); document.getElementById('arenaFilterAnchor').scrollIntoView({behavior:'smooth'});">
@@ -1452,7 +1452,7 @@ class NexusApp {
               <div class="my-reg-title">${r.eventTitle}</div>
             </div>
             <span class="badge ${isCancelled ? 'status-cancelled' : r.checkedIn ? 'status-checked-in' : 'status-approved'}">
-              ${isCancelled ? '❌ CANCELLED' : r.checkedIn ? '🟢 CHECKED IN' : '✅ APPROVED'}
+              ${isCancelled ? 'CANCELLED' : r.checkedIn ? 'CHECKED IN' : 'APPROVED'}
             </span>
           </div>
 
@@ -1478,18 +1478,18 @@ class NexusApp {
           <div class="my-reg-actions">
             ${!isCancelled ? `
               <button class="btn btn-primary btn-sm" onclick="window.nexusApp.openBadgeModal('${r.ticketId}')">
-                🎫 View Holographic Pass
+                View Holographic Pass
               </button>
               <button class="btn btn-secondary btn-sm" onclick="window.nexusApp.openCertificate('${r.ticketId}')">
-                🏆 Certificate
+                Certificate
               </button>
               ${r.teamName ? `
                 <button class="btn btn-secondary btn-sm" onclick="window.nexusApp.editRegistrationTeam('${r.ticketId}')">
-                  ✏️ Edit Team
+                  Edit Team
                 </button>
               ` : ''}
               <button class="btn btn-secondary btn-sm text-danger" onclick="window.nexusApp.cancelAttendeeRegistration('${r.ticketId}')">
-                ✕ Cancel Registration
+                Cancel Registration
               </button>
             ` : `
               <span class="text-rose" style="font-size:0.8rem;">Registration was cancelled. Quota seat released.</span>
@@ -1519,7 +1519,7 @@ class NexusApp {
     const toast = document.createElement('div');
     toast.className = 'nexus-toast toast-success';
     toast.innerHTML = `
-      <div class="toast-icon">✓</div>
+      <div class="toast-icon">OK</div>
       <div class="toast-content">
         <div class="toast-title">Team Info Updated</div>
         <div class="toast-desc">Team name updated to "${reg.teamName}" on pass ${ticketId}.</div>
@@ -1544,7 +1544,7 @@ class NexusApp {
       const toast = document.createElement('div');
       toast.className = 'nexus-toast toast-success';
       toast.innerHTML = `
-        <div class="toast-icon">✓</div>
+        <div class="toast-icon">OK</div>
         <div class="toast-content">
           <div class="toast-title">Registration Cancelled</div>
           <div class="toast-desc">Seat quota has been released and pass ${ticketId} is now deactivated.</div>
@@ -1599,12 +1599,12 @@ class NexusApp {
     const fests = db.getFests ? db.getFests() : [];
 
     const items = [
-      { type: 'NAV', title: '🏠 Home / Landing Page', action: () => this.switchTab('arena') },
-      { type: 'NAV', title: '🎪 Browse Events & Contests', action: () => { window.location.href = 'events.html'; } },
-      { type: 'NAV', title: '🎟️ My Passes / Manage Registrations', action: () => this.openMyRegistrationsModal() },
-      { type: 'NAV', title: '🛠️ Form Studio (Build Custom Forms)', action: () => this.switchTab('studio') },
-      { type: 'NAV', title: '⚡ Gate Check-in QR Scanner', action: () => this.switchTab('scanner') },
-      { type: 'NAV', title: '📊 Organizer Command Center', action: () => this.switchTab('admin') },
+      { type: 'NAV', title: 'Home / Landing Page', action: () => this.switchTab('arena') },
+      { type: 'NAV', title: 'Browse Events & Contests', action: () => { window.location.href = 'events.html'; } },
+      { type: 'NAV', title: 'My Passes / Manage Registrations', action: () => this.openMyRegistrationsModal() },
+      { type: 'NAV', title: 'Form Studio (Build Custom Forms)', action: () => this.switchTab('studio') },
+      { type: 'NAV', title: 'Gate Check-in QR Scanner', action: () => this.switchTab('scanner') },
+      { type: 'NAV', title: 'Organizer Command Center', action: () => this.switchTab('admin') },
       ...fests.map(f => ({
         type: 'FEST',
         title: `Festival: ${f.title}`,

@@ -106,7 +106,7 @@ export function renderHolographicBadge(reg) {
         <div class="badge-avatar" style="overflow:hidden; display:flex; align-items:center; justify-content:center;">
           ${(reg.leadAvatar && (reg.leadAvatar.startsWith('data:image') || reg.leadAvatar.startsWith('http') || reg.leadAvatar.startsWith('blob:')))
             ? `<img src="${reg.leadAvatar}" alt="${reg.leadName}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />`
-            : (reg.leadAvatar || (reg.leadName ? reg.leadName.charAt(0).toUpperCase() : '👤'))}
+            : (reg.leadAvatar || (reg.leadName ? reg.leadName.charAt(0).toUpperCase() : 'U'))}
         </div>
         <div class="badge-attendee-details">
           <div class="badge-attendee-name">${reg.leadName}</div>
@@ -131,7 +131,7 @@ export function renderHolographicBadge(reg) {
           <div class="telemetry-item">
             <span class="label">ENTRY STATUS</span>
             <span class="value status-badge ${isChecked ? 'status-in' : 'status-pending'}">
-              ${isChecked ? '🟢 CHECKED IN' : '🟡 GATE READY'}
+              ${isChecked ? 'CHECKED IN' : 'GATE READY'}
             </span>
           </div>
           <div class="telemetry-item">

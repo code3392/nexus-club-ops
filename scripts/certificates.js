@@ -12,8 +12,8 @@ export function renderCertificateModal(participant, eventName, clubName) {
     <div class="cert-modal-backdrop" onclick="if(event.target === this) window.nexusApp.closeModal()">
       <div class="cert-modal-dialog">
         <div class="cert-modal-actions">
-          <button class="btn btn-primary btn-sm" onclick="window.print()">🖨️ Print Certificate</button>
-          <button class="btn btn-secondary btn-sm" onclick="window.nexusApp.closeModal()">✕ Close</button>
+          <button class="btn btn-primary btn-sm" onclick="window.print()">Print Certificate</button>
+          <button class="btn btn-secondary btn-sm" onclick="window.nexusApp.closeModal()">Close</button>
         </div>
 
         <div class="cert-frame" id="printableCertificate">
@@ -24,7 +24,7 @@ export function renderCertificateModal(participant, eventName, clubName) {
             <div class="cert-corner br"></div>
 
             <div class="cert-header">
-              <div class="cert-org-emblem">🏆</div>
+              <div class="cert-org-emblem" style="font-weight:900; font-family:var(--font-mono); letter-spacing:0.1em;">HONOR</div>
               <div class="cert-super-title">CAMPUS SMART OPERATIONS ALLIANCE</div>
               <div class="cert-main-title">Certificate of Merit & Excellence</div>
               <div class="cert-tagline">This credential certifies verifiable technical participation</div>

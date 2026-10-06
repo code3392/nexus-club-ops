@@ -194,7 +194,6 @@ export class FormBuilderStudio {
       authNotice = `
         <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
           <div style="display:flex; align-items:center; gap:0.75rem;">
-            <span style="font-size:1.5rem;">🔐</span>
             <div>
               <strong style="color:#ffffff; display:block; font-size:0.95rem;">Sign In Required to Create Forms</strong>
               <span style="color:#d1d5db; font-size:0.85rem;">You must be logged in so only you can scan and manage registrations for your events.</span>
@@ -210,7 +209,6 @@ export class FormBuilderStudio {
     const editBanner = this.editingEventId ? `
       <div style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
         <div style="display:flex; align-items:center; gap:0.75rem;">
-          <span style="font-size:1.4rem;">✏️</span>
           <div>
             <strong style="color:#ffffff; font-size:1rem;">Editing Form: ${this.currentSchema.eventTitle}</strong>
             <span style="display:block; color:#9ca3af; font-size:0.82rem;">Updates will take effect immediately across attendee registration and gates.</span>
@@ -228,7 +226,7 @@ export class FormBuilderStudio {
           oninput="window.formStudio.updateGate('${g.id}', this.value)" />
         <button type="button" class="fb-btn-remove" style="padding: 6px 10px;" 
           onclick="window.formStudio.removeGate('${g.id}')" title="Delete Gate">
-          ✕
+          &times;
         </button>
       </div>
     `).join('');
@@ -251,7 +249,7 @@ export class FormBuilderStudio {
           <div class="fb-field-card-header">
             <span class="fb-field-drag-badge">Question ${idx + 1} • ${f.type.toUpperCase()}</span>
             <button class="fb-btn-remove" onclick="window.formStudio.removeField('${f.id}')" title="Delete">
-              ✕ Delete
+              Delete
             </button>
           </div>
           <div class="fb-field-body">
@@ -284,7 +282,7 @@ export class FormBuilderStudio {
         <!-- Requirement 7: Form Headline, Description & Core Details -->
         <div class="fb-meta-section">
           <div class="fb-section-title">
-            <span>📝 Form Headline & Description</span>
+            <span>Form Headline & Description</span>
           </div>
 
           <div style="margin-bottom: 1.25rem;">
@@ -362,7 +360,7 @@ export class FormBuilderStudio {
         <!-- Requirement 9: Team Type & Custom Member Limits -->
         <div class="fb-meta-section">
           <div class="fb-section-title">
-            <span>👥 Team Configuration (Customize Member Numbers)</span>
+            <span>Team Configuration (Customize Member Numbers)</span>
           </div>
           <div class="fb-grid-2">
             <div>
@@ -389,7 +387,7 @@ export class FormBuilderStudio {
               </div>
             ` : `
               <div style="display:flex; align-items:center; color:var(--text-muted); font-size:0.88rem; padding-top:1.5rem;">
-                ℹ️ Each registrant registers individually (1 member per pass).
+                Each registrant registers individually (1 member per pass).
               </div>
             `}
           </div>
@@ -398,7 +396,7 @@ export class FormBuilderStudio {
         <!-- Requirement 3: Gate Customization -->
         <div class="fb-meta-section">
           <div class="fb-section-title" style="display:flex; justify-content:space-between; align-items:center;">
-            <span>🚪 Custom Gate Checkpoints (${(this.currentSchema.gates || []).length} Gates)</span>
+            <span>Custom Gate Checkpoints (${(this.currentSchema.gates || []).length} Gates)</span>
             <button type="button" class="btn btn-sm btn-secondary" onclick="window.formStudio.addGate()">
               + Add Gate Checkpoint
             </button>
@@ -414,7 +412,7 @@ export class FormBuilderStudio {
         <!-- Requirement 6: Form Expiry Controls -->
         <div class="fb-meta-section">
           <div class="fb-section-title">
-            <span>⏰ Form Expiry & Status Controls</span>
+            <span>Form Expiry & Status Controls</span>
           </div>
           <div class="fb-grid-2">
             <div>
@@ -429,7 +427,7 @@ export class FormBuilderStudio {
                 class="btn ${this.currentSchema.isExpired ? 'btn-danger' : 'btn-primary'} btn-block" 
                 style="height: 42px; display:flex; align-items:center; justify-content:center; gap:0.5rem;"
                 onclick="window.formStudio.toggleFormExpiry()">
-                ${this.currentSchema.isExpired ? '🔴 Form is EXPIRED (Click to Reopen)' : '🟢 Form is ACTIVE (Click to Expire Now)'}
+                ${this.currentSchema.isExpired ? 'Form is EXPIRED (Click to Reopen)' : 'Form is ACTIVE (Click to Expire Now)'}
               </button>
             </div>
           </div>
@@ -458,7 +456,7 @@ export class FormBuilderStudio {
         <!-- Deploy / Save Button -->
         <div class="fb-deploy-box">
           <button class="btn btn-primary btn-glow btn-lg" onclick="window.formStudio.deployForm()">
-            ${this.editingEventId ? '💾 Save & Update Form' : '🚀 Publish Registration Form'}
+            ${this.editingEventId ? 'Save & Update Form' : 'Publish Registration Form'}
           </button>
         </div>
       </div>
@@ -502,7 +500,7 @@ export class FormBuilderStudio {
       `;
     }).join('');
 
-    const gatesPreview = (this.currentSchema.gates || []).map(g => `<span class="fest-event-mini-pill" style="font-size:0.65rem;">🚪 ${g.name}</span>`).join(' ');
+    const gatesPreview = (this.currentSchema.gates || []).map(g => `<span class="fest-event-mini-pill" style="font-size:0.65rem;">${g.name}</span>`).join(' ');
 
     this.phonePreview.innerHTML = `
       <div class="phone-device-bezel">
@@ -517,19 +515,19 @@ export class FormBuilderStudio {
             <div class="phone-event-badge">${(this.currentSchema.clubName || 'STUDENT ORGANIZATION').toUpperCase()}</div>
             <div class="phone-event-title">${this.currentSchema.headline || this.currentSchema.eventTitle}</div>
             <div class="phone-event-meta">
-              <span>🎟️ Capacity: ${this.currentSchema.capacity} slots</span>
-              <span>💵 ${this.currentSchema.fee === 0 ? 'Free Entry' : '$' + this.currentSchema.fee}</span>
+              <span>Capacity: ${this.currentSchema.capacity} slots</span>
+              <span>${this.currentSchema.fee === 0 ? 'Free Entry' : '$' + this.currentSchema.fee}</span>
             </div>
             ${this.currentSchema.isExpired ? `
               <div style="background:#ffffff; color:#000000; font-size:0.7rem; font-weight:800; padding:3px 8px; border-radius:4px; margin-top:5px; text-align:center;">
-                ⛔ REGISTRATION EXPIRED
+                REGISTRATION EXPIRED
               </div>
             ` : ''}
           </div>
 
           <div class="phone-content-scroll">
             <div class="phone-info-card">
-              <span class="phone-card-icon">⚡</span>
+              <span class="phone-card-icon">•</span>
               <div>
                 <strong>${this.currentSchema.isTeam ? `Team (${this.currentSchema.minTeam}-${this.currentSchema.maxTeam} members)` : 'Solo Registration'}</strong>
                 <p>${(this.currentSchema.description || 'Fill out the form below to secure your holographic attendee pass.').substring(0, 100)}...</p>
@@ -594,7 +592,7 @@ export class FormBuilderStudio {
         badge: 'Campus Org',
         color: '#ffffff',
         lead: currentUser.name,
-        icon: '🏛️',
+        icon: 'ORG',
         activeEvents: 1,
         members: 50
       });
@@ -715,21 +713,20 @@ export class FormBuilderStudio {
     modal.innerHTML = `
       <div class="modal-backdrop" onclick="if(event.target===this) window.nexusApp.closeModal()">
         <div class="modal-dialog" style="max-width: 500px; text-align: center; padding: 2rem;">
-          <div style="font-size: 3rem; margin-bottom: 0.75rem;">🚀</div>
           <h2 style="color: #ffffff; font-size: 1.4rem; font-weight: 800; margin-bottom: 0.5rem;">Registration Form Published!</h2>
           <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.5;">
             <strong>"${event.title}"</strong> is now live. As the creator, you can participate/register in your own form right now, mint a holographic pass, and test gate check-in scanning.
           </p>
           <div style="display: flex; flex-direction: column; gap: 0.75rem;">
             <button class="btn btn-primary btn-glow btn-lg" onclick="window.nexusApp.closeModal(); window.nexusApp.startRegistration('${event.id}')">
-              🎟️ Participate / Register in Your Event &rarr;
+              Participate / Register in Your Event &rarr;
             </button>
             <div style="display: flex; gap: 0.75rem; justify-content: center;">
               <button class="btn btn-secondary" onclick="window.nexusApp.closeModal(); window.nexusApp.switchTab('admin')">
-                📊 Open Dashboard
+                Open Dashboard
               </button>
               <button class="btn btn-secondary" onclick="window.nexusApp.closeModal(); window.nexusApp.switchTab('arena')">
-                🏠 View in Arena
+                View in Arena
               </button>
             </div>
           </div>
@@ -742,7 +739,7 @@ export class FormBuilderStudio {
     const toast = document.createElement('div');
     toast.className = 'nexus-toast toast-success';
     toast.innerHTML = `
-      <div class="toast-icon">🚀</div>
+      <div class="toast-icon">OK</div>
       <div class="toast-content">
         <div class="toast-title">${title}</div>
         <div class="toast-desc">${desc}</div>
