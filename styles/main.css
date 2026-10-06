@@ -3204,11 +3204,12 @@ body {
   text-align: left;
 }
 
+.nav-user-pill .user-name,
 .user-info-text .user-name {
-  font-size: 0.74rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  line-height: 1.1;
-  max-width: 140px;
+  line-height: 1.2;
+  max-width: 150px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

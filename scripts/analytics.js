@@ -881,7 +881,7 @@ export class AdminCommandCenter {
           <div class="profile-header-left">
             <div class="profile-section-badge">
               <span class="badge-dot pulse"></span>
-              <span>${user.provider === 'google' ? 'Google Verified Account' : 'Campus Member Account'}</span>
+              <span>${user.provider === 'google' ? 'Google Account' : 'Campus Member Account'}</span>
             </div>
             <h2 class="profile-card-title">My Profile & Account Settings</h2>
             <p class="profile-card-sub">Edit your profile name, picture, and contact details. Reflected automatically across your passes, registrations, and forms.</p>

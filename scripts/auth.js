@@ -77,10 +77,7 @@ export class AuthSystem {
         <div class="auth-user-dropdown-wrap">
           <button class="nav-user-pill" onclick="window.authSystem.toggleUserDropdown()">
             <div class="user-avatar-small" style="overflow:hidden; display:flex; align-items:center; justify-content:center;">${avatarHTML}</div>
-            <div class="user-info-text">
-              <span class="user-name">${this.currentUser.name}</span>
-              <span class="user-role-badge">${this.currentUser.provider === 'google' ? 'Google Verified' : 'Campus Member'}</span>
-            </div>
+            <span class="user-name">${this.currentUser.name}</span>
             <span class="user-caret">▾</span>
           </button>
 
@@ -567,7 +564,7 @@ export class AuthSystem {
       bio: '',
       provider: 'google',
       verified: true,
-      role: 'Google Verified Member'
+      role: 'Campus Member'
     };
 
     sound.playPassUnlocked();
