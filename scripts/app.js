@@ -223,65 +223,97 @@ class NexusApp {
     container.innerHTML = fests.map(fest => {
       const festEvents = events.filter(e => e.festId === fest.id);
       const isSelected = this.activeFestFilter === fest.id;
+      const isCreator = !fest.createdBy || (auth.currentUser && (
+        (fest.createdBy && fest.createdBy === auth.currentUser.id) ||
+        (fest.creatorEmail && fest.creatorEmail.toLowerCase() === auth.currentUser.email.toLowerCase()) ||
+        auth.currentUser.role === 'admin'
+      ));
 
       return `
-        <div class="fest-card ${isSelected ? 'fest-card-selected' : ''}" data-id="${fest.id}">
-          <div class="fest-card-banner" style="background: ${fest.bannerGradient};">
-            <div class="fest-badge-top">
-              <span class="fest-status-pill">${fest.status}</span>
-              <span class="fest-events-count">${festEvents.length} Contests</span>
+        <div class="event-card fest-card ${isSelected ? 'fest-card-selected' : ''}" data-id="${fest.id}">
+          <div class="event-card-banner" style="background: ${fest.bannerGradient};">
+            <div class="banner-top-row">
+              <span class="event-club-badge">🎪 ${fest.status || 'Active'}</span>
+              ${isCreator ? '<span class="event-club-badge" style="background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.4); color:#ffffff;">👑 Your Fest</span>' : ''}
+              <span class="event-tier-badge">${festEvents.length === 1 ? '1 CONTEST' : festEvents.length + ' CONTESTS'}</span>
             </div>
-            <div>
-              <div style="font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.85);">${fest.edition}</div>
-              <h3 class="fest-card-title">${fest.title}</h3>
+            <div class="event-banner-content">
+              <span class="event-category-chip">${(fest.edition || 'Annual Edition').toUpperCase()}</span>
+              <h3 class="event-card-title">${fest.title}</h3>
             </div>
           </div>
 
-          <div class="fest-card-body">
-            <div>
-              <div class="fest-org-tag">
-                <span>🏛️</span>
-                <span>${fest.organization || 'Campus Tech Society'}</span>
-              </div>
+          <div class="event-card-body">
+            <div class="fest-desc-wrap" style="margin-bottom: 0.75rem;">
+              <p class="event-tagline fest-tagline-clamped" id="festDesc-${fest.id}" style="margin-bottom: 0.25rem;">
+                ${fest.description || fest.tagline || 'Official campus festival hub.'}
+              </p>
+              ${(fest.description || fest.tagline || '').length > 70 ? `
+                <button type="button" class="fest-show-more-btn" onclick="window.nexusApp.toggleFestDescription('${fest.id}', event)">
+                  Show more &darr;
+                </button>
+              ` : ''}
+            </div>
 
-              <!-- Compact description with Show More toggle -->
-              <div class="fest-desc-wrap" style="margin-bottom: 0.5rem;">
-                <p class="fest-tagline fest-tagline-clamped" id="festDesc-${fest.id}">${fest.description || fest.tagline || 'Official campus festival hub.'}</p>
-                ${(fest.description || fest.tagline || '').length > 90 ? `
-                  <button type="button" class="fest-show-more-btn" onclick="window.nexusApp.toggleFestDescription('${fest.id}', event)">
-                    Show more &darr;
-                  </button>
-                ` : ''}
-              </div>
+            <div style="margin-bottom:0.75rem;">
+              <span class="event-deadline-pill">📅 Dates: ${fest.date || 'TBA'}</span>
+            </div>
 
-              <div class="fest-meta-list">
-                <div class="fest-meta-item">
-                  <span>📅</span>
-                  <span>${fest.date}</span>
-                </div>
-                <div class="fest-meta-item">
-                  <span>📍</span>
-                  <span>${fest.venue}</span>
-                </div>
+            <div class="event-details-grid">
+              <div class="detail-item">
+                <span class="d-icon">🏛️</span>
+                <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${fest.organization || 'Campus Tech Society'}">${fest.organization || 'Campus Tech Society'}</span>
               </div>
-
-              <div class="fest-events-pills">
-                ${festEvents.length > 0
-                  ? festEvents.map(e => `<span class="fest-event-mini-pill">${e.title}</span>`).join('')
-                  : '<span style="font-size:0.72rem; color:var(--text-muted);">Ready for your custom events</span>'}
+              <div class="detail-item">
+                <span class="d-icon">📍</span>
+                <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${fest.venue || 'Campus Venue'}">${fest.venue || 'Campus Venue'}</span>
+              </div>
+              <div class="detail-item">
+                <span class="d-icon">🏆</span>
+                <span>${festEvents.length > 0 ? `${festEvents.length} Contests Active` : 'Open Entry'}</span>
+              </div>
+              <div class="detail-item">
+                <span class="d-icon">👥</span>
+                <span>Host: ${fest.lead ? fest.lead : (fest.organization ? fest.organization.split(' ')[0] : 'Campus')}</span>
               </div>
             </div>
 
-            <div class="fest-card-actions">
-              <button class="btn btn-primary btn-sm btn-block" onclick="window.nexusApp.openFestDetails('${fest.id}')">
-                🎪 Select Fest & Schedule &rarr;
-              </button>
-              <button class="btn btn-secondary btn-sm" onclick="window.nexusApp.openEditFestModal('${fest.id}')" title="Edit Festival Details">
-                ✏️ Edit
-              </button>
-              <button class="btn btn-outline-danger btn-sm" onclick="window.nexusApp.deleteFest('${fest.id}')" title="Delete Festival">
-                🗑️
-              </button>
+            <!-- Dynamic Capacity / Contests Box -->
+            <div class="capacity-meter-box">
+              <div class="capacity-meter-header">
+                <span>Contests: <strong>${festEvents.length} ${festEvents.length === 1 ? 'Contest' : 'Contests'} Active</strong></span>
+                <span class="slots-alert text-emerald">⚡ Live Fest</span>
+              </div>
+              <div class="capacity-meter-track">
+                <div class="capacity-meter-fill" style="width: ${festEvents.length > 0 ? '100' : '20'}%; background: #ffffff;"></div>
+              </div>
+              ${festEvents.length > 0 ? `
+                <div class="fest-events-pills" style="margin-top:0.6rem; margin-bottom:0;">
+                  ${festEvents.slice(0, 3).map(e => `<span class="fest-event-mini-pill">${e.title}</span>`).join('')}
+                  ${festEvents.length > 3 ? `<span class="fest-event-mini-pill">+${festEvents.length - 3} more</span>` : ''}
+                </div>
+              ` : ''}
+            </div>
+
+            <div class="event-card-footer" style="flex-direction: column; gap: 0.6rem; align-items: stretch;">
+              <div style="display: flex; gap: 0.75rem; width: 100%;">
+                <button class="btn btn-secondary btn-sm" onclick="window.nexusApp.openFestDetails('${fest.id}')" style="white-space: nowrap;">
+                  Details & Rules
+                </button>
+                <button class="btn btn-primary btn-sm btn-glow" style="flex: 1; white-space: nowrap;" onclick="window.nexusApp.openFestDetails('${fest.id}')">
+                  🎪 Select Fest &rarr;
+                </button>
+              </div>
+              ${isCreator ? `
+                <div style="display: flex; justify-content: flex-end; gap: 0.5rem; padding-top: 0.45rem; border-top: 1px dashed var(--border-subtle);">
+                  <button class="btn btn-secondary btn-sm" style="padding: 0.3rem 0.65rem; font-size: 0.74rem;" onclick="window.nexusApp.openEditFestModal('${fest.id}')" title="Edit Festival Details">
+                    ✏️ Edit Fest
+                  </button>
+                  <button class="btn btn-outline-danger btn-sm" style="padding: 0.3rem 0.65rem; font-size: 0.74rem;" onclick="window.nexusApp.deleteFest('${fest.id}')" title="Delete Festival">
+                    🗑️ Delete Fest
+                  </button>
+                </div>
+              ` : ''}
             </div>
           </div>
         </div>

@@ -3583,99 +3583,27 @@ select.gform-input,
 
 .fests-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 1.75rem;
+}
+
+@media (max-width: 480px) {
+  .fests-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .fest-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  display: flex;
-  flex-direction: column;
-  position: relative;
+  max-width: 440px;
+  width: 100%;
 }
 
-.fest-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7), 0 0 25px rgba(255, 255, 255, 0.15);
+.fest-card.fest-card-selected {
+  border-color: #ffffff !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4), 0 12px 30px rgba(0, 0, 0, 0.7);
 }
 
-.fest-card-banner {
-  padding: 1.15rem 1.25rem;
-  position: relative;
-  min-height: 110px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  background: linear-gradient(135deg, #262626 0%, #171717 50%, #0a0a0a 100%) !important;
-}
-
-.fest-badge-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.fest-status-pill {
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 999px;
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.fest-events-count {
-  background: #ffffff;
-  color: #000000;
-  font-size: 0.72rem;
-  font-weight: 800;
-  padding: 2px 8px;
-  border-radius: 999px;
-}
-
-.fest-card-title {
-  font-size: 1.15rem;
-  font-weight: 800;
-  color: #ffffff;
-  line-height: 1.25;
-  margin-top: 0.45rem;
-}
-
-.fest-card-body {
-  padding: 1.15rem;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  justify-content: space-between;
-}
-
-.fest-org-tag {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.76rem;
-  font-weight: 700;
-  color: #d4d4d4;
-  margin-bottom: 0.45rem;
-}
-
-.fest-tagline {
-  font-size: 0.84rem;
-  color: #cbd5e1;
-  line-height: 1.5;
-  margin-bottom: 0.35rem;
-  word-break: break-word;
-}
-
-.fest-tagline.fest-tagline-clamped {
+.fest-tagline-clamped {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -3691,7 +3619,7 @@ select.gform-input,
   font-weight: 700;
   cursor: pointer;
   padding: 0;
-  margin-bottom: 0.75rem;
+  margin-top: 0.25rem;
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
@@ -3703,43 +3631,20 @@ select.gform-input,
   color: #d4d4d4;
 }
 
-.fest-meta-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  margin-bottom: 0.85rem;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
-
-.fest-meta-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
 .fest-events-pills {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
-  margin-bottom: 1rem;
 }
 
 .fest-event-mini-pill {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   font-size: 0.72rem;
   font-weight: 600;
   padding: 2px 7px;
   border-radius: 6px;
-  color: #94a3b8;
-}
-
-.fest-card-actions {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: auto;
-  align-items: center;
+  color: #ffffff;
 }
 
 .btn-outline-danger {
