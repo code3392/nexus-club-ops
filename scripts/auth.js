@@ -78,10 +78,17 @@ export class AuthSystem {
       const fallbackBtn = document.getElementById('googleCustomBtnFallback');
       if (!slot) return;
 
-      const ready = this.initGoogleIdentity();
-      if (ready && window.google?.accounts?.id) {
+      const customClientId = localStorage.getItem(GOOGLE_CLIENT_ID_KEY);
+      if (customClientId && window.google?.accounts?.id) {
         try {
           slot.innerHTML = '';
+          window.google.accounts.id.initialize({
+            client_id: customClientId,
+            callback: (res) => this.handleGoogleCredentialResponse(res),
+            auto_select: false,
+            cancel_on_tap_outside: true
+          });
+
           window.google.accounts.id.renderButton(slot, {
             type: 'standard',
             theme: 'filled_black',
@@ -89,21 +96,20 @@ export class AuthSystem {
             text: this.authMode === 'signin' ? 'signin_with' : 'signup_with',
             shape: 'rectangular',
             logo_alignment: 'left',
-            width: Math.min(360, slot.parentElement?.offsetWidth || 340)
+            width: 320
           });
-          if (slot.children.length > 0 && fallbackBtn) {
-            fallbackBtn.style.display = 'none';
-            return;
-          }
+
+          slot.style.display = 'flex';
+          if (fallbackBtn) fallbackBtn.style.display = 'none';
+          return;
         } catch (e) {
           console.warn('Could not render Google Identity button:', e);
         }
       }
 
-      if (fallbackBtn) {
-        fallbackBtn.style.display = 'flex';
-      }
-    }, 60);
+      if (slot) slot.style.display = 'none';
+      if (fallbackBtn) fallbackBtn.style.display = 'flex';
+    }, 40);
   }
 
   handleGoogleCredentialResponse(response) {
@@ -484,10 +490,37 @@ export class AuthSystem {
   getSavedGoogleAccounts() {
     try {
       const data = localStorage.getItem('NEXUS_SAVED_GOOGLE_ACCOUNTS');
-      return data ? JSON.parse(data) : [];
-    } catch (e) {
-      return [];
-    }
+      if (data) {
+        const list = JSON.parse(data);
+        if (Array.isArray(list) && list.length > 0) return list;
+      }
+    } catch (e) {}
+    return [
+      {
+        id: 'google-usr-campus-1',
+        name: 'Alex Rivera',
+        email: 'alex.rivera@campus.edu',
+        rollNo: '2024-CS-104',
+        avatar: 'A',
+        department: 'Computer Science & Engineering',
+        organization: 'Campus Member',
+        provider: 'google',
+        verified: true,
+        role: 'Campus Member'
+      },
+      {
+        id: 'google-usr-campus-2',
+        name: 'Priya Sharma',
+        email: 'priya.sharma@gmail.com',
+        rollNo: '2024-AI-022',
+        avatar: 'P',
+        department: 'Artificial Intelligence & Robotics',
+        organization: 'Campus Member',
+        provider: 'google',
+        verified: true,
+        role: 'Campus Member'
+      }
+    ];
   }
 
   saveGoogleAccounts(accounts) {
