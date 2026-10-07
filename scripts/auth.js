@@ -10,6 +10,15 @@ try {
   if (legacyId && (legacyId.includes('8qu3qgkh0t8d7f7i8kff7v442d7681u7') || legacyId.includes('1038165722284'))) {
     localStorage.removeItem(GOOGLE_CLIENT_ID_KEY);
   }
+  // Purge any hardcoded demo accounts so no user ever sees another person's email
+  const legacySaved = localStorage.getItem('NEXUS_SAVED_GOOGLE_ACCOUNTS');
+  if (legacySaved) {
+    const list = JSON.parse(legacySaved);
+    if (Array.isArray(list)) {
+      const filtered = list.filter(a => a && a.email && !['alex.rivera@campus.edu', 'priya.sharma@gmail.com', 'mdshahalam3392@gmail.com'].includes(a.email.toLowerCase()));
+      localStorage.setItem('NEXUS_SAVED_GOOGLE_ACCOUNTS', JSON.stringify(filtered));
+    }
+  }
 } catch (e) {}
 
 export class AuthSystem {
@@ -335,12 +344,9 @@ export class AuthSystem {
           <span>${this.authMode === 'signin' ? 'Continue with Google' : 'Sign up with Google'}</span>
         </button>
 
-        <div class="google-auth-meta-row">
-          <button type="button" class="btn-subtle-link" onclick="window.authSystem.openGoogleAccountModal(false)">
-            Campus Google Profiles
-          </button>
+        <div class="google-auth-meta-row" style="justify-content:center;">
           <button type="button" class="btn-subtle-link" onclick="window.authSystem.promptGoogleClientIdConfig()">
-            Configure Client ID
+            Google Cloud OAuth Client ID (Optional)
           </button>
         </div>
       </div>
@@ -473,64 +479,12 @@ export class AuthSystem {
       const data = localStorage.getItem('NEXUS_SAVED_GOOGLE_ACCOUNTS');
       if (data) {
         const list = JSON.parse(data);
-        if (Array.isArray(list) && list.length > 0) {
-          if (!list.some(a => a.email && a.email.toLowerCase() === 'mdshahalam3392@gmail.com')) {
-            list.unshift({
-              id: 'google-usr-mdshahalam',
-              name: 'Md Shah Alam',
-              email: 'mdshahalam3392@gmail.com',
-              rollNo: '2024-CSE-001',
-              avatar: 'M',
-              department: 'Computer Science & Engineering',
-              organization: 'Campus Member',
-              provider: 'google',
-              verified: true,
-              role: 'Campus Member'
-            });
-            this.saveGoogleAccounts(list);
-          }
-          return list;
+        if (Array.isArray(list)) {
+          return list.filter(a => a && a.email && !['alex.rivera@campus.edu', 'priya.sharma@gmail.com', 'mdshahalam3392@gmail.com'].includes(a.email.toLowerCase()));
         }
       }
     } catch (e) {}
-    return [
-      {
-        id: 'google-usr-mdshahalam',
-        name: 'Md Shah Alam',
-        email: 'mdshahalam3392@gmail.com',
-        rollNo: '2024-CSE-001',
-        avatar: 'M',
-        department: 'Computer Science & Engineering',
-        organization: 'Campus Member',
-        provider: 'google',
-        verified: true,
-        role: 'Campus Member'
-      },
-      {
-        id: 'google-usr-campus-1',
-        name: 'Alex Rivera',
-        email: 'alex.rivera@campus.edu',
-        rollNo: '2024-CS-104',
-        avatar: 'A',
-        department: 'Computer Science & Engineering',
-        organization: 'Campus Member',
-        provider: 'google',
-        verified: true,
-        role: 'Campus Member'
-      },
-      {
-        id: 'google-usr-campus-2',
-        name: 'Priya Sharma',
-        email: 'priya.sharma@gmail.com',
-        rollNo: '2024-AI-022',
-        avatar: 'P',
-        department: 'Artificial Intelligence & Robotics',
-        organization: 'Campus Member',
-        provider: 'google',
-        verified: true,
-        role: 'Campus Member'
-      }
-    ];
+    return [];
   }
 
   saveGoogleAccounts(accounts) {
@@ -598,7 +552,7 @@ export class AuthSystem {
           },
           error_callback: (err) => {
             console.warn('Google OAuth popup error:', err);
-            this.openGoogleAccountModal(false);
+            this.openGoogleAccountModal(true);
           }
         });
         client.requestAccessToken();
@@ -608,8 +562,10 @@ export class AuthSystem {
       }
     }
 
-    // Default seamless Google Account Picker with 1-click sign in (no 401 invalid_client popup)
-    this.openGoogleAccountModal(false);
+    // Default seamless Google Account Sign In / Sign Up:
+    // If no previous account on this browser, show the Google input form directly so the user enters their own account!
+    const saved = this.getSavedGoogleAccounts();
+    this.openGoogleAccountModal(saved.length === 0);
   }
 
   promptGoogleClientIdConfig() {
@@ -688,7 +644,7 @@ export class AuthSystem {
               </svg>
             </div>
             <h3 class="google-modal-title">Sign in with Google</h3>
-            <p class="google-modal-subtitle">${isCustom ? 'Enter your Google profile information to continue to <strong>NexusOps</strong>' : 'Choose an account to continue to <strong>NexusOps</strong>'}</p>
+            <p class="google-modal-subtitle">${isCustom ? 'Enter your Google account details to sign in or register to <strong>NexusOps</strong>' : 'Choose an account to continue to <strong>NexusOps</strong>'}</p>
             <button class="modal-close-btn" onclick="window.authSystem.closeModal()" style="position:absolute; top:1rem; right:1.25rem;">&times;</button>
           </div>
 
@@ -716,7 +672,7 @@ export class AuthSystem {
                   <div class="google-acc-avatar" style="background:rgba(255,255,255,0.1); color:#ffffff; font-size:1.1rem;">+</div>
                   <div class="google-acc-details">
                     <div class="google-acc-name" style="font-weight:700; color:var(--text-main);">Use another Google account</div>
-                    <div class="google-acc-email">Sign in with your own custom name & picture</div>
+                    <div class="google-acc-email">Sign in with a different Google account</div>
                   </div>
                 </div>
               </div>
@@ -724,7 +680,7 @@ export class AuthSystem {
               <form class="google-custom-form" onsubmit="event.preventDefault(); window.authSystem.submitGoogleCustomAccount();">
                 <div class="form-group">
                   <label class="form-label">Full Name <span class="req">*</span></label>
-                  <input type="text" id="gCustomName" class="form-input" placeholder="e.g. Your Name" required autofocus />
+                  <input type="text" id="gCustomName" class="form-input" placeholder="e.g. Your Full Name" required autofocus />
                 </div>
 
                 <div class="form-group">
@@ -735,7 +691,7 @@ export class AuthSystem {
                 <div class="form-group">
                   <label class="form-label">Profile Picture / Avatar</label>
                   <div class="google-avatar-picker-wrap">
-                    <div class="google-avatar-preview" id="gAvatarPreview">U</div>
+                    <div class="google-avatar-preview" id="gAvatarPreview">G</div>
                     <div class="google-avatar-controls">
                       <label class="btn btn-sm btn-secondary" style="cursor:pointer;">
                         Upload Photo
