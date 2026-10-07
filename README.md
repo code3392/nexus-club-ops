@@ -1,4 +1,4 @@
-# ⚡ NEXUS CLUB OPS
+# NEXUS CLUB OPS
 ### Next-Gen In-House Fest & Event Management Operating System
 **International Tech Carnival 2026 — AI Web Development Contest**
 **Theme:** Smart Club Operations
@@ -27,7 +27,7 @@ The platform enables attendees to browse official festivals, inspect event sched
 
 ## 3. Features
 
-### 🎪 Fest & Event Directory (`Organization → Fest → Event`)
+### Fest & Event Directory (`Organization -> Fest -> Event`)
 - **Multi-Festival Support:** Pre-loaded with official collegiate festivals:
   - **International Tech Carnival 2026** (AI Web Dev, Programming Contest, Robotics Challenge, Gaming Tournament)
   - **Winter Tech Fest 2026** (Hackathon 24h, AI Workshop, Tech Quiz Olympiad)
@@ -36,27 +36,27 @@ The platform enables attendees to browse official festivals, inspect event sched
 - **Search & Filtering:** Real-time search across events, fests, rules, prizes, and venues, paired with quick category pills (AI & Web, Programming, Robotics, Gaming, Hackathons, Workshops, Quiz).
 - **Comprehensive Event Detail Cards:** Shows parent festival badge, host club, dates, venue, registration deadlines, and live capacity progress bars.
 
-### 📝 Google Forms Replacement (Registration System)
+### Google Forms Replacement (Registration System)
 - **Clean, Minimal Form Interface:** Intuitive card-based input matching the familiarity of Google Forms without external dependencies.
 - **Unified Team Registration:** Team leader registers once, inputting team details and members with auto-generated shared pass credentials.
 - **Dynamic Capacity Quota Lock:** Automatically stops submissions when the venue capacity limit is reached, displaying a clean "Quota Full / Capacity Reached" state.
 - **Deadline Enforcement:** Clear visual deadline countdown and automated registration status locks.
 - **Contest-Specific Custom Questions:** Flexible schemas supporting text, select dropdowns, radio buttons, and URL portfolio links.
 
-### 🎟️ Attendee Self-Service (`My Passes / Registrations`)
+### Attendee Self-Service (`My Passes / Registrations`)
 - **Attendee Lookup:** Attendees can look up their registrations by entering their campus email or Ticket ID.
 - **View Holographic Credentials:** One-click access to dynamic 3D holographic digital passes and pure SVG QR codes.
 - **Verifiable Certificate Dispenser:** View and download verifiable digital certificates with SHA-256 hashes.
 - **Registration Management & Cancellation:** Attendees can cancel registrations with one click, which **automatically decrements registered counts in real time**, reopening seats for others.
 
-### 📊 Organizer Command Center & Management
+### Organizer Command Center & Management
 - **Executive Dashboard:** Live metrics for total registrations, capacity utilization, verified gate check-ins, and club participation.
 - **Attendee Roster Management:** Search and filter participants by Festival, Event, and Status.
 - **Participant Status Management:** Organizers can update participant registration status in real time (`Approved`, `Pending`, `Waitlisted`, `Checked In`, `Cancelled`).
 - **Clean CSV Export:** 1-click export of complete attendee rosters with ticket IDs, team info, and gate timestamps.
 - **Emergency Broadcast Engine:** Push urgent bulletins across festival screens and attendee passes.
 
-### ⚡ Creative Bonus Features
+### Creative Bonus Features
 - **Fast QR Gate Scanner:** Sub-second entrance verification with creator-authorized ticket validation, duplicate detection, and invalid pass protection.
 - **Interactive Form Builder Studio:** Allows club leads to create new custom event registration schemas with a live mobile phone simulator preview.
 - **3D Holographic Pass Generator:** Interactive card physics with iridescent foil gradients, tamper-resistant SHA-256 security signatures, and print mode.
@@ -168,7 +168,7 @@ Holographic Pass & QR ──► 0.4s Gate Scanner Check-in
 
 ## 11. Known Limitations
 - Camera-based QR scanning requires browser camera permissions over `localhost` or `https://` (on `http://` network origins, browsers block camera access; one-click simulation buttons are built-in for instant gate testing).
-- Persistent state uses browser `localStorage`. To reset to the initial demo state at any time, click **⚙️ Preferences → 🔄 Reset Demo Data**.
+- Persistent state uses browser `localStorage`. To reset to the initial demo state at any time, click **Preferences -> Reset Demo Data**.
 
 ---
 

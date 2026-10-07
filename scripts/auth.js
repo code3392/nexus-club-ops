@@ -2,6 +2,8 @@
 import { sound } from './sound.js';
 
 const AUTH_STORAGE_KEY = 'NEXUS_AUTH_USER_V2';
+const GOOGLE_CLIENT_ID_KEY = 'NEXUS_GOOGLE_CLIENT_ID';
+const DEFAULT_GOOGLE_CLIENT_ID = '1038165722284-8qu3qgkh0t8d7f7i8kff7v442d7681u7.apps.googleusercontent.com';
 
 export class AuthSystem {
   constructor() {
@@ -9,6 +11,137 @@ export class AuthSystem {
     this.authMode = 'signin'; // 'signin' | 'signup'
     this.pendingAuthCallback = null;
     this.listeners = [];
+  }
+
+  getGoogleClientId() {
+    try {
+      return localStorage.getItem(GOOGLE_CLIENT_ID_KEY) || DEFAULT_GOOGLE_CLIENT_ID;
+    } catch (e) {
+      return DEFAULT_GOOGLE_CLIENT_ID;
+    }
+  }
+
+  setGoogleClientId(id) {
+    try {
+      if (id) {
+        localStorage.setItem(GOOGLE_CLIENT_ID_KEY, id);
+      } else {
+        localStorage.removeItem(GOOGLE_CLIENT_ID_KEY);
+      }
+    } catch (e) {
+      console.warn('Could not store Google Client ID', e);
+    }
+  }
+
+  decodeJwtResponse(token) {
+    try {
+      const parts = token.split('.');
+      if (parts.length < 2) return null;
+      const base64Url = parts[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      console.warn('Could not decode Google JWT credential', e);
+      return null;
+    }
+  }
+
+  initGoogleIdentity() {
+    if (typeof window === 'undefined') return false;
+    if (!window.google || !window.google.accounts || !window.google.accounts.id) {
+      return false;
+    }
+    try {
+      const clientId = this.getGoogleClientId();
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: (res) => this.handleGoogleCredentialResponse(res),
+        auto_select: false,
+        cancel_on_tap_outside: true
+      });
+      return true;
+    } catch (err) {
+      console.warn('Google Identity initialization error:', err);
+      return false;
+    }
+  }
+
+  initAndRenderGoogleButton() {
+    setTimeout(() => {
+      const slot = document.getElementById('googleOfficialBtnSlot');
+      const fallbackBtn = document.getElementById('googleCustomBtnFallback');
+      if (!slot) return;
+
+      const ready = this.initGoogleIdentity();
+      if (ready && window.google?.accounts?.id) {
+        try {
+          slot.innerHTML = '';
+          window.google.accounts.id.renderButton(slot, {
+            type: 'standard',
+            theme: 'filled_black',
+            size: 'large',
+            text: this.authMode === 'signin' ? 'signin_with' : 'signup_with',
+            shape: 'rectangular',
+            logo_alignment: 'left',
+            width: Math.min(360, slot.parentElement?.offsetWidth || 340)
+          });
+          if (slot.children.length > 0 && fallbackBtn) {
+            fallbackBtn.style.display = 'none';
+            return;
+          }
+        } catch (e) {
+          console.warn('Could not render Google Identity button:', e);
+        }
+      }
+
+      if (fallbackBtn) {
+        fallbackBtn.style.display = 'flex';
+      }
+    }, 60);
+  }
+
+  handleGoogleCredentialResponse(response) {
+    if (!response || !response.credential) return;
+    const payload = this.decodeJwtResponse(response.credential);
+    if (!payload) {
+      alert('Unable to decode Google credential response.');
+      return;
+    }
+    this.applyGoogleUserData({
+      sub: payload.sub,
+      name: payload.name || payload.email?.split('@')[0],
+      email: payload.email,
+      picture: payload.picture
+    });
+  }
+
+  applyGoogleUserData({ sub, name, email, picture }) {
+    const user = {
+      id: 'google-' + (sub || Date.now()),
+      name: name || 'Google User',
+      email: email || 'user@gmail.com',
+      rollNo: 'CAMPUS-ID-' + (sub ? String(sub).slice(-4) : Math.floor(1000 + Math.random() * 9000)),
+      avatar: picture || (name ? name.charAt(0).toUpperCase() : 'G'),
+      phone: '',
+      department: '',
+      organization: 'Campus Member',
+      bio: '',
+      provider: 'google',
+      verified: true,
+      role: 'Campus Member'
+    };
+
+    sound.playPassUnlocked();
+    this.addSavedGoogleAccount(user);
+    this.saveUser(user);
+    this.closeModal();
+    this.showAuthToast(`Authenticated with Google as ${user.name}!`);
   }
 
   addAuthListener(fn) {
@@ -182,6 +315,8 @@ export class AuthSystem {
         </div>
       </div>
     `;
+
+    this.initAndRenderGoogleButton();
   }
 
   switchAuthMode(mode) {
@@ -194,6 +329,7 @@ export class AuthSystem {
     const body = document.getElementById('authDialogBody');
     if (body) {
       body.innerHTML = this.renderAuthForm();
+      this.initAndRenderGoogleButton();
     }
   }
 
@@ -201,15 +337,25 @@ export class AuthSystem {
     return `
       <!-- 1. Sign In With Google Button -->
       <div class="google-auth-section">
-        <button class="btn-google-auth" onclick="window.authSystem.handleGoogleSignIn()">
+        <div id="googleOfficialBtnSlot" class="google-official-btn-slot"></div>
+        <button id="googleCustomBtnFallback" class="btn-google-auth" onclick="window.authSystem.handleGoogleSignIn()">
           <svg class="google-logo" viewBox="0 0 24 24" width="20" height="20">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
           </svg>
-          <span>Continue with Google</span>
+          <span>${this.authMode === 'signin' ? 'Continue with Google' : 'Sign up with Google'}</span>
         </button>
+
+        <div class="google-auth-meta-row">
+          <button type="button" class="btn-subtle-link" onclick="window.authSystem.openGoogleAccountModal(false)">
+            Campus Google Profiles
+          </button>
+          <button type="button" class="btn-subtle-link" onclick="window.authSystem.promptGoogleClientIdConfig()">
+            Configure Client ID
+          </button>
+        </div>
       </div>
 
       <div class="auth-divider">
@@ -377,7 +523,114 @@ export class AuthSystem {
   }
 
   handleGoogleSignIn() {
+    sound.playClick();
+    const clientId = this.getGoogleClientId();
+
+    if (window.google?.accounts?.oauth2) {
+      try {
+        const client = window.google.accounts.oauth2.initTokenClient({
+          client_id: clientId,
+          scope: 'email profile openid',
+          callback: async (tokenResponse) => {
+            if (tokenResponse && tokenResponse.access_token) {
+              try {
+                const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                  headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+                });
+                if (res.ok) {
+                  const data = await res.json();
+                  this.applyGoogleUserData({
+                    sub: data.sub,
+                    name: data.name,
+                    email: data.email,
+                    picture: data.picture
+                  });
+                  return;
+                }
+              } catch (err) {
+                console.warn('Failed fetching Google userinfo:', err);
+              }
+            }
+          },
+          error_callback: (err) => {
+            console.warn('Google OAuth popup error:', err);
+            this.openGoogleAccountModal(false);
+          }
+        });
+        client.requestAccessToken();
+        return;
+      } catch (e) {
+        console.warn('Token client error:', e);
+      }
+    }
+
+    if (window.google?.accounts?.id) {
+      try {
+        window.google.accounts.id.prompt((notification) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            this.openGoogleAccountModal(false);
+          }
+        });
+        return;
+      } catch (e) {
+        console.warn('One Tap prompt error:', e);
+      }
+    }
+
     this.openGoogleAccountModal(false);
+  }
+
+  promptGoogleClientIdConfig() {
+    sound.playClick();
+    const currentId = this.getGoogleClientId();
+    const modalContainer = document.getElementById('globalModalContainer');
+    if (!modalContainer) return;
+
+    modalContainer.innerHTML = `
+      <div class="modal-backdrop" onclick="if(event.target === this) window.authSystem.closeModal()">
+        <div class="modal-dialog modal-sm">
+          <div class="modal-header">
+            <div>
+              <span class="modal-club-tag">Google Identity Services</span>
+              <h3 class="modal-title">Google OAuth Client ID</h3>
+            </div>
+            <button class="modal-close-btn" onclick="window.authSystem.closeModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.5;">
+              Enter your Google Cloud Console OAuth 2.0 Web Client ID. Authorized JavaScript Origins in your Google Cloud project must include this domain (e.g. <code>http://localhost:3000</code>).
+            </p>
+            <div class="form-group mb-3">
+              <label class="form-label">Client ID <span class="req">*</span></label>
+              <input type="text" id="gConfigClientId" class="form-input mono" value="${currentId}" placeholder="xxxx.apps.googleusercontent.com" />
+            </div>
+            <div style="display: flex; gap: 0.65rem; justify-content: flex-end; margin-top: 1.25rem;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.authSystem.resetGoogleClientId()">Reset Default</button>
+              <button type="button" class="btn btn-primary btn-sm" onclick="window.authSystem.saveGoogleClientIdFromInput()">Save Client ID</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  saveGoogleClientIdFromInput() {
+    const input = document.getElementById('gConfigClientId');
+    if (!input) return;
+    const val = input.value.trim();
+    if (!val) {
+      alert('Please enter a valid Google Client ID or click Reset Default.');
+      return;
+    }
+    this.setGoogleClientId(val);
+    this.showAuthToast('Google Client ID updated successfully.');
+    this.openAuthModal(this.authMode);
+  }
+
+  resetGoogleClientId() {
+    this.setGoogleClientId('');
+    this.showAuthToast('Google Client ID reset to default.');
+    this.openAuthModal(this.authMode);
   }
 
   openGoogleAccountModal(showCustomForm = false) {
