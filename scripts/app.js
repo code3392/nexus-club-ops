@@ -30,6 +30,8 @@ class NexusApp {
   }
 
   init() {
+    window.nexusApp = this;
+
     // Interactive canvas background
     this.canvas = new NetworkCanvas('networkCanvas');
 
@@ -71,6 +73,16 @@ class NexusApp {
     window.formStudio.init();
     window.gateScanner.init();
     window.adminCenter.init();
+  }
+
+  onDataSynced() {
+    this.renderFestFilterPills();
+    this.renderFestDirectory();
+    this.renderFestArena();
+    this.updateHeroStats();
+    if (window.adminCenter && typeof window.adminCenter.render === 'function') {
+      window.adminCenter.render();
+    }
   }
 
   bindEvents() {

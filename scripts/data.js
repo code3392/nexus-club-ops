@@ -13,8 +13,26 @@ export const INITIAL_ORGANIZATION = {
   badge: 'Official Student Organization'
 };
 
-// All festivals removed by user request - empty initial list, user adds fests manually
-export const INITIAL_FESTS = [];
+// Shared festival & event catalog across all users
+export const INITIAL_FESTS = [
+  {
+    id: 'fest-drmc-2026',
+    title: '9th DRMC International Tech Carnival 2026',
+    shortName: '9th DRMC Tech Carnival',
+    edition: '9th',
+    organization: 'DRMC IT CLUB',
+    createdBy: null,
+    creatorEmail: 'mdsaminyasirsami@gmail.com',
+    status: 'Active',
+    date: 'October 8-10, 2026',
+    venue: 'Dhaka Residential Model College',
+    tagline: 'DRMC IT CLUB proudly presents the grandest tech event of the year, The 9th DRMC International Tech Carnival 2026.',
+    description: 'DRMC IT CLUB proudly presents the grandest tech event of the year, The 9th DRMC International Tech Carnival 2026. Join collegiate and high school innovators across national competitions, programming contests, and robotics showcases.',
+    bannerGradient: 'linear-gradient(135deg, #262626 0%, #171717 50%, #0a0a0a 100%)',
+    totalEvents: 1,
+    badge: 'Official Fest'
+  }
+];
 
 export const INITIAL_CLUBS = [
   {
@@ -49,8 +67,42 @@ export const INITIAL_CLUBS = [
   }
 ];
 
-// Requirement 4: Empty initial events list (user adds events manually)
-export const INITIAL_EVENTS = [];
+// Seeded contest under the active festival
+export const INITIAL_EVENTS = [
+  {
+    id: 'evt-drmc-prog-2026',
+    festId: 'fest-drmc-2026',
+    festName: '9th DRMC International Tech Carnival 2026',
+    clubId: 'club-tech-society',
+    clubName: 'DRMC IT CLUB',
+    title: 'National Programming Contest 2026',
+    category: 'hackathon',
+    tagline: 'Collegiate & high school competitive algorithmic contest with live scoreboard.',
+    headline: 'National Algorithmic Programming Battle',
+    description: 'Solve competitive algorithm and data structure problems in 3 hours. Live scoreboard and instant gate entry pass provided upon registration.',
+    rules: 'ICPC style scoring. Individual solo entry or team of up to 3 members. All standard programming languages (C++, Java, Python) allowed.',
+    fee: 0,
+    capacity: 150,
+    registeredCount: 0,
+    date: 'October 9, 2026 • 10:00 AM',
+    venue: 'Campus Tech Complex, Room 402',
+    prizePool: 'BDT 50,000 + Trophies',
+    deadline: 'October 7, 2026 • 11:59 PM',
+    isTeam: true,
+    minTeam: 1,
+    maxTeam: 3,
+    status: 'open',
+    gradient: 'linear-gradient(135deg, #1f1f1f 0%, #121212 100%)',
+    gates: [
+      { id: 'gate-main', name: 'Main Gate' },
+      { id: 'gate-lab', name: 'Lab 4 Entrance' }
+    ],
+    fields: [
+      { id: 'q-institution', type: 'text', label: 'School / College / University Name', required: true, placeholder: 'e.g. Dhaka Residential Model College' },
+      { id: 'q-tshirt', type: 'select', label: 'T-Shirt Size', required: true, options: ['M', 'L', 'XL', 'XXL'] }
+    ]
+  }
+];
 
 // Requirement 4: Empty initial registrations
 export const INITIAL_REGISTRATIONS = [];
@@ -70,6 +122,170 @@ export const INITIAL_ANNOUNCEMENTS = [
 export class StateManager {
   constructor() {
     this.state = this.loadState();
+
+    // Real-time broadcast channel across open tabs in same browser
+    if (typeof BroadcastChannel !== 'undefined') {
+      try {
+        this.channel = new BroadcastChannel('nexus_ops_channel');
+        this.channel.onmessage = (event) => {
+          if (event && event.data && event.data.type === 'STATE_UPDATED') {
+            this.handleRemoteSync(event.data.state);
+          }
+        };
+      } catch (e) {
+        this.channel = null;
+      }
+    }
+
+    // Cross-tab storage listener
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', (e) => {
+        if (e.key === STORAGE_KEY && e.newValue) {
+          try {
+            this.handleRemoteSync(JSON.parse(e.newValue));
+          } catch (err) {}
+        }
+      });
+
+      // Window focus sync to catch updates from other users/devices immediately
+      window.addEventListener('focus', () => {
+        this.syncWithServer();
+      });
+    }
+
+    // Initial server sync
+    this.syncWithServer();
+
+    // Background poll every 4 seconds to sync from server across all devices & users
+    if (typeof setInterval !== 'undefined') {
+      setInterval(() => {
+        this.syncWithServer();
+      }, 4000);
+    }
+  }
+
+  handleRemoteSync(newState) {
+    if (!newState) return;
+    this.state = newState;
+    this.notifySyncListeners();
+  }
+
+  notifySyncListeners() {
+    if (typeof window !== 'undefined') {
+      if (window.nexusApp && typeof window.nexusApp.onDataSynced === 'function') {
+        window.nexusApp.onDataSynced();
+      }
+      if (window.adminCenter && typeof window.adminCenter.render === 'function') {
+        window.adminCenter.render();
+      }
+    }
+  }
+
+  async syncWithServer() {
+    try {
+      const res = await fetch('/api/data', { cache: 'no-store' });
+      if (!res.ok) return;
+      const serverData = await res.json();
+      if (!serverData) return;
+
+      let hasLocalChanges = false;
+      let hasServerChanges = false;
+
+      if (!Array.isArray(this.state.fests)) this.state.fests = [];
+      if (!Array.isArray(this.state.events)) this.state.events = [];
+      if (!Array.isArray(this.state.registrations)) this.state.registrations = [];
+
+      // 1. Merge festivals from server into client
+      if (Array.isArray(serverData.fests)) {
+        serverData.fests.forEach(sf => {
+          if (!sf || !sf.id) return;
+          const localIdx = this.state.fests.findIndex(lf => lf.id === sf.id);
+          if (localIdx === -1) {
+            this.state.fests.push(sf);
+            hasServerChanges = true;
+          } else {
+            if (JSON.stringify(this.state.fests[localIdx]) !== JSON.stringify(sf)) {
+              this.state.fests[localIdx] = sf;
+              hasServerChanges = true;
+            }
+          }
+        });
+
+        // Check if client has fests not yet stored on server (e.g. created offline/locally)
+        const missingOnServer = this.state.fests.some(lf => 
+          !serverData.fests.some(sf => sf.id === lf.id)
+        );
+        if (missingOnServer) hasLocalChanges = true;
+      }
+
+      // 2. Merge events from server into client
+      if (Array.isArray(serverData.events)) {
+        serverData.events.forEach(se => {
+          if (!se || !se.id) return;
+          const localIdx = this.state.events.findIndex(le => le.id === se.id);
+          if (localIdx === -1) {
+            this.state.events.push(se);
+            hasServerChanges = true;
+          } else {
+            if (JSON.stringify(this.state.events[localIdx]) !== JSON.stringify(se)) {
+              this.state.events[localIdx] = se;
+              hasServerChanges = true;
+            }
+          }
+        });
+
+        const missingOnServer = this.state.events.some(le => 
+          !serverData.events.some(se => se.id === le.id)
+        );
+        if (missingOnServer) hasLocalChanges = true;
+      }
+
+      // 3. Merge registrations from server
+      if (Array.isArray(serverData.registrations)) {
+        serverData.registrations.forEach(sr => {
+          if (!sr || !sr.ticketId) return;
+          const localIdx = this.state.registrations.findIndex(lr => lr.ticketId === sr.ticketId);
+          if (localIdx === -1) {
+            this.state.registrations.push(sr);
+            hasServerChanges = true;
+          }
+        });
+
+        const missingOnServer = this.state.registrations.some(lr => 
+          !serverData.registrations.some(sr => sr.ticketId === lr.ticketId)
+        );
+        if (missingOnServer) hasLocalChanges = true;
+      }
+
+      // If client has items missing on server, push client state to server so everyone gets it
+      if (hasLocalChanges) {
+        this.pushStateToServer();
+      }
+
+      // If server had new or updated items, update local storage and notify UI
+      if (hasServerChanges) {
+        this.save(false);
+        this.notifySyncListeners();
+      }
+    } catch (err) {
+      // Offline fallback
+    }
+  }
+
+  async pushStateToServer() {
+    try {
+      await fetch('/api/data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fests: this.state.fests || [],
+          events: this.state.events || [],
+          registrations: this.state.registrations || []
+        })
+      });
+    } catch (err) {
+      // Offline fallback
+    }
   }
 
   loadState() {
@@ -91,6 +307,12 @@ export class StateManager {
           } else {
             parsed.fests = [];
           }
+          if (parsed.fests.length === 0 && INITIAL_FESTS.length > 0) {
+            parsed.fests = [...INITIAL_FESTS];
+          }
+          if (parsed.events.length === 0 && INITIAL_EVENTS.length > 0) {
+            parsed.events = [...INITIAL_EVENTS];
+          }
           return parsed;
         }
       }
@@ -100,18 +322,21 @@ export class StateManager {
 
     return {
       organization: INITIAL_ORGANIZATION,
-      fests: [],
+      fests: [...INITIAL_FESTS],
       clubs: INITIAL_CLUBS,
-      events: INITIAL_EVENTS,
+      events: [...INITIAL_EVENTS],
       registrations: INITIAL_REGISTRATIONS,
       announcements: INITIAL_ANNOUNCEMENTS,
       scanHistory: []
     };
   }
 
-  save() {
+  save(broadcast = true) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+      if (broadcast && this.channel) {
+        this.channel.postMessage({ type: 'STATE_UPDATED', state: this.state });
+      }
     } catch (e) {
       console.warn('Could not save to localStorage', e);
     }
@@ -121,14 +346,15 @@ export class StateManager {
     localStorage.removeItem(STORAGE_KEY);
     this.state = {
       organization: INITIAL_ORGANIZATION,
-      fests: [],
+      fests: [...INITIAL_FESTS],
       clubs: INITIAL_CLUBS,
-      events: INITIAL_EVENTS,
+      events: [...INITIAL_EVENTS],
       registrations: INITIAL_REGISTRATIONS,
       announcements: INITIAL_ANNOUNCEMENTS,
       scanHistory: []
     };
     this.save();
+    this.pushStateToServer();
     return this.state;
   }
 
@@ -148,6 +374,7 @@ export class StateManager {
     if (!this.state.fests) this.state.fests = [];
     this.state.fests.unshift(festData);
     this.save();
+    this.pushStateToServer();
     return festData;
   }
 
@@ -155,6 +382,8 @@ export class StateManager {
     if (!this.state.fests) return false;
     this.state.fests = this.state.fests.filter(f => f.id !== festId);
     this.save();
+    fetch('/api/fests/' + encodeURIComponent(festId), { method: 'DELETE' }).catch(() => {});
+    this.pushStateToServer();
     return true;
   }
 
@@ -164,6 +393,7 @@ export class StateManager {
     if (idx !== -1) {
       this.state.fests[idx] = { ...this.state.fests[idx], ...updatedFields };
       this.save();
+      this.pushStateToServer();
       return this.state.fests[idx];
     }
     return null;
@@ -186,6 +416,7 @@ export class StateManager {
     if (!this.state.clubs.some(c => c.name.toLowerCase() === clubData.name.toLowerCase())) {
       this.state.clubs.push(clubData);
       this.save();
+      this.pushStateToServer();
     }
   }
 
@@ -197,6 +428,7 @@ export class StateManager {
     if (!this.state.events) this.state.events = [];
     this.state.events.unshift(eventData);
     this.save();
+    this.pushStateToServer();
     return eventData;
   }
 
@@ -207,6 +439,7 @@ export class StateManager {
     if (idx !== -1) {
       this.state.events[idx] = { ...this.state.events[idx], ...updatedFields };
       this.save();
+      this.pushStateToServer();
       return this.state.events[idx];
     }
     return null;
@@ -220,6 +453,8 @@ export class StateManager {
       this.state.registrations = this.state.registrations.filter(r => r.eventId !== eventId);
     }
     this.save();
+    fetch('/api/events/' + encodeURIComponent(eventId), { method: 'DELETE' }).catch(() => {});
+    this.pushStateToServer();
     return true;
   }
 
@@ -236,6 +471,7 @@ export class StateManager {
       event.registeredCount = (event.registeredCount || 0) + 1;
     }
     this.save();
+    this.pushStateToServer();
     return regData;
   }
 
@@ -254,6 +490,7 @@ export class StateManager {
         }
       }
       this.save();
+      this.pushStateToServer();
       return true;
     }
     return false;
@@ -268,6 +505,7 @@ export class StateManager {
     if (reg) {
       Object.assign(reg, updateFields);
       this.save();
+      this.pushStateToServer();
       return true;
     }
     return false;

@@ -1,0 +1,58 @@
+{
+  "fests": [
+    {
+      "id": "fest-drmc-2026",
+      "title": "9th DRMC International Tech Carnival 2026",
+      "shortName": "9th DRMC Tech Carnival",
+      "edition": "9th",
+      "organization": "DRMC IT CLUB",
+      "createdBy": null,
+      "creatorEmail": "mdsaminyasirsami@gmail.com",
+      "status": "Active",
+      "date": "October 8-10, 2026",
+      "venue": "Dhaka Residential Model College",
+      "tagline": "DRMC IT CLUB proudly presents the grandest tech event of the year, The 9th DRMC International Tech Carnival 2026.",
+      "description": "DRMC IT CLUB proudly presents the grandest tech event of the year, The 9th DRMC International Tech Carnival 2026. Join collegiate and high school innovators across national competitions, programming contests, and robotics showcases.",
+      "bannerGradient": "linear-gradient(135deg, #262626 0%, #171717 50%, #0a0a0a 100%)",
+      "totalEvents": 1,
+      "badge": "Official Fest"
+    }
+  ],
+  "events": [
+    {
+      "id": "evt-drmc-prog-2026",
+      "festId": "fest-drmc-2026",
+      "festName": "9th DRMC International Tech Carnival 2026",
+      "clubId": "club-tech-society",
+      "clubName": "DRMC IT CLUB",
+      "title": "National Programming Contest 2026",
+      "category": "hackathon",
+      "tagline": "Collegiate & high school competitive algorithmic contest with live scoreboard.",
+      "headline": "National Algorithmic Programming Battle",
+      "description": "Solve competitive algorithm and data structure problems in 3 hours. Live scoreboard and instant gate entry pass provided upon registration.",
+      "rules": "ICPC style scoring. Individual solo entry or team of up to 3 members. All standard programming languages (C++, Java, Python) allowed.",
+      "fee": 0,
+      "capacity": 150,
+      "registeredCount": 0,
+      "date": "October 9, 2026 • 10:00 AM",
+      "venue": "Campus Tech Complex, Room 402",
+      "prizePool": "BDT 50,000 + Trophies",
+      "deadline": "October 7, 2026 • 11:59 PM",
+      "isTeam": true,
+      "minTeam": 1,
+      "maxTeam": 3,
+      "status": "open",
+      "gradient": "linear-gradient(135deg, #1f1f1f 0%, #121212 100%)",
+      "gates": [
+        { "id": "gate-main", "name": "Main Gate" },
+        { "id": "gate-lab", "name": "Lab 4 Entrance" }
+      ],
+      "fields": [
+        { "id": "q-institution", "type": "text", "label": "School / College / University Name", "required": true, "placeholder": "e.g. Dhaka Residential Model College" },
+        { "id": "q-tshirt", "type": "select", "label": "T-Shirt Size", "required": true, "options": ["M", "L", "XL", "XXL"] }
+      ]
+    }
+  ],
+  "registrations": [],
+  "clubs": []
+}
