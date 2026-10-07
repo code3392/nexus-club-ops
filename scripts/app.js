@@ -672,6 +672,18 @@ class NexusApp {
       return;
     }
 
+    if (this.activeFestFilter === festId) {
+      this.activeFestFilter = 'all';
+    }
+
+    // Cascade delete any events attached to this festival
+    const festEvents = (db.getEvents ? db.getEvents() : []).filter(e => e.festId === festId);
+    festEvents.forEach(e => {
+      if (db.deleteEvent) {
+        db.deleteEvent(e.id);
+      }
+    });
+
     if (db.deleteFest) {
       db.deleteFest(festId);
     }
@@ -1497,8 +1509,16 @@ class NexusApp {
               <button class="btn btn-secondary btn-sm text-danger" onclick="window.nexusApp.cancelAttendeeRegistration('${r.ticketId}')">
                 Cancel Registration
               </button>
+              <button class="btn btn-outline-danger btn-sm" onclick="window.nexusApp.deleteAttendeeRegistration('${r.ticketId}')" title="Permanently delete pass">
+                Remove Pass
+              </button>
             ` : `
-              <span class="text-rose" style="font-size:0.8rem;">Registration was cancelled. Quota seat released.</span>
+              <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                <span class="text-rose" style="font-size:0.8rem;">Registration was cancelled. Quota seat released.</span>
+                <button class="btn btn-outline-danger btn-sm" onclick="window.nexusApp.deleteAttendeeRegistration('${r.ticketId}')" title="Permanently delete pass">
+                  Remove Pass
+                </button>
+              </div>
             `}
           </div>
         </div>
@@ -1554,6 +1574,35 @@ class NexusApp {
         <div class="toast-content">
           <div class="toast-title">Registration Cancelled</div>
           <div class="toast-desc">Seat quota has been released and pass ${ticketId} is now deactivated.</div>
+        </div>
+      `;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.classList.add('visible'), 50);
+      setTimeout(() => {
+        toast.classList.remove('visible');
+        setTimeout(() => toast.remove(), 400);
+      }, 3500);
+    }
+  }
+
+  deleteAttendeeRegistration(ticketId) {
+    if (confirm(`Are you sure you want to permanently delete pass ${ticketId}? This cannot be undone.`)) {
+      sound.playClick();
+      db.deleteRegistration(ticketId);
+      this.updateHeroStats();
+      this.renderFestArena();
+      this.openMyRegistrationsModal();
+      if (window.adminCenter && typeof window.adminCenter.render === 'function') {
+        window.adminCenter.render();
+      }
+
+      const toast = document.createElement('div');
+      toast.className = 'nexus-toast toast-success';
+      toast.innerHTML = `
+        <div class="toast-icon">OK</div>
+        <div class="toast-content">
+          <div class="toast-title">Pass Removed</div>
+          <div class="toast-desc">Pass ${ticketId} has been permanently deleted from your account and records.</div>
         </div>
       `;
       document.body.appendChild(toast);

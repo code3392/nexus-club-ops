@@ -159,49 +159,23 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // API Route: POST /api/data (Sync / merge full state from any client)
+  // API Route: POST /api/data (Sync full state from client)
   if (reqPath === '/api/data' && req.method === 'POST') {
     try {
       const payload = await parseJsonBody(req);
       const db = readDb();
 
-      // Merge festivals
       if (Array.isArray(payload.fests)) {
-        payload.fests.forEach(incomingFest => {
-          if (!incomingFest || !incomingFest.id) return;
-          const idx = db.fests.findIndex(f => f.id === incomingFest.id);
-          if (idx === -1) {
-            db.fests.unshift(incomingFest);
-          } else {
-            db.fests[idx] = { ...db.fests[idx], ...incomingFest };
-          }
-        });
+        db.fests = payload.fests;
       }
-
-      // Merge events
       if (Array.isArray(payload.events)) {
-        payload.events.forEach(incomingEvt => {
-          if (!incomingEvt || !incomingEvt.id) return;
-          const idx = db.events.findIndex(e => e.id === incomingEvt.id);
-          if (idx === -1) {
-            db.events.unshift(incomingEvt);
-          } else {
-            db.events[idx] = { ...db.events[idx], ...incomingEvt };
-          }
-        });
+        db.events = payload.events;
       }
-
-      // Merge registrations
       if (Array.isArray(payload.registrations)) {
-        payload.registrations.forEach(incomingReg => {
-          if (!incomingReg || !incomingReg.ticketId) return;
-          const idx = db.registrations.findIndex(r => r.ticketId === incomingReg.ticketId);
-          if (idx === -1) {
-            db.registrations.unshift(incomingReg);
-          } else {
-            db.registrations[idx] = { ...db.registrations[idx], ...incomingReg };
-          }
-        });
+        db.registrations = payload.registrations;
+      }
+      if (Array.isArray(payload.clubs)) {
+        db.clubs = payload.clubs;
       }
 
       writeDb(db);

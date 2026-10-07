@@ -386,8 +386,8 @@ export class AdminCommandCenter {
                 title="${isExpired ? 'Reopen Registrations' : 'Expire Registrations'}">
                 ${isExpired ? 'Reopen' : 'Expire'}
               </button>
-              <button class="btn btn-danger btn-sm" onclick="window.adminCenter.cancelCreatedForm('${evt.id}')" title="Cancel & Delete Event">
-                Cancel
+              <button class="btn btn-outline-danger btn-sm" onclick="window.adminCenter.cancelCreatedForm('${evt.id}')" title="Remove & Delete Event">
+                Remove
               </button>
             </div>
           </td>

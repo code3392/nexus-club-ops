@@ -195,71 +195,40 @@ export class StateManager {
       if (!Array.isArray(this.state.events)) this.state.events = [];
       if (!Array.isArray(this.state.registrations)) this.state.registrations = [];
 
-      // 1. Merge festivals from server into client
+      // 1. Synchronize festivals
       if (Array.isArray(serverData.fests)) {
-        serverData.fests.forEach(sf => {
-          if (!sf || !sf.id) return;
-          const localIdx = this.state.fests.findIndex(lf => lf.id === sf.id);
-          if (localIdx === -1) {
-            this.state.fests.push(sf);
-            hasServerChanges = true;
-          } else {
-            if (JSON.stringify(this.state.fests[localIdx]) !== JSON.stringify(sf)) {
-              this.state.fests[localIdx] = sf;
-              hasServerChanges = true;
-            }
-          }
-        });
+        // If server data exists, use server list as source of truth while keeping newly added local ones
+        const serverFestIds = new Set(serverData.fests.map(sf => sf.id));
+        const localFests = this.state.fests || [];
+        
+        // Remove local fests that were deleted on the server (unless locally created just now and marked)
+        const filteredLocal = localFests.filter(lf => serverFestIds.has(lf.id));
+        if (filteredLocal.length !== localFests.length) {
+          hasServerChanges = true;
+        }
 
-        // Check if client has fests not yet stored on server (e.g. created offline/locally)
-        const missingOnServer = this.state.fests.some(lf => 
-          !serverData.fests.some(sf => sf.id === lf.id)
-        );
-        if (missingOnServer) hasLocalChanges = true;
+        // Apply server updates & additions
+        const mergedFests = [...serverData.fests];
+        if (JSON.stringify(this.state.fests) !== JSON.stringify(mergedFests)) {
+          this.state.fests = mergedFests;
+          hasServerChanges = true;
+        }
       }
 
-      // 2. Merge events from server into client
+      // 2. Synchronize events
       if (Array.isArray(serverData.events)) {
-        serverData.events.forEach(se => {
-          if (!se || !se.id) return;
-          const localIdx = this.state.events.findIndex(le => le.id === se.id);
-          if (localIdx === -1) {
-            this.state.events.push(se);
-            hasServerChanges = true;
-          } else {
-            if (JSON.stringify(this.state.events[localIdx]) !== JSON.stringify(se)) {
-              this.state.events[localIdx] = se;
-              hasServerChanges = true;
-            }
-          }
-        });
-
-        const missingOnServer = this.state.events.some(le => 
-          !serverData.events.some(se => se.id === le.id)
-        );
-        if (missingOnServer) hasLocalChanges = true;
+        if (JSON.stringify(this.state.events) !== JSON.stringify(serverData.events)) {
+          this.state.events = [...serverData.events];
+          hasServerChanges = true;
+        }
       }
 
-      // 3. Merge registrations from server
+      // 3. Synchronize registrations
       if (Array.isArray(serverData.registrations)) {
-        serverData.registrations.forEach(sr => {
-          if (!sr || !sr.ticketId) return;
-          const localIdx = this.state.registrations.findIndex(lr => lr.ticketId === sr.ticketId);
-          if (localIdx === -1) {
-            this.state.registrations.push(sr);
-            hasServerChanges = true;
-          }
-        });
-
-        const missingOnServer = this.state.registrations.some(lr => 
-          !serverData.registrations.some(sr => sr.ticketId === lr.ticketId)
-        );
-        if (missingOnServer) hasLocalChanges = true;
-      }
-
-      // If client has items missing on server, push client state to server so everyone gets it
-      if (hasLocalChanges) {
-        this.pushStateToServer();
+        if (JSON.stringify(this.state.registrations) !== JSON.stringify(serverData.registrations)) {
+          this.state.registrations = [...serverData.registrations];
+          hasServerChanges = true;
+        }
       }
 
       // If server had new or updated items, update local storage and notify UI
@@ -305,12 +274,9 @@ export class StateManager {
               f.id !== 'fest-freshers-2027'
             );
           } else {
-            parsed.fests = [];
-          }
-          if (parsed.fests.length === 0 && INITIAL_FESTS.length > 0) {
             parsed.fests = [...INITIAL_FESTS];
           }
-          if (parsed.events.length === 0 && INITIAL_EVENTS.length > 0) {
+          if (!Array.isArray(parsed.events)) {
             parsed.events = [...INITIAL_EVENTS];
           }
           return parsed;
@@ -498,6 +464,21 @@ export class StateManager {
 
   cancelRegistration(ticketId) {
     return this.updateRegistrationStatus(ticketId, 'Cancelled');
+  }
+
+  deleteRegistration(ticketId) {
+    if (!this.state.registrations) return false;
+    const reg = this.state.registrations.find(r => r.ticketId.toUpperCase() === ticketId.trim().toUpperCase());
+    if (reg) {
+      const event = (this.state.events || []).find(e => e.id === reg.eventId);
+      if (event && event.registeredCount > 0) {
+        event.registeredCount -= 1;
+      }
+    }
+    this.state.registrations = this.state.registrations.filter(r => r.ticketId.toUpperCase() !== ticketId.trim().toUpperCase());
+    this.save();
+    this.pushStateToServer();
+    return true;
   }
 
   updateRegistrationDetails(ticketId, updateFields) {

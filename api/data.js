@@ -76,28 +76,16 @@ export default function handler(req, res) {
   if (req.method === 'POST') {
     const payload = req.body || {};
     if (Array.isArray(payload.fests)) {
-      payload.fests.forEach(f => {
-        if (!f || !f.id) return;
-        const idx = sharedDb.fests.findIndex(item => item.id === f.id);
-        if (idx === -1) sharedDb.fests.unshift(f);
-        else sharedDb.fests[idx] = { ...sharedDb.fests[idx], ...f };
-      });
+      sharedDb.fests = payload.fests;
     }
     if (Array.isArray(payload.events)) {
-      payload.events.forEach(e => {
-        if (!e || !e.id) return;
-        const idx = sharedDb.events.findIndex(item => item.id === e.id);
-        if (idx === -1) sharedDb.events.unshift(e);
-        else sharedDb.events[idx] = { ...sharedDb.events[idx], ...e };
-      });
+      sharedDb.events = payload.events;
     }
     if (Array.isArray(payload.registrations)) {
-      payload.registrations.forEach(r => {
-        if (!r || !r.ticketId) return;
-        const idx = sharedDb.registrations.findIndex(item => item.ticketId === r.ticketId);
-        if (idx === -1) sharedDb.registrations.unshift(r);
-        else sharedDb.registrations[idx] = { ...sharedDb.registrations[idx], ...r };
-      });
+      sharedDb.registrations = payload.registrations;
+    }
+    if (Array.isArray(payload.clubs)) {
+      sharedDb.clubs = payload.clubs;
     }
     return res.status(200).json({ success: true, count: sharedDb.fests.length });
   }
