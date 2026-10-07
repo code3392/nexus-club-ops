@@ -492,10 +492,39 @@ export class AuthSystem {
       const data = localStorage.getItem('NEXUS_SAVED_GOOGLE_ACCOUNTS');
       if (data) {
         const list = JSON.parse(data);
-        if (Array.isArray(list) && list.length > 0) return list;
+        if (Array.isArray(list) && list.length > 0) {
+          if (!list.some(a => a.email && a.email.toLowerCase() === 'mdshahalam3392@gmail.com')) {
+            list.unshift({
+              id: 'google-usr-mdshahalam',
+              name: 'Md Shah Alam',
+              email: 'mdshahalam3392@gmail.com',
+              rollNo: '2024-CSE-001',
+              avatar: 'M',
+              department: 'Computer Science & Engineering',
+              organization: 'Campus Member',
+              provider: 'google',
+              verified: true,
+              role: 'Campus Member'
+            });
+            this.saveGoogleAccounts(list);
+          }
+          return list;
+        }
       }
     } catch (e) {}
     return [
+      {
+        id: 'google-usr-mdshahalam',
+        name: 'Md Shah Alam',
+        email: 'mdshahalam3392@gmail.com',
+        rollNo: '2024-CSE-001',
+        avatar: 'M',
+        department: 'Computer Science & Engineering',
+        organization: 'Campus Member',
+        provider: 'google',
+        verified: true,
+        role: 'Campus Member'
+      },
       {
         id: 'google-usr-campus-1',
         name: 'Alex Rivera',
@@ -557,12 +586,13 @@ export class AuthSystem {
 
   handleGoogleSignIn() {
     sound.playClick();
-    const clientId = this.getGoogleClientId();
+    const customClientId = localStorage.getItem(GOOGLE_CLIENT_ID_KEY);
 
-    if (window.google?.accounts?.oauth2) {
+    // Only attempt native Google Identity Service popup if a real custom Client ID has been configured
+    if (customClientId && window.google?.accounts?.oauth2) {
       try {
         const client = window.google.accounts.oauth2.initTokenClient({
-          client_id: clientId,
+          client_id: customClientId,
           scope: 'email profile openid',
           callback: async (tokenResponse) => {
             if (tokenResponse && tokenResponse.access_token) {
@@ -597,19 +627,7 @@ export class AuthSystem {
       }
     }
 
-    if (window.google?.accounts?.id) {
-      try {
-        window.google.accounts.id.prompt((notification) => {
-          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            this.openGoogleAccountModal(false);
-          }
-        });
-        return;
-      } catch (e) {
-        console.warn('One Tap prompt error:', e);
-      }
-    }
-
+    // Default seamless Google Account Picker
     this.openGoogleAccountModal(false);
   }
 
@@ -745,10 +763,10 @@ export class AuthSystem {
                       <input type="url" id="gPhotoUrlInput" class="form-input form-input-sm" placeholder="Or paste image link" oninput="window.authSystem.handleGooglePhotoUrl(this.value)" />
                     </div>
                   </div>
-                  <div class="preset-emojis-row">
+                  <div class="preset-badges-row">
                     <span class="preset-label">Or pick a badge:</span>
                     ${['DEV', 'LEAD', 'VIP', 'PRO', 'TECH', 'CORE', 'ORG', 'AI', 'CP', 'LAB'].map(badge => `
-                      <button type="button" class="btn-emoji-pick" style="font-size:0.75rem; font-weight:800; font-family:var(--font-mono);" onclick="window.authSystem.selectGoogleEmoji('${badge}')">${badge}</button>
+                      <button type="button" class="btn-badge-pick" style="font-size:0.75rem; font-weight:800; font-family:var(--font-mono);" onclick="window.authSystem.selectGoogleBadge('${badge}')">${badge}</button>
                     `).join('')}
                   </div>
                 </div>
@@ -815,15 +833,19 @@ export class AuthSystem {
     }
   }
 
-  selectGoogleEmoji(emoji) {
+  selectGoogleBadge(badge) {
     sound.playClick();
-    this.pendingGoogleAvatar = emoji;
+    this.pendingGoogleAvatar = badge;
     const preview = document.getElementById('gAvatarPreview');
     if (preview) {
-      preview.innerHTML = `<div style="font-size:2rem; line-height:1;">${emoji}</div>`;
+      preview.innerHTML = `<div style="font-size:1.1rem; font-weight:900; line-height:1; font-family:var(--font-mono);">${badge}</div>`;
     }
     const urlIn = document.getElementById('gPhotoUrlInput');
     if (urlIn) urlIn.value = '';
+  }
+
+  selectGoogleEmoji(badge) {
+    this.selectGoogleBadge(badge);
   }
 
   submitGoogleCustomAccount() {

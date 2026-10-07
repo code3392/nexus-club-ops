@@ -129,8 +129,8 @@ body {
     radial-gradient(ellipse 65% 120% at 50% -20%, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 50%, transparent 82%),
     linear-gradient(180deg, rgba(16, 16, 16, 0.98) 0%, rgba(0, 0, 0, 0.98) 100%);
   background-size: 34px 34px, 34px 34px, 100% 100%, 100% 100%;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7), 0 1px 0 rgba(255, 255, 255, 0.08);
   padding: 0.38rem 1.25rem;
@@ -4625,7 +4625,8 @@ select.gform-input,
   gap: 0.45rem;
 }
 
-.preset-emojis-row {
+.preset-emojis-row,
+.preset-badges-row {
   margin-top: 0.5rem;
 }
 
@@ -4636,42 +4637,52 @@ select.gform-input,
   margin-bottom: 0.35rem;
 }
 
-.presets-emoji-list {
+.presets-emoji-list,
+.presets-badge-list {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
 }
 
-.btn-emoji-pick {
+.btn-emoji-pick,
+.btn-badge-pick {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-subtle);
   border-radius: 6px;
-  font-size: 1.15rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--text-main);
   padding: 4px 8px;
   cursor: pointer;
   transition: all 0.15s;
 }
 
-.btn-emoji-pick:hover {
+.btn-emoji-pick:hover,
+.btn-badge-pick:hover {
   background: rgba(255, 255, 255, 0.15);
   border-color: #ffffff;
-  transform: scale(1.15);
+  transform: scale(1.08);
 }
 
-.btn-emoji-pick-sm {
+.btn-emoji-pick-sm,
+.btn-badge-pick-sm {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-subtle);
   border-radius: 6px;
-  font-size: 1rem;
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: var(--text-main);
   padding: 3px 6px;
   cursor: pointer;
   transition: all 0.15s;
 }
 
-.btn-emoji-pick-sm:hover {
+.btn-emoji-pick-sm:hover,
+.btn-badge-pick-sm:hover {
   background: rgba(255, 255, 255, 0.15);
   border-color: #ffffff;
-  transform: scale(1.15);
+  transform: scale(1.08);
 }
 
 /* ==========================================================================

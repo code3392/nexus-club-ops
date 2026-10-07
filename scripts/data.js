@@ -156,11 +156,11 @@ export class StateManager {
     // Initial server sync
     this.syncWithServer();
 
-    // Background poll every 4 seconds to sync from server across all devices & users
+    // Background poll every 15 seconds to sync from server across all devices & users
     if (typeof setInterval !== 'undefined') {
       setInterval(() => {
         this.syncWithServer();
-      }, 4000);
+      }, 15000);
     }
   }
 
@@ -188,7 +188,19 @@ export class StateManager {
       const serverData = await res.json();
       if (!serverData) return;
 
-      let hasLocalChanges = false;
+      // Compute stable signature to avoid re-rendering DOM if data is identical
+      const incomingSignature = JSON.stringify({
+        fCount: serverData.fests?.length || 0,
+        eCount: serverData.events?.length || 0,
+        rCount: serverData.registrations?.length || 0,
+        fIds: (serverData.fests || []).map(f => `${f.id}:${f.name}`),
+        eIds: (serverData.events || []).map(e => `${e.id}:${e.registeredCount || 0}`)
+      });
+
+      if (this._lastServerSignature === incomingSignature) {
+        return; // No changes from server, skip re-render
+      }
+
       let hasServerChanges = false;
 
       if (!Array.isArray(this.state.fests)) this.state.fests = [];
@@ -197,17 +209,14 @@ export class StateManager {
 
       // 1. Synchronize festivals
       if (Array.isArray(serverData.fests)) {
-        // If server data exists, use server list as source of truth while keeping newly added local ones
         const serverFestIds = new Set(serverData.fests.map(sf => sf.id));
         const localFests = this.state.fests || [];
         
-        // Remove local fests that were deleted on the server (unless locally created just now and marked)
         const filteredLocal = localFests.filter(lf => serverFestIds.has(lf.id));
         if (filteredLocal.length !== localFests.length) {
           hasServerChanges = true;
         }
 
-        // Apply server updates & additions
         const mergedFests = [...serverData.fests];
         if (JSON.stringify(this.state.fests) !== JSON.stringify(mergedFests)) {
           this.state.fests = mergedFests;
@@ -230,6 +239,8 @@ export class StateManager {
           hasServerChanges = true;
         }
       }
+
+      this._lastServerSignature = incomingSignature;
 
       // If server had new or updated items, update local storage and notify UI
       if (hasServerChanges) {
