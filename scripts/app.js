@@ -6,7 +6,7 @@ import { NetworkCanvas } from './canvas.js';
 import { FormBuilderStudio } from './formBuilder.js';
 import { GateScannerTerminal } from './scanner.js';
 import { AdminCommandCenter } from './analytics.js';
-import { renderHolographicBadge } from './badges.js';
+import { renderHolographicBadge, downloadBadgeImage } from './badges.js';
 import { renderCertificateModal } from './certificates.js';
 import { auth } from './auth.js';
 
@@ -1344,13 +1344,20 @@ class NexusApp {
             <button class="btn btn-secondary" onclick="window.nexusApp.copyTicketId('${reg.ticketId}')">
               Copy Pass ID
             </button>
-            <button class="btn btn-secondary" onclick="window.print()">
-              Print / Save Pass
+            <button class="btn btn-secondary" onclick="window.nexusApp.savePassInfo('${reg.ticketId}')">
+              Save Info
             </button>
           </div>
         </div>
       </div>
     `;
+  }
+
+  savePassInfo(ticketId) {
+    const reg = db.getRegistrations().find(r => r.ticketId === ticketId);
+    if (!reg) return;
+    sound.playClick();
+    downloadBadgeImage(reg);
   }
 
   testGateScan(ticketId) {

@@ -155,3 +155,341 @@ export function renderHolographicBadge(reg) {
     </div>
   `;
 }
+
+// Generate a high-resolution PNG image canvas matching the pass card exactly
+export function generateBadgeCanvas(reg) {
+  const canvas = document.createElement('canvas');
+  // High-DPI canvas dimensions (scale = 2 for crisp 380x600 layout)
+  const width = 420;
+  const height = 620;
+  canvas.width = width * 2;
+  canvas.height = height * 2;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(2, 2);
+
+  // Helper rounded rectangle
+  function roundRect(x, y, w, h, r, fill, stroke, strokeColor) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+    if (fill) {
+      ctx.fillStyle = fill;
+      ctx.fill();
+    }
+    if (stroke) {
+      ctx.strokeStyle = strokeColor || 'rgba(255,255,255,0.2)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  }
+
+  // 1. Pass background
+  const bgGrad = ctx.createLinearGradient(0, 0, width, height);
+  bgGrad.addColorStop(0, '#18181b');
+  bgGrad.addColorStop(1, '#09090b');
+  roundRect(0, 0, width, height, 24, bgGrad, true, 'rgba(255,255,255,0.18)');
+
+  // 2. Sheen subtle shine effect
+  ctx.save();
+  ctx.beginPath();
+  roundRect(0, 0, width, height, 24, null, false);
+  ctx.clip();
+  const sheen = ctx.createLinearGradient(0, 0, width, height);
+  sheen.addColorStop(0, 'rgba(255,255,255,0.06)');
+  sheen.addColorStop(0.3, 'rgba(255,255,255,0.02)');
+  sheen.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = sheen;
+  ctx.fillRect(0, 0, width, height);
+  ctx.restore();
+
+  let curY = 32;
+
+  // 3. Header badges
+  // Campus Pass Pill
+  roundRect(24, curY, 86, 20, 10, '#ffffff', false);
+  ctx.fillStyle = '#000000';
+  ctx.font = '800 9px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.fillText('CAMPUS PASS', 31, curY + 14);
+
+  // Club / Org Pill
+  const clubText = (reg.clubName || 'NEXUS FEST 2026').toUpperCase();
+  ctx.font = '700 9px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  const clubWidth = Math.min(130, ctx.measureText(clubText).width + 14);
+  roundRect(116, curY, clubWidth, 20, 10, 'rgba(255,255,255,0.1)', false);
+  ctx.fillStyle = '#a1a1aa';
+  ctx.fillText(clubText, 123, curY + 14);
+
+  // Pass Tier Tag (Right aligned)
+  const tierText = (reg.passTier || (reg.isTeam || reg.teamName ? 'TEAM PASS' : 'VIP ACCESS')).toUpperCase();
+  ctx.font = '800 9px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  const tierWidth = ctx.measureText(tierText).width + 16;
+  roundRect(width - 24 - tierWidth, curY, tierWidth, 20, 4, '#ffffff', false);
+  ctx.fillStyle = '#000000';
+  ctx.fillText(tierText, width - 24 - tierWidth + 8, curY + 14);
+
+  curY += 44;
+
+  // 4. Event Title (Multi-line support if needed)
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '900 20px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  const eventTitle = reg.eventTitle || 'Campus Event';
+  const words = eventTitle.split(' ');
+  let line = '';
+  const maxTitleWidth = width - 48;
+  for (let n = 0; n < words.length; n++) {
+    const testLine = line + words[n] + ' ';
+    const metrics = ctx.measureText(testLine);
+    if (metrics.width > maxTitleWidth && n > 0) {
+      ctx.fillText(line.trim(), 24, curY);
+      line = words[n] + ' ';
+      curY += 24;
+    } else {
+      line = testLine;
+    }
+  }
+  ctx.fillText(line.trim(), 24, curY);
+  curY += 24;
+
+  // 5. Team info
+  if (reg.teamName) {
+    ctx.font = '600 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillStyle = '#a1a1aa';
+    ctx.fillText('TEAM: ', 24, curY);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '800 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText(reg.teamName, 68, curY);
+    curY += 22;
+  } else {
+    curY += 6;
+  }
+
+  // 6. Attendee Card Box
+  roundRect(24, curY, width - 48, 64, 12, 'rgba(255,255,255,0.04)', true, 'rgba(255,255,255,0.08)');
+  
+  // Avatar Circle
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(58, curY + 32, 22, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+  ctx.fillStyle = '#000000';
+  ctx.font = '900 18px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const leadInitial = reg.leadName ? reg.leadName.charAt(0).toUpperCase() : 'U';
+  ctx.fillText(leadInitial, 58, curY + 32);
+  ctx.restore();
+
+  // Attendee Details
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '800 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.fillText(reg.leadName || 'Attendee', 92, curY + 24);
+
+  ctx.fillStyle = '#71717a';
+  ctx.font = '600 11px "JetBrains Mono", monospace';
+  ctx.fillText('ID: ' + (reg.collegeRoll || 'VERIFIED'), 92, curY + 40);
+
+  ctx.fillStyle = '#a1a1aa';
+  ctx.font = '500 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.fillText(reg.leadEmail || '', 92, curY + 54);
+
+  curY += 76;
+
+  // 7. Team member pills if any
+  if (reg.teamMembers && reg.teamMembers.length > 0) {
+    let pillX = 24;
+    reg.teamMembers.forEach(m => {
+      const pillLabel = `${m.name} (${m.role || 'Member'})`;
+      ctx.font = '500 10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      const pWidth = ctx.measureText(pillLabel).width + 14;
+      if (pillX + pWidth > width - 24) return; // avoid overflow
+      roundRect(pillX, curY, pWidth, 20, 6, 'rgba(255,255,255,0.06)', false);
+      ctx.fillStyle = '#a1a1aa';
+      ctx.fillText(pillLabel, pillX + 7, curY + 14);
+      pillX += pWidth + 6;
+    });
+    curY += 28;
+  }
+
+  // 8. QR Code Box & Telemetry
+  const qrBoxSize = 144;
+  roundRect(24, curY, qrBoxSize, qrBoxSize + 20, 12, '#ffffff', false);
+
+  // Draw deterministic QR matrix directly onto canvas
+  const matrixSize = 25;
+  const grid = Array.from({ length: matrixSize }, () => Array(matrixSize).fill(0));
+  function drawFinderMatrix(startX, startY) {
+    for (let r = 0; r < 7; r++) {
+      for (let c = 0; c < 7; c++) {
+        if (
+          r === 0 || r === 6 || c === 0 || c === 6 ||
+          (r >= 2 && r <= 4 && c >= 2 && c <= 4)
+        ) {
+          grid[startY + r][startX + c] = 1;
+        } else {
+          grid[startY + r][startX + c] = 0;
+        }
+      }
+    }
+  }
+  drawFinderMatrix(0, 0);
+  drawFinderMatrix(matrixSize - 7, 0);
+  drawFinderMatrix(0, matrixSize - 7);
+  for (let i = 8; i < matrixSize - 8; i++) {
+    grid[6][i] = i % 2 === 0 ? 1 : 0;
+    grid[i][6] = i % 2 === 0 ? 1 : 0;
+  }
+  let hash = 0;
+  for (let i = 0; i < (reg.ticketId || '').length; i++) {
+    hash = (hash << 5) - hash + reg.ticketId.charCodeAt(i);
+    hash |= 0;
+  }
+  for (let r = 0; r < matrixSize; r++) {
+    for (let c = 0; c < matrixSize; c++) {
+      const isTopLeft = r < 8 && c < 8;
+      const isTopRight = r < 8 && c >= matrixSize - 8;
+      const isBottomLeft = r >= matrixSize - 8 && c < 8;
+      if (isTopLeft || isTopRight || isBottomLeft) continue;
+      const seed = Math.abs(Math.sin((r * 31 + c * 17) + hash) * 10000);
+      grid[r][c] = (seed % 100) > 42 ? 1 : 0;
+    }
+  }
+
+  const qrInnerMargin = 8;
+  const cellSize = (qrBoxSize - qrInnerMargin * 2) / matrixSize;
+  ctx.fillStyle = '#000000';
+  for (let r = 0; r < matrixSize; r++) {
+    for (let c = 0; c < matrixSize; c++) {
+      if (grid[r][c] === 1) {
+        ctx.fillRect(
+          24 + qrInnerMargin + c * cellSize,
+          curY + qrInnerMargin + r * cellSize,
+          cellSize,
+          cellSize
+        );
+      }
+    }
+  }
+
+  // Center QR Security badge
+  const qrCenterX = 24 + qrBoxSize / 2;
+  const qrCenterY = curY + qrInnerMargin + (qrBoxSize - qrInnerMargin * 2) / 2;
+  ctx.beginPath();
+  ctx.arc(qrCenterX, qrCenterY, 14, 0, Math.PI * 2);
+  ctx.fillStyle = '#000000';
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '900 9px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('NEX', qrCenterX, qrCenterY + 1);
+
+  // Label under QR
+  ctx.fillStyle = '#000000';
+  ctx.font = '800 8px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.fillText('TAP TO SCAN', qrCenterX, curY + qrBoxSize + 10);
+
+  // Right Telemetry details
+  const telemX = 186;
+  let telemY = curY + 6;
+
+  // PASS ID
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#71717a';
+  ctx.font = '600 9px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.fillText('PASS ID', telemX, telemY);
+  telemY += 16;
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '800 13px "JetBrains Mono", monospace';
+  ctx.fillText(reg.ticketId || 'NX-PASS-0000', telemX, telemY);
+  telemY += 22;
+
+  // ENTRY STATUS
+  ctx.fillStyle = '#71717a';
+  ctx.font = '600 9px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.fillText('ENTRY STATUS', telemX, telemY);
+  telemY += 16;
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '800 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.fillText(reg.checkedIn ? 'CHECKED IN' : 'GATE READY', telemX, telemY);
+  telemY += 22;
+
+  // GATE ACCESS
+  ctx.fillStyle = '#71717a';
+  ctx.font = '600 9px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.fillText('GATE ACCESS', telemX, telemY);
+  telemY += 16;
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '800 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.fillText(reg.gate || 'ALL CAMPUS GATES', telemX, telemY);
+  telemY += 22;
+
+  // VERIFIED PROTOCOL
+  ctx.fillStyle = '#71717a';
+  ctx.font = '600 9px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.fillText('VERIFIED PROTOCOL', telemX, telemY);
+  telemY += 16;
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '800 11px "JetBrains Mono", monospace';
+  ctx.fillText('SHA-256 SECURED', telemX, telemY);
+
+  curY += qrBoxSize + 36;
+
+  // 9. Footer: Barcode & Watermark
+  // Dotted line
+  ctx.beginPath();
+  ctx.setLineDash([4, 4]);
+  ctx.moveTo(24, curY);
+  ctx.lineTo(width - 24, curY);
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  curY += 16;
+
+  // Barcode stripes
+  let barX = 24;
+  const barPattern = [3, 2, 1, 3, 2, 4, 1, 2, 3, 1, 4, 2, 2, 3, 1, 2, 4, 2];
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  for (let b = 0; b < barPattern.length; b++) {
+    const barW = barPattern[b];
+    if (b % 2 === 0) {
+      ctx.fillRect(barX, curY, barW, 16);
+    }
+    barX += barW + 2;
+  }
+  ctx.fillStyle = '#71717a';
+  ctx.font = '600 9px "JetBrains Mono", monospace';
+  ctx.fillText('*' + (reg.ticketId || '') + '*', 24, curY + 28);
+
+  // Watermark text
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.font = '800 9px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText('KILLTHEFORMS // NEXUS OPS', width - 24, curY + 20);
+
+  return canvas;
+}
+
+// Download the high-resolution pass PNG file
+export function downloadBadgeImage(reg) {
+  const canvas = generateBadgeCanvas(reg);
+  const link = document.createElement('a');
+  link.download = `Pass-${reg.ticketId || 'card'}.png`;
+  link.href = canvas.toDataURL('image/png');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
