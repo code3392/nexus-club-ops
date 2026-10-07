@@ -76,51 +76,7 @@ export class AdminCommandCenter {
           </div>
         </div>
 
-        <!-- Charts Section -->
-        <div class="admin-charts-grid">
-          <div class="admin-chart-card">
-            <div class="chart-header">
-              <div class="chart-title">Registration & Check-in Trajectory</div>
-              <span class="chart-pill">Live Timeline</span>
-            </div>
-            <div class="canvas-chart-container">
-              <canvas id="velocityChart" height="220"></canvas>
-            </div>
-          </div>
 
-          <div class="admin-chart-card">
-            <div class="chart-header">
-              <div class="chart-title">Club Quota & Attendance Share</div>
-              <span class="chart-pill">Active Clubs</span>
-            </div>
-            <div class="canvas-chart-container">
-              <canvas id="clubShareChart" height="220"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <!-- Live Campus Broadcast Terminal -->
-        <div class="admin-broadcast-card">
-          <div class="broadcast-header">
-            <div class="broadcast-title">
-              <span class="live-pulse"></span>
-              <span>Campus Live Broadcast & Schedule Updates</span>
-            </div>
-            <span class="broadcast-hint">Instantly alerts attendees across venue screens and e-badges</span>
-          </div>
-
-          <div class="broadcast-input-row">
-            <input type="text" id="broadcastTitle" class="admin-input" placeholder="Announcement Headline (e.g. Robowars Round 2 starting at Arena B)" />
-            <input type="text" id="broadcastMsg" class="admin-input flex-2" placeholder="Detailed bulletin or room update..." />
-            <button class="btn btn-primary" onclick="window.adminCenter.sendBroadcast()">
-              Push Broadcast
-            </button>
-          </div>
-
-          <div class="broadcast-feed" id="broadcastFeed">
-            ${this.renderBroadcastFeed(announcements)}
-          </div>
-        </div>
 
         <!-- Created Festivals & Hubs Management Section -->
         <div class="admin-table-card" style="margin-bottom: 2rem;">
@@ -242,11 +198,6 @@ export class AdminCommandCenter {
         </div>
       </div>
     `;
-
-    setTimeout(() => {
-      this.drawVelocityChart();
-      this.drawClubChart();
-    }, 50);
   }
 
   renderBroadcastFeed(announcements) {
