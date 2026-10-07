@@ -3,7 +3,14 @@ import { sound } from './sound.js';
 
 const AUTH_STORAGE_KEY = 'NEXUS_AUTH_USER_V2';
 const GOOGLE_CLIENT_ID_KEY = 'NEXUS_GOOGLE_CLIENT_ID';
-const DEFAULT_GOOGLE_CLIENT_ID = '1038165722284-8qu3qgkh0t8d7f7i8kff7v442d7681u7.apps.googleusercontent.com';
+
+// Purge any legacy placeholder client ID from storage so Google never throws Error 401: invalid_client
+try {
+  const legacyId = localStorage.getItem(GOOGLE_CLIENT_ID_KEY);
+  if (legacyId && (legacyId.includes('8qu3qgkh0t8d7f7i8kff7v442d7681u7') || legacyId.includes('1038165722284'))) {
+    localStorage.removeItem(GOOGLE_CLIENT_ID_KEY);
+  }
+} catch (e) {}
 
 export class AuthSystem {
   constructor() {
@@ -15,16 +22,20 @@ export class AuthSystem {
 
   getGoogleClientId() {
     try {
-      return localStorage.getItem(GOOGLE_CLIENT_ID_KEY) || DEFAULT_GOOGLE_CLIENT_ID;
+      const stored = localStorage.getItem(GOOGLE_CLIENT_ID_KEY);
+      if (stored && !stored.includes('8qu3qgkh0t8d7f7i8kff7v442d7681u7') && !stored.includes('1038165722284')) {
+        return stored.trim();
+      }
+      return '';
     } catch (e) {
-      return DEFAULT_GOOGLE_CLIENT_ID;
+      return '';
     }
   }
 
   setGoogleClientId(id) {
     try {
-      if (id) {
-        localStorage.setItem(GOOGLE_CLIENT_ID_KEY, id);
+      if (id && !id.includes('8qu3qgkh0t8d7f7i8kff7v442d7681u7')) {
+        localStorage.setItem(GOOGLE_CLIENT_ID_KEY, id.trim());
       } else {
         localStorage.removeItem(GOOGLE_CLIENT_ID_KEY);
       }
@@ -54,11 +65,12 @@ export class AuthSystem {
 
   initGoogleIdentity() {
     if (typeof window === 'undefined') return false;
+    const clientId = this.getGoogleClientId();
+    if (!clientId) return false;
     if (!window.google || !window.google.accounts || !window.google.accounts.id) {
       return false;
     }
     try {
-      const clientId = this.getGoogleClientId();
       window.google.accounts.id.initialize({
         client_id: clientId,
         callback: (res) => this.handleGoogleCredentialResponse(res),
@@ -76,37 +88,6 @@ export class AuthSystem {
     setTimeout(() => {
       const slot = document.getElementById('googleOfficialBtnSlot');
       const fallbackBtn = document.getElementById('googleCustomBtnFallback');
-      if (!slot) return;
-
-      const customClientId = localStorage.getItem(GOOGLE_CLIENT_ID_KEY);
-      if (customClientId && window.google?.accounts?.id) {
-        try {
-          slot.innerHTML = '';
-          window.google.accounts.id.initialize({
-            client_id: customClientId,
-            callback: (res) => this.handleGoogleCredentialResponse(res),
-            auto_select: false,
-            cancel_on_tap_outside: true
-          });
-
-          window.google.accounts.id.renderButton(slot, {
-            type: 'standard',
-            theme: 'filled_black',
-            size: 'large',
-            text: this.authMode === 'signin' ? 'signin_with' : 'signup_with',
-            shape: 'rectangular',
-            logo_alignment: 'left',
-            width: 320
-          });
-
-          slot.style.display = 'flex';
-          if (fallbackBtn) fallbackBtn.style.display = 'none';
-          return;
-        } catch (e) {
-          console.warn('Could not render Google Identity button:', e);
-        }
-      }
-
       if (slot) slot.style.display = 'none';
       if (fallbackBtn) fallbackBtn.style.display = 'flex';
     }, 40);
@@ -586,9 +567,9 @@ export class AuthSystem {
 
   handleGoogleSignIn() {
     sound.playClick();
-    const customClientId = localStorage.getItem(GOOGLE_CLIENT_ID_KEY);
+    const customClientId = this.getGoogleClientId();
 
-    // Only attempt native Google Identity Service popup if a real custom Client ID has been configured
+    // Only attempt external popup if user explicitly provided a verified Google Cloud Client ID
     if (customClientId && window.google?.accounts?.oauth2) {
       try {
         const client = window.google.accounts.oauth2.initTokenClient({
@@ -627,7 +608,7 @@ export class AuthSystem {
       }
     }
 
-    // Default seamless Google Account Picker
+    // Default seamless Google Account Picker with 1-click sign in (no 401 invalid_client popup)
     this.openGoogleAccountModal(false);
   }
 
