@@ -7,7 +7,6 @@ import { FormBuilderStudio } from './formBuilder.js';
 import { GateScannerTerminal } from './scanner.js';
 import { AdminCommandCenter } from './analytics.js';
 import { renderHolographicBadge, downloadBadgeImage } from './badges.js';
-import { renderCertificateModal } from './certificates.js';
 import { auth } from './auth.js';
 
 class NexusApp {
@@ -1374,15 +1373,6 @@ class NexusApp {
     alert(`Pass ID ${ticketId} copied to clipboard!`);
   }
 
-  openCertificate(ticketId) {
-    const reg = db.getRegistrations().find(r => r.ticketId === ticketId);
-    if (!reg) return;
-    const modalContainer = document.getElementById('globalModalContainer');
-    if (modalContainer) {
-      modalContainer.innerHTML = renderCertificateModal(reg, reg.eventTitle, reg.clubName);
-    }
-  }
-
   // ===================================================================
   // ATTENDEE SELF-SERVICE: MY REGISTRATIONS (Rulebook Page 2: 5 pts)
   // ===================================================================
@@ -1410,7 +1400,7 @@ class NexusApp {
 
           <div class="modal-body">
             <p style="color:var(--text-muted); font-size:0.88rem; margin-bottom:1rem;">
-              Look up your registered passes by campus email or pass ticket ID. View holographic credentials, download certificates, or manage registrations.
+              Look up your registered passes by campus email or pass ticket ID. View holographic credentials or manage registrations.
             </p>
 
             <div class="my-regs-lookup-bar">
@@ -1498,9 +1488,6 @@ class NexusApp {
             ${!isCancelled ? `
               <button class="btn btn-primary btn-sm" onclick="window.nexusApp.openBadgeModal('${r.ticketId}')">
                 View Holographic Pass
-              </button>
-              <button class="btn btn-secondary btn-sm" onclick="window.nexusApp.openCertificate('${r.ticketId}')">
-                Certificate
               </button>
               ${r.teamName ? `
                 <button class="btn btn-secondary btn-sm" onclick="window.nexusApp.editRegistrationTeam('${r.ticketId}')">

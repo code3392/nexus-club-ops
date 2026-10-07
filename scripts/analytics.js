@@ -1,7 +1,6 @@
 // Analytics Charts and Organizer Command Center Logic
 import { db } from './data.js';
 import { sound } from './sound.js';
-import { renderCertificateModal } from './certificates.js';
 import { auth } from './auth.js';
 
 export class AdminCommandCenter {
@@ -190,7 +189,7 @@ export class AdminCommandCenter {
           <div class="table-card-header">
             <div class="table-title-group">
               <div class="table-title">Attendee Roster & E-Pass Management</div>
-              <div class="table-subtitle">Search, verify payments, issue certificates, or resend passes</div>
+              <div class="table-subtitle">Search, verify payments, manage attendees, or resend passes</div>
             </div>
 
             <div class="table-actions-group">
@@ -522,9 +521,6 @@ export class AdminCommandCenter {
             <button class="crm-btn" title="View Digital Pass" onclick="window.nexusApp.openBadgeModal('${r.ticketId}')">
               Pass
             </button>
-            <button class="crm-btn" title="Dispense Certificate" onclick="window.adminCenter.openCertificate('${r.ticketId}')">
-              Cert
-            </button>
             <button class="crm-btn" title="Quick Toggle Check-in" onclick="window.adminCenter.toggleCheckIn('${r.ticketId}')">
               ${r.checkedIn ? 'Undo' : 'Check-in'}
             </button>
@@ -606,15 +602,6 @@ export class AdminCommandCenter {
       }
       db.save();
       this.render();
-    }
-  }
-
-  openCertificate(ticketId) {
-    const reg = db.getRegistrations().find(r => r.ticketId === ticketId);
-    if (!reg) return;
-    const modalContainer = document.getElementById('globalModalContainer');
-    if (modalContainer) {
-      modalContainer.innerHTML = renderCertificateModal(reg, reg.eventTitle, reg.clubName);
     }
   }
 
