@@ -44,15 +44,39 @@
       "status": "open",
       "gradient": "linear-gradient(135deg, #1f1f1f 0%, #121212 100%)",
       "gates": [
-        { "id": "gate-main", "name": "Main Gate" },
-        { "id": "gate-lab", "name": "Lab 4 Entrance" }
+        {
+          "id": "gate-main",
+          "name": "Main Gate"
+        },
+        {
+          "id": "gate-lab",
+          "name": "Lab 4 Entrance"
+        }
       ],
       "fields": [
-        { "id": "q-institution", "type": "text", "label": "School / College / University Name", "required": true, "placeholder": "e.g. Dhaka Residential Model College" },
-        { "id": "q-tshirt", "type": "select", "label": "T-Shirt Size", "required": true, "options": ["M", "L", "XL", "XXL"] }
+        {
+          "id": "q-institution",
+          "type": "text",
+          "label": "School / College / University Name",
+          "required": true,
+          "placeholder": "e.g. Dhaka Residential Model College"
+        },
+        {
+          "id": "q-tshirt",
+          "type": "select",
+          "label": "T-Shirt Size",
+          "required": true,
+          "options": [
+            "M",
+            "L",
+            "XL",
+            "XXL"
+          ]
+        }
       ]
     }
   ],
   "registrations": [],
-  "clubs": []
+  "clubs": [],
+  "users": []
 }

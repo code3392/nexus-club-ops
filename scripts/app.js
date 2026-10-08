@@ -1278,14 +1278,43 @@ class NexusApp {
     this.finishRegistration();
   }
 
+  generateUniquePassCredentials(catPrefix) {
+    const existing = db.getRegistrations() || [];
+    const usedTickets = new Set(existing.map(r => (r.ticketId || '').toUpperCase()));
+    const usedPassCodes = new Set(existing.map(r => (r.passCode || '').toUpperCase()));
+
+    let ticketId = '';
+    let passCode = '';
+    let qrSecurityToken = '';
+    let attempts = 0;
+
+    do {
+      attempts++;
+      const timePart = Date.now().toString(36).toUpperCase();
+      const randHex1 = Math.floor(1000 + Math.random() * 9000);
+      const randHex2 = Math.random().toString(36).substring(2, 6).toUpperCase();
+      const randCode = Math.floor(100000 + Math.random() * 900000);
+
+      ticketId = `NX-${catPrefix}-${timePart.slice(-4)}-${randHex1}`;
+      passCode = `PASS-${randCode}-${randHex2}`;
+      qrSecurityToken = `SEC-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    } while ((usedTickets.has(ticketId) || usedPassCodes.has(passCode)) && attempts < 50);
+
+    const qrData = `NEXUS-PASS:${ticketId}:${passCode}:${qrSecurityToken}`;
+    return { ticketId, passCode, qrSecurityToken, qrData };
+  }
+
   finishRegistration(txnId = null) {
     const evt = this.currentRegEvent;
     const catPrefix = evt.category ? evt.category.substring(0, 4).toUpperCase() : 'TECH';
-    const ticketId = 'NX-' + catPrefix + '-' + Math.floor(1000 + Math.random() * 9000);
+    const credentials = this.generateUniquePassCredentials(catPrefix);
 
     const newReg = {
-      id: 'REG-' + Date.now().toString(36),
-      ticketId,
+      id: 'REG-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 7),
+      ticketId: credentials.ticketId,
+      passCode: credentials.passCode,
+      qrSecurityToken: credentials.qrSecurityToken,
+      qrData: credentials.qrData,
       eventId: evt.id,
       festId: evt.festId || '',
       eventTitle: evt.title,
@@ -1308,7 +1337,7 @@ class NexusApp {
       checkedIn: false,
       gate: null,
       passTier: evt.isTeam ? 'Team Pass' : 'VIP Pass',
-      // Requirement 1: Store event creator metadata on registration
+      // Store event creator metadata on registration
       createdBy: evt.createdBy || null,
       creatorName: evt.creatorName || null
     };
@@ -1318,7 +1347,7 @@ class NexusApp {
     this.renderFestArena();
 
     // Open confirmation badge modal
-    this.openBadgeModal(ticketId, true);
+    this.openBadgeModal(credentials.ticketId, true);
   }
 
   // ===================================================================
@@ -1352,8 +1381,8 @@ class NexusApp {
             <button class="btn btn-primary" onclick="window.nexusApp.testGateScan('${reg.ticketId}')">
               Test Check-in at Gate
             </button>
-            <button class="btn btn-secondary" onclick="window.nexusApp.copyTicketId('${reg.ticketId}')">
-              Copy Pass ID
+            <button class="btn btn-secondary" onclick="window.nexusApp.copyTicketId('${reg.ticketId}', '${reg.passCode || ''}')">
+              Copy Pass Info
             </button>
             <button class="btn btn-secondary" onclick="window.nexusApp.savePassInfo('${reg.ticketId}')">
               Save Info
@@ -1379,10 +1408,11 @@ class NexusApp {
     }, 400);
   }
 
-  copyTicketId(ticketId) {
-    navigator.clipboard?.writeText(ticketId);
+  copyTicketId(ticketId, passCode = '') {
+    const text = passCode ? `Pass ID: ${ticketId}\nPass Code: ${passCode}` : ticketId;
+    navigator.clipboard?.writeText(text);
     sound.playClick();
-    alert(`Pass ID ${ticketId} copied to clipboard!`);
+    alert(`Pass ID: ${ticketId}\nPass Code: ${passCode || 'N/A'}\nCopied to clipboard!`);
   }
 
   // ===================================================================

@@ -89,10 +89,16 @@ function readDb() {
   ensureDbFile();
   try {
     const raw = fs.readFileSync(DB_FILE, 'utf8');
-    return JSON.parse(raw);
+    const data = JSON.parse(raw);
+    if (!Array.isArray(data.fests)) data.fests = [];
+    if (!Array.isArray(data.events)) data.events = [];
+    if (!Array.isArray(data.registrations)) data.registrations = [];
+    if (!Array.isArray(data.clubs)) data.clubs = [];
+    if (!Array.isArray(data.users)) data.users = [];
+    return data;
   } catch (err) {
     console.warn('Could not read db.json, returning empty structure', err);
-    return { fests: [], events: [], registrations: [], clubs: [] };
+    return { fests: [], events: [], registrations: [], clubs: [], users: [] };
   }
 }
 
@@ -177,6 +183,9 @@ const server = http.createServer(async (req, res) => {
       if (Array.isArray(payload.clubs)) {
         db.clubs = payload.clubs;
       }
+      if (Array.isArray(payload.users)) {
+        db.users = payload.users;
+      }
 
       writeDb(db);
       res.writeHead(200, jsonHeaders);
@@ -184,7 +193,8 @@ const server = http.createServer(async (req, res) => {
         success: true,
         festsCount: db.fests.length,
         eventsCount: db.events.length,
-        registrationsCount: db.registrations.length
+        registrationsCount: db.registrations.length,
+        usersCount: db.users.length
       }));
       return;
     } catch (err) {
@@ -268,6 +278,160 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(200, jsonHeaders);
     res.end(JSON.stringify({ success: true, deleted: eventId }));
     return;
+  }
+
+  // API Route: GET /api/users
+  if (reqPath === '/api/users' && req.method === 'GET') {
+    const db = readDb();
+    const safeUsers = (db.users || []).map(u => ({
+      id: u.id,
+      email: u.email,
+      name: u.name,
+      rollNo: u.rollNo,
+      avatar: u.avatar,
+      provider: u.provider,
+      role: u.role,
+      createdAt: u.createdAt
+    }));
+    res.writeHead(200, jsonHeaders);
+    res.end(JSON.stringify(safeUsers));
+    return;
+  }
+
+  // API Route: POST /api/users/check-email (Verify 1 email = 1 account)
+  if (reqPath === '/api/users/check-email' && req.method === 'POST') {
+    try {
+      const payload = await parseJsonBody(req);
+      const email = (payload.email || '').trim().toLowerCase();
+      if (!email) {
+        res.writeHead(400, jsonHeaders);
+        res.end(JSON.stringify({ error: 'Email is required' }));
+        return;
+      }
+      const db = readDb();
+      const existing = (db.users || []).find(u => u.email.toLowerCase() === email);
+      if (existing) {
+        res.writeHead(200, jsonHeaders);
+        res.end(JSON.stringify({
+          exists: true,
+          name: existing.name,
+          provider: existing.provider,
+          avatar: existing.avatar
+        }));
+      } else {
+        res.writeHead(200, jsonHeaders);
+        res.end(JSON.stringify({ exists: false }));
+      }
+      return;
+    } catch (err) {
+      res.writeHead(400, jsonHeaders);
+      res.end(JSON.stringify({ error: err.message }));
+      return;
+    }
+  }
+
+  // API Route: POST /api/users/register (Enforce 1 email = 1 account)
+  if (reqPath === '/api/users/register' && req.method === 'POST') {
+    try {
+      const payload = await parseJsonBody(req);
+      const email = (payload.email || '').trim().toLowerCase();
+      const password = payload.password || '';
+      const name = (payload.name || '').trim();
+
+      if (!email || !name) {
+        res.writeHead(400, jsonHeaders);
+        res.end(JSON.stringify({ error: 'Name and email are required.' }));
+        return;
+      }
+
+      if (!password || password.length < 6) {
+        res.writeHead(400, jsonHeaders);
+        res.end(JSON.stringify({ error: 'Password must be at least 6 characters long.' }));
+        return;
+      }
+
+      const db = readDb();
+      if (!Array.isArray(db.users)) db.users = [];
+
+      // Enforce 1 email = 1 account
+      const exists = db.users.some(u => u.email.toLowerCase() === email);
+      if (exists) {
+        res.writeHead(409, jsonHeaders);
+        res.end(JSON.stringify({
+          error: 'An account with this email already exists. Please sign in with your password.'
+        }));
+        return;
+      }
+
+      const newUser = {
+        id: (payload.provider === 'google' ? 'g-usr-' : 'usr-') + Date.now().toString(36) + '-' + Math.floor(1000 + Math.random() * 9000),
+        email,
+        password,
+        name,
+        rollNo: (payload.rollNo || '').trim(),
+        avatar: payload.avatar || name.charAt(0).toUpperCase(),
+        provider: payload.provider || 'email',
+        verified: true,
+        role: payload.role || 'Campus Member',
+        createdAt: new Date().toISOString()
+      };
+
+      db.users.push(newUser);
+      writeDb(db);
+
+      const safeUser = { ...newUser };
+      delete safeUser.password;
+
+      res.writeHead(201, jsonHeaders);
+      res.end(JSON.stringify({ success: true, user: safeUser }));
+      return;
+    } catch (err) {
+      res.writeHead(400, jsonHeaders);
+      res.end(JSON.stringify({ error: err.message }));
+      return;
+    }
+  }
+
+  // API Route: POST /api/users/login (Authenticate user with password)
+  if (reqPath === '/api/users/login' && req.method === 'POST') {
+    try {
+      const payload = await parseJsonBody(req);
+      const email = (payload.email || '').trim().toLowerCase();
+      const password = payload.password || '';
+
+      if (!email || !password) {
+        res.writeHead(400, jsonHeaders);
+        res.end(JSON.stringify({ error: 'Email and password are required.' }));
+        return;
+      }
+
+      const db = readDb();
+      const user = (db.users || []).find(u => u.email.toLowerCase() === email);
+
+      if (!user) {
+        res.writeHead(404, jsonHeaders);
+        res.end(JSON.stringify({ error: 'No account found with this email. Please create an account first.' }));
+        return;
+      }
+
+      // Verify password
+      if (user.password !== password) {
+        res.writeHead(401, jsonHeaders);
+        res.end(JSON.stringify({ error: 'Incorrect password. Please enter the correct password.' }));
+        return;
+      }
+
+      const safeUser = { ...user };
+      delete safeUser.password;
+
+      res.writeHead(200, jsonHeaders);
+      res.end(JSON.stringify({ success: true, user: safeUser }));
+      return;
+    } catch (err) {
+      res.writeHead(400, jsonHeaders);
+      res.end(JSON.stringify({ error: err.message }));
+      return;
+    }
   }
 
   // Static File Serving

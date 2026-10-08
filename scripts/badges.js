@@ -1,8 +1,8 @@
 // Holographic Fest Pass & Cryptographic QR Badge Generator
 
-// Lightweight pure SVG QR-like visual generator with deterministic hash patterns
+// Lightweight pure SVG QR-like visual generator with high-avalanche entropy patterns
 export function generateSvgQr(dataString, size = 160) {
-  // Deterministic hash algorithm to build a realistic 21x21 QR code matrix
+  const str = String(dataString || 'NEXUS-PASS-DEFAULT');
   const matrixSize = 25;
   const grid = Array.from({ length: matrixSize }, () => Array(matrixSize).fill(0));
 
@@ -32,12 +32,16 @@ export function generateSvgQr(dataString, size = 160) {
     grid[i][6] = i % 2 === 0 ? 1 : 0;
   }
 
-  // Deterministic data fill based on ticket ID
-  let hash = 0;
-  for (let i = 0; i < dataString.length; i++) {
-    hash = (hash << 5) - hash + dataString.charCodeAt(i);
-    hash |= 0;
+  // High-entropy multi-round avalanche hash so every single pass generates a completely different QR pattern
+  let h1 = 0x811c9dc5;
+  let h2 = 0x5bd1e995;
+  for (let i = 0; i < str.length; i++) {
+    const code = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ code, 0x01000193);
+    h2 = Math.imul(h2 ^ (code + (i * 17)), 0x5bd1e995);
   }
+  h1 ^= h1 >>> 16;
+  h2 ^= h2 >>> 13;
 
   for (let r = 0; r < matrixSize; r++) {
     for (let c = 0; c < matrixSize; c++) {
@@ -47,8 +51,9 @@ export function generateSvgQr(dataString, size = 160) {
       const isBottomLeft = r >= matrixSize - 8 && c < 8;
       if (isTopLeft || isTopRight || isBottomLeft) continue;
 
-      const seed = Math.abs(Math.sin((r * 31 + c * 17) + hash) * 10000);
-      grid[r][c] = (seed % 100) > 42 ? 1 : 0;
+      const cellSeed = Math.imul(h1 ^ (r * 131 + c * 59), 0x27d4eb2d) ^ Math.imul(h2 ^ (r * 37 + c * 83), 0x165667b1);
+      const mixed = (cellSeed ^ (cellSeed >>> 15)) >>> 0;
+      grid[r][c] = (mixed % 100) > 46 ? 1 : 0;
     }
   }
 
@@ -76,7 +81,8 @@ export function generateSvgQr(dataString, size = 160) {
 
 // Generate the high-tech holographic HTML card component
 export function renderHolographicBadge(reg) {
-  const qrSvg = generateSvgQr(reg.ticketId, 140);
+  const qrPayload = reg.qrData || `${reg.ticketId}:${reg.passCode || ''}:${reg.id || ''}`;
+  const qrSvg = generateSvgQr(qrPayload, 140);
   const isChecked = reg.checkedIn;
   const teamInfo = reg.teamName ? `<div class="badge-team-name">TEAM: <span>${reg.teamName}</span></div>` : '';
 
@@ -129,6 +135,10 @@ export function renderHolographicBadge(reg) {
             <span class="value mono">${reg.ticketId}</span>
           </div>
           <div class="telemetry-item">
+            <span class="label">PASS CODE</span>
+            <span class="value mono text-highlight">${reg.passCode || 'SEC-READY'}</span>
+          </div>
+          <div class="telemetry-item">
             <span class="label">ENTRY STATUS</span>
             <span class="value status-badge ${isChecked ? 'status-in' : 'status-pending'}">
               ${isChecked ? 'CHECKED IN' : 'GATE READY'}
@@ -137,10 +147,6 @@ export function renderHolographicBadge(reg) {
           <div class="telemetry-item">
             <span class="label">GATE ACCESS</span>
             <span class="value">${reg.gate || 'ALL CAMPUS GATES'}</span>
-          </div>
-          <div class="telemetry-item">
-            <span class="label">VERIFIED PROTOCOL</span>
-            <span class="value mono">SHA-256 SECURED</span>
           </div>
         </div>
       </div>
@@ -349,19 +355,26 @@ export function generateBadgeCanvas(reg) {
     grid[6][i] = i % 2 === 0 ? 1 : 0;
     grid[i][6] = i % 2 === 0 ? 1 : 0;
   }
-  let hash = 0;
-  for (let i = 0; i < (reg.ticketId || '').length; i++) {
-    hash = (hash << 5) - hash + reg.ticketId.charCodeAt(i);
-    hash |= 0;
+  const qrPayload = reg.qrData || `${reg.ticketId}:${reg.passCode || ''}:${reg.id || ''}`;
+  let h1 = 0x811c9dc5;
+  let h2 = 0x5bd1e995;
+  for (let i = 0; i < qrPayload.length; i++) {
+    const code = qrPayload.charCodeAt(i);
+    h1 = Math.imul(h1 ^ code, 0x01000193);
+    h2 = Math.imul(h2 ^ (code + (i * 17)), 0x5bd1e995);
   }
+  h1 ^= h1 >>> 16;
+  h2 ^= h2 >>> 13;
+
   for (let r = 0; r < matrixSize; r++) {
     for (let c = 0; c < matrixSize; c++) {
       const isTopLeft = r < 8 && c < 8;
       const isTopRight = r < 8 && c >= matrixSize - 8;
       const isBottomLeft = r >= matrixSize - 8 && c < 8;
       if (isTopLeft || isTopRight || isBottomLeft) continue;
-      const seed = Math.abs(Math.sin((r * 31 + c * 17) + hash) * 10000);
-      grid[r][c] = (seed % 100) > 42 ? 1 : 0;
+      const cellSeed = Math.imul(h1 ^ (r * 131 + c * 59), 0x27d4eb2d) ^ Math.imul(h2 ^ (r * 37 + c * 83), 0x165667b1);
+      const mixed = (cellSeed ^ (cellSeed >>> 15)) >>> 0;
+      grid[r][c] = (mixed % 100) > 46 ? 1 : 0;
     }
   }
 
@@ -401,29 +414,39 @@ export function generateBadgeCanvas(reg) {
 
   // Right Telemetry details
   const telemX = 186;
-  let telemY = curY + 6;
+  let telemY = curY + 4;
 
   // PASS ID
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = '#71717a';
-  ctx.font = '600 9px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.font = '600 8.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
   ctx.fillText('PASS ID', telemX, telemY);
-  telemY += 16;
+  telemY += 14;
   ctx.fillStyle = '#ffffff';
-  ctx.font = '800 13px "JetBrains Mono", monospace';
+  ctx.font = '800 12px "JetBrains Mono", monospace';
   ctx.fillText(reg.ticketId || 'NX-PASS-0000', telemX, telemY);
-  telemY += 22;
+  telemY += 18;
+
+  // PASS CODE
+  ctx.fillStyle = '#71717a';
+  ctx.font = '600 8.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.fillText('PASS CODE', telemX, telemY);
+  telemY += 14;
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '800 11px "JetBrains Mono", monospace';
+  ctx.fillText(reg.passCode || 'SEC-READY', telemX, telemY);
+  telemY += 18;
 
   // ENTRY STATUS
   ctx.fillStyle = '#71717a';
-  ctx.font = '600 9px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.font = '600 8.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
   ctx.fillText('ENTRY STATUS', telemX, telemY);
-  telemY += 16;
+  telemY += 14;
   ctx.fillStyle = '#ffffff';
-  ctx.font = '800 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.font = '800 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
   ctx.fillText(reg.checkedIn ? 'CHECKED IN' : 'GATE READY', telemX, telemY);
-  telemY += 22;
+  telemY += 18;
 
   // GATE ACCESS
   ctx.fillStyle = '#71717a';

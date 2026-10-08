@@ -509,14 +509,19 @@ export class StateManager {
     return (this.state.registrations || []).filter(r =>
       r.leadEmail?.toLowerCase() === q ||
       r.ticketId?.toLowerCase() === q ||
+      r.passCode?.toLowerCase() === q ||
       r.collegeRoll?.toLowerCase() === q
     );
   }
 
   // Requirement 1: Only the user who launched the event can scan tickets for it
   verifyCheckIn(ticketId, gate = 'Gate 1', currentOperatorEmail = null) {
+    const query = ticketId.trim().toUpperCase();
     const reg = (this.state.registrations || []).find(
-      r => r.ticketId.toUpperCase() === ticketId.trim().toUpperCase()
+      r => (r.ticketId && r.ticketId.toUpperCase() === query)
+        || (r.passCode && r.passCode.toUpperCase() === query)
+        || (r.qrData && r.qrData.toUpperCase() === query)
+        || (r.qrData && r.qrData.toUpperCase().includes(query))
     );
 
     const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });

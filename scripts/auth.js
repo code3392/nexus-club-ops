@@ -3,6 +3,7 @@ import { sound } from './sound.js';
 
 const AUTH_STORAGE_KEY = 'NEXUS_AUTH_USER_V2';
 const GOOGLE_CLIENT_ID_KEY = 'NEXUS_GOOGLE_CLIENT_ID';
+const USERS_STORAGE_KEY = 'NEXUS_REGISTERED_USERS_V2';
 
 // Purge any legacy placeholder client ID from storage so Google never throws Error 401: invalid_client
 try {
@@ -28,6 +29,192 @@ export class AuthSystem {
     this.pendingAuthCallback = null;
     this.listeners = [];
   }
+
+  getLocalUsers() {
+    try {
+      const data = localStorage.getItem(USERS_STORAGE_KEY);
+      if (data) {
+        const list = JSON.parse(data);
+        if (Array.isArray(list)) return list;
+      }
+    } catch (e) {}
+    return [];
+  }
+
+  saveLocalUsers(users) {
+    try {
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+    } catch (e) {}
+  }
+
+  async checkEmailExists(email) {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (!cleanEmail) return { exists: false };
+    try {
+      const res = await fetch('/api/users/check-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data;
+      }
+    } catch (e) {}
+
+    // Offline / fallback local store
+    const local = this.getLocalUsers();
+    const found = local.find(u => u.email && u.email.toLowerCase() === cleanEmail);
+    return {
+      exists: !!found,
+      name: found ? found.name : undefined,
+      avatar: found ? found.avatar : undefined,
+      provider: found ? found.provider : undefined
+    };
+  }
+
+  async registerUserAccount({ name, email, password, rollNo = '', avatar = '', provider = 'email', role = 'Campus Member' }) {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanName = (name || '').trim();
+    const cleanPass = password || '';
+
+    if (!cleanName || !cleanEmail) {
+      throw new Error('Name and email are required.');
+    }
+    if (!cleanPass || cleanPass.length < 6) {
+      throw new Error('Password must be at least 6 characters long.');
+    }
+
+    let serverUser = null;
+    let serverResponded = false;
+    try {
+      const res = await fetch('/api/users/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: cleanName,
+          email: cleanEmail,
+          password: cleanPass,
+          rollNo: rollNo ? rollNo.trim() : '',
+          avatar: avatar || cleanName.charAt(0).toUpperCase(),
+          provider,
+          role
+        })
+      });
+      const data = await res.json();
+      serverResponded = true;
+      if (res.status === 409) {
+        throw new Error(data.error || 'An account with this email already exists. Please sign in with your password.');
+      }
+      if (!res.ok) {
+        throw new Error(data.error || 'Registration failed.');
+      }
+      serverUser = data.user;
+    } catch (err) {
+      if (serverResponded || (err.message && err.message.toLowerCase().includes('already exists'))) {
+        throw err;
+      }
+    }
+
+    // Local check to enforce 1 email = 1 account
+    const localUsers = this.getLocalUsers();
+    if (localUsers.some(u => u.email && u.email.toLowerCase() === cleanEmail)) {
+      throw new Error('An account with this email already exists. Please sign in with your password.');
+    }
+
+    const newUserRecord = serverUser || {
+      id: (provider === 'google' ? 'g-usr-' : 'usr-') + Date.now().toString(36) + '-' + Math.floor(1000 + Math.random() * 9000),
+      name: cleanName,
+      email: cleanEmail,
+      rollNo: rollNo ? rollNo.trim() : ('ID: ' + Math.floor(1000 + Math.random() * 9000)),
+      avatar: avatar || cleanName.charAt(0).toUpperCase(),
+      provider,
+      verified: true,
+      role
+    };
+
+    localUsers.push({
+      ...newUserRecord,
+      password: cleanPass
+    });
+    this.saveLocalUsers(localUsers);
+
+    return newUserRecord;
+  }
+
+  async loginUserAccount({ email, password }) {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanPass = password || '';
+
+    if (!cleanEmail || !cleanPass) {
+      throw new Error('Email and password are required.');
+    }
+
+    let serverResponded = false;
+    try {
+      const res = await fetch('/api/users/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail, password: cleanPass })
+      });
+      const data = await res.json();
+      serverResponded = true;
+      if (res.status === 401) {
+        throw new Error(data.error || 'Incorrect password. Please enter the correct password.');
+      }
+      if (res.status === 404) {
+        throw new Error(data.error || 'No account found with this email. Please register first.');
+      }
+      if (res.ok && data.user) {
+        const local = this.getLocalUsers();
+        const idx = local.findIndex(u => u.email && u.email.toLowerCase() === cleanEmail);
+        if (idx >= 0) {
+          local[idx] = { ...local[idx], ...data.user, password: cleanPass };
+        } else {
+          local.push({ ...data.user, password: cleanPass });
+        }
+        this.saveLocalUsers(local);
+        return data.user;
+      }
+    } catch (err) {
+      if (serverResponded || (err.message && (err.message.includes('Incorrect password') || err.message.includes('No account found')))) {
+        throw err;
+      }
+    }
+
+    // Local fallback
+    const localUsers = this.getLocalUsers();
+    const found = localUsers.find(u => u.email && u.email.toLowerCase() === cleanEmail);
+    if (!found) {
+      throw new Error('No account found with this email. Please register first.');
+    }
+    if (found.password && found.password !== cleanPass) {
+      throw new Error('Incorrect password. Please enter the correct password.');
+    }
+    const safeUser = { ...found };
+    delete safeUser.password;
+    return safeUser;
+  }
+
+  showFormError(msg, targetId = 'authErrorMessage') {
+    const el = document.getElementById(targetId);
+    if (el) {
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+      alert(msg);
+    }
+  }
+
+  hideFormError(targetId = 'authErrorMessage') {
+    const el = document.getElementById(targetId);
+    if (el) {
+      el.textContent = '';
+      el.classList.add('hidden');
+    }
+  }
+
 
   getGoogleClientId() {
     try {
@@ -117,27 +304,24 @@ export class AuthSystem {
     });
   }
 
-  applyGoogleUserData({ sub, name, email, picture }) {
-    const user = {
-      id: 'google-' + (sub || Date.now()),
-      name: name || 'Google User',
-      email: email || 'user@gmail.com',
-      rollNo: 'CAMPUS-ID-' + (sub ? String(sub).slice(-4) : Math.floor(1000 + Math.random() * 9000)),
-      avatar: picture || (name ? name.charAt(0).toUpperCase() : 'G'),
-      phone: '',
-      department: '',
-      organization: 'Campus Member',
-      bio: '',
-      provider: 'google',
-      verified: true,
-      role: 'Campus Member'
-    };
-
-    sound.playPassUnlocked();
-    this.addSavedGoogleAccount(user);
-    this.saveUser(user);
-    this.closeModal();
-    this.showAuthToast(`Authenticated with Google as ${user.name}!`);
+  async applyGoogleUserData({ sub, name, email, picture }) {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const check = await this.checkEmailExists(cleanEmail);
+    if (check.exists) {
+      this.openGooglePasswordPrompt({
+        email: cleanEmail,
+        name: name || check.name || cleanEmail.split('@')[0],
+        avatar: picture || check.avatar || 'G',
+        provider: 'google'
+      });
+      return;
+    }
+    this.openGoogleSetPasswordPrompt({
+      sub,
+      name: name || cleanEmail.split('@')[0],
+      email: cleanEmail,
+      picture: picture || 'G'
+    });
   }
 
   addAuthListener(fn) {
@@ -357,6 +541,7 @@ export class AuthSystem {
 
       <!-- 2. Email & Password Form -->
       <form class="auth-form" onsubmit="event.preventDefault(); window.authSystem.handleAuthSubmit();">
+        <div id="authErrorMessage" class="auth-error-banner hidden"></div>
         ${this.authMode === 'signup' ? `
           <div class="form-group">
             <label class="form-label">Full Name <span class="req">*</span></label>
@@ -644,11 +829,13 @@ export class AuthSystem {
               </svg>
             </div>
             <h3 class="google-modal-title">Sign in with Google</h3>
-            <p class="google-modal-subtitle">${isCustom ? 'Enter your Google account details to sign in or register to <strong>NexusOps</strong>' : 'Choose an account to continue to <strong>NexusOps</strong>'}</p>
+            <p class="google-modal-subtitle">${isCustom ? 'Register or sign in with your Google account. Accounts are protected by password.' : 'Select an account to enter password and sign in'}</p>
             <button class="modal-close-btn" onclick="window.authSystem.closeModal()" style="position:absolute; top:1rem; right:1.25rem;">&times;</button>
           </div>
 
           <div class="google-modal-body">
+            <div id="googleModalError" class="auth-error-banner hidden"></div>
+
             ${!isCustom ? `
               <div class="google-account-list">
                 ${savedAccounts.map((acc, idx) => {
@@ -657,7 +844,7 @@ export class AuthSystem {
                     ? `<img src="${acc.avatar}" alt="${acc.name}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />`
                     : (acc.avatar || acc.name.charAt(0).toUpperCase());
                   return `
-                    <div class="google-account-item" onclick="window.authSystem.selectGoogleAccount(${idx})">
+                    <div class="google-account-item" onclick="window.authSystem.openGooglePasswordPrompt(window.authSystem.getSavedGoogleAccounts()[${idx}])">
                       <div class="google-acc-avatar">${avContent}</div>
                       <div class="google-acc-details">
                         <div class="google-acc-name">${acc.name}</div>
@@ -672,7 +859,7 @@ export class AuthSystem {
                   <div class="google-acc-avatar" style="background:rgba(255,255,255,0.1); color:#ffffff; font-size:1.1rem;">+</div>
                   <div class="google-acc-details">
                     <div class="google-acc-name" style="font-weight:700; color:var(--text-main);">Use another Google account</div>
-                    <div class="google-acc-email">Sign in with a different Google account</div>
+                    <div class="google-acc-email">Sign in or register a new Google account</div>
                   </div>
                 </div>
               </div>
@@ -685,7 +872,24 @@ export class AuthSystem {
 
                 <div class="form-group">
                   <label class="form-label">Google / Gmail Address <span class="req">*</span></label>
-                  <input type="email" id="gCustomEmail" class="form-input" placeholder="e.g. yourname@gmail.com" required />
+                  <input type="email" id="gCustomEmail" class="form-input" placeholder="e.g. yourname@gmail.com" required onblur="window.authSystem.checkGoogleEmailField(this.value)" />
+                  <div id="gEmailStatusNotice" style="font-size:0.75rem; color:var(--text-muted); margin-top:0.35rem;"></div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Password <span class="req">*</span></label>
+                  <div class="password-input-wrap">
+                    <input type="password" id="gCustomPassword" class="form-input" placeholder="Enter password (min 6 chars)" minlength="6" required />
+                    <button type="button" class="btn-toggle-pw" aria-label="Toggle password visibility" onclick="window.authSystem.togglePwVisibility('gCustomPassword', this)">${this.renderEyeIcon(false)}</button>
+                  </div>
+                </div>
+
+                <div class="form-group" id="gConfirmPwGroup">
+                  <label class="form-label">Confirm Password <span class="req">*</span></label>
+                  <div class="password-input-wrap">
+                    <input type="password" id="gCustomConfirmPassword" class="form-input" placeholder="Re-enter password to confirm" minlength="6" required />
+                    <button type="button" class="btn-toggle-pw" aria-label="Toggle password visibility" onclick="window.authSystem.togglePwVisibility('gCustomConfirmPassword', this)">${this.renderEyeIcon(false)}</button>
+                  </div>
                 </div>
 
                 <div class="form-group">
@@ -719,8 +923,8 @@ export class AuthSystem {
                       &larr; Back
                     </button>
                   ` : ''}
-                  <button type="submit" class="btn btn-primary btn-glow flex-1">
-                    Sign In with Google &rarr;
+                  <button type="submit" id="gSubmitBtn" class="btn btn-primary btn-glow flex-1">
+                    Create Google Account & Sign In &rarr;
                   </button>
                 </div>
               </form>
@@ -728,12 +932,238 @@ export class AuthSystem {
           </div>
 
           <div class="google-modal-footer">
-            <span class="google-security-badge">Instant Google Sign-In • Saved to your browser</span>
+            <span class="google-security-badge">Google Authentication • 1 Account Per Email with Password Protection</span>
           </div>
 
         </div>
       </div>
     `;
+  }
+
+  async checkGoogleEmailField(email) {
+    email = (email || '').trim().toLowerCase();
+    const noticeEl = document.getElementById('gEmailStatusNotice');
+    const confirmGroup = document.getElementById('gConfirmPwGroup');
+    const submitBtn = document.getElementById('gSubmitBtn');
+    if (!email || !email.includes('@')) {
+      if (noticeEl) noticeEl.textContent = '';
+      return;
+    }
+
+    const check = await this.checkEmailExists(email);
+    if (check.exists) {
+      if (noticeEl) {
+        noticeEl.innerHTML = `<span style="color:#ffffff;">Account found for this email. Enter your password to sign in.</span>`;
+      }
+      if (confirmGroup) confirmGroup.style.display = 'none';
+      const confirmInput = document.getElementById('gCustomConfirmPassword');
+      if (confirmInput) confirmInput.required = false;
+      if (submitBtn) submitBtn.innerHTML = `Sign In with Password &rarr;`;
+      const nameInput = document.getElementById('gCustomName');
+      if (nameInput && !nameInput.value && check.name) {
+        nameInput.value = check.name;
+      }
+    } else {
+      if (noticeEl) {
+        noticeEl.innerHTML = `<span style="color:var(--text-muted);">New email address. Create account and set password.</span>`;
+      }
+      if (confirmGroup) confirmGroup.style.display = 'block';
+      const confirmInput = document.getElementById('gCustomConfirmPassword');
+      if (confirmInput) confirmInput.required = true;
+      if (submitBtn) submitBtn.innerHTML = `Create Google Account & Sign In &rarr;`;
+    }
+  }
+
+  openGooglePasswordPrompt(account) {
+    sound.playClick();
+    const modalContainer = document.getElementById('globalModalContainer');
+    if (!modalContainer || !account) return;
+
+    const isImg = account.avatar && (account.avatar.startsWith('data:image') || account.avatar.startsWith('http') || account.avatar.startsWith('blob:'));
+    const avContent = isImg 
+      ? `<img src="${account.avatar}" alt="${account.name}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />`
+      : (account.avatar || account.name?.charAt(0).toUpperCase() || 'G');
+
+    modalContainer.innerHTML = `
+      <div class="modal-backdrop" onclick="if(event.target === this) window.authSystem.closeModal()">
+        <div class="modal-dialog google-modal-dialog">
+          
+          <div class="google-modal-top">
+            <div style="display:flex; justify-content:center; margin-bottom:0.75rem;">
+              <svg class="google-logo" viewBox="0 0 24 24" width="32" height="32">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+            </div>
+            <h3 class="google-modal-title">Enter Your Password</h3>
+            <p class="google-modal-subtitle">To access account for <strong>${account.email}</strong></p>
+            <button class="modal-close-btn" onclick="window.authSystem.closeModal()" style="position:absolute; top:1rem; right:1.25rem;">&times;</button>
+          </div>
+
+          <div class="google-modal-body">
+            <div id="googlePasswordPromptError" class="auth-error-banner hidden"></div>
+
+            <div style="display:flex; align-items:center; gap:0.75rem; background:rgba(255,255,255,0.05); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:0.75rem 1rem; margin-bottom:1.25rem;">
+              <div class="google-acc-avatar" style="width:38px; height:38px;">${avContent}</div>
+              <div style="flex:1; overflow:hidden;">
+                <div style="font-weight:700; color:#ffffff; font-size:0.9rem;">${account.name}</div>
+                <div style="font-size:0.78rem; color:var(--text-muted);">${account.email}</div>
+              </div>
+            </div>
+
+            <form onsubmit="event.preventDefault(); window.authSystem.submitGooglePasswordLogin('${account.email}');">
+              <div class="form-group mb-3">
+                <label class="form-label">Password <span class="req">*</span></label>
+                <div class="password-input-wrap">
+                  <input type="password" id="gPromptPassword" class="form-input" placeholder="Enter your password" required autofocus />
+                  <button type="button" class="btn-toggle-pw" aria-label="Toggle password visibility" onclick="window.authSystem.togglePwVisibility('gPromptPassword', this)">${this.renderEyeIcon(false)}</button>
+                </div>
+              </div>
+
+              <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+                <button type="button" class="btn btn-secondary" onclick="window.authSystem.openGoogleAccountModal()">
+                  &larr; Switch Account
+                </button>
+                <button type="submit" class="btn btn-primary btn-glow flex-1">
+                  Access Account &rarr;
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div class="google-modal-footer">
+            <span class="google-security-badge">Protected by Nexus Secure Authentication</span>
+          </div>
+
+        </div>
+      </div>
+    `;
+  }
+
+  async submitGooglePasswordLogin(email) {
+    const pw = document.getElementById('gPromptPassword')?.value;
+    if (!pw) {
+      this.showFormError('Please enter your password.', 'googlePasswordPromptError');
+      return;
+    }
+
+    try {
+      const user = await this.loginUserAccount({ email, password: pw });
+      sound.playPassUnlocked();
+      this.addSavedGoogleAccount(user);
+      this.saveUser(user);
+      this.closeModal();
+      this.showAuthToast(`Welcome back, ${user.name}!`);
+    } catch (err) {
+      this.showFormError(err.message || 'Incorrect password.', 'googlePasswordPromptError');
+    }
+  }
+
+  openGoogleSetPasswordPrompt({ sub, name, email, picture }) {
+    sound.playClick();
+    const modalContainer = document.getElementById('globalModalContainer');
+    if (!modalContainer) return;
+
+    modalContainer.innerHTML = `
+      <div class="modal-backdrop" onclick="if(event.target === this) window.authSystem.closeModal()">
+        <div class="modal-dialog google-modal-dialog">
+          
+          <div class="google-modal-top">
+            <div style="display:flex; justify-content:center; margin-bottom:0.75rem;">
+              <svg class="google-logo" viewBox="0 0 24 24" width="32" height="32">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+            </div>
+            <h3 class="google-modal-title">Set Account Password</h3>
+            <p class="google-modal-subtitle">Secure your new account for <strong>${email}</strong></p>
+            <button class="modal-close-btn" onclick="window.authSystem.closeModal()" style="position:absolute; top:1rem; right:1.25rem;">&times;</button>
+          </div>
+
+          <div class="google-modal-body">
+            <div id="googleSetPwError" class="auth-error-banner hidden"></div>
+
+            <form onsubmit="event.preventDefault(); window.authSystem.submitGoogleSetPassword('${email}', '${encodeURIComponent(name || 'Google User')}', '${encodeURIComponent(picture || '')}');">
+              <div class="form-group mb-3">
+                <label class="form-label">Create Password <span class="req">*</span></label>
+                <div class="password-input-wrap">
+                  <input type="password" id="gSetNewPassword" class="form-input" placeholder="Set password (min 6 chars)" minlength="6" required autofocus />
+                  <button type="button" class="btn-toggle-pw" aria-label="Toggle password visibility" onclick="window.authSystem.togglePwVisibility('gSetNewPassword', this)">${this.renderEyeIcon(false)}</button>
+                </div>
+              </div>
+
+              <div class="form-group mb-3">
+                <label class="form-label">Confirm Password <span class="req">*</span></label>
+                <div class="password-input-wrap">
+                  <input type="password" id="gSetConfirmPassword" class="form-input" placeholder="Confirm password" minlength="6" required />
+                  <button type="button" class="btn-toggle-pw" aria-label="Toggle password visibility" onclick="window.authSystem.togglePwVisibility('gSetConfirmPassword', this)">${this.renderEyeIcon(false)}</button>
+                </div>
+              </div>
+
+              <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+                <button type="button" class="btn btn-secondary" onclick="window.authSystem.closeModal()">
+                  Cancel
+                </button>
+                <button type="submit" class="btn btn-primary btn-glow flex-1">
+                  Save Password & Sign In &rarr;
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div class="google-modal-footer">
+            <span class="google-security-badge">1 Email = 1 Account • Access with Password Anytime</span>
+          </div>
+
+        </div>
+      </div>
+    `;
+  }
+
+  async submitGoogleSetPassword(email, encName, encPicture) {
+    const pw = document.getElementById('gSetNewPassword')?.value;
+    const confirmPw = document.getElementById('gSetConfirmPassword')?.value;
+
+    if (!pw || !confirmPw) {
+      this.showFormError('Please enter and confirm your password.', 'googleSetPwError');
+      return;
+    }
+
+    if (pw !== confirmPw) {
+      this.showFormError('Passwords do not match.', 'googleSetPwError');
+      return;
+    }
+
+    if (pw.length < 6) {
+      this.showFormError('Password must be at least 6 characters long.', 'googleSetPwError');
+      return;
+    }
+
+    const name = decodeURIComponent(encName || 'Google User');
+    const picture = decodeURIComponent(encPicture || '');
+
+    try {
+      const user = await this.registerUserAccount({
+        name,
+        email,
+        password: pw,
+        avatar: picture || name.charAt(0).toUpperCase(),
+        provider: 'google',
+        role: 'Campus Member'
+      });
+
+      sound.playPassUnlocked();
+      this.addSavedGoogleAccount(user);
+      this.saveUser(user);
+      this.closeModal();
+      this.showAuthToast(`Account registered and verified as ${user.name}!`);
+    } catch (err) {
+      this.showFormError(err.message || 'Failed to complete registration.', 'googleSetPwError');
+    }
   }
 
   handleGooglePhotoUpload(event) {
@@ -785,53 +1215,88 @@ export class AuthSystem {
     this.selectGoogleBadge(badge);
   }
 
-  submitGoogleCustomAccount() {
+  async submitGoogleCustomAccount() {
     const name = document.getElementById('gCustomName')?.value.trim();
-    const email = document.getElementById('gCustomEmail')?.value.trim();
+    const email = document.getElementById('gCustomEmail')?.value.trim().toLowerCase();
+    const pw = document.getElementById('gCustomPassword')?.value;
+    const confirmPw = document.getElementById('gCustomConfirmPassword')?.value;
     const roll = document.getElementById('gCustomRoll')?.value.trim();
 
-    if (!name || !email) {
-      alert('Please provide your name and email address.');
+    if (!name || !email || !pw) {
+      this.showFormError('Please fill out all mandatory fields.', 'googleModalError');
+      return;
+    }
+
+    // Check if account already exists
+    const check = await this.checkEmailExists(email);
+    if (check.exists) {
+      // 1 email = 1 account! The account already exists, so it MUST be accessed with password
+      try {
+        const user = await this.loginUserAccount({ email, password: pw });
+        sound.playPassUnlocked();
+        this.addSavedGoogleAccount(user);
+        this.saveUser(user);
+        this.closeModal();
+        this.showAuthToast(`Welcome back, ${user.name}!`);
+        return;
+      } catch (err) {
+        // If wrong password, open the clear password verification prompt for this account
+        this.openGooglePasswordPrompt({
+          email,
+          name: check.name || name,
+          avatar: check.avatar || name.charAt(0).toUpperCase()
+        });
+        setTimeout(() => {
+          this.showFormError('An account with this email already exists. Please enter your correct password.', 'googlePasswordPromptError');
+        }, 50);
+        return;
+      }
+    }
+
+    // New account creation
+    if (pw !== confirmPw) {
+      this.showFormError('Password and Confirm Password must match.', 'googleModalError');
+      return;
+    }
+
+    if (pw.length < 6) {
+      this.showFormError('Password must be at least 6 characters long.', 'googleModalError');
       return;
     }
 
     const avatar = this.pendingGoogleAvatar || name.charAt(0).toUpperCase();
 
-    const user = {
-      id: 'google-usr-' + Date.now(),
-      name,
-      email,
-      rollNo: roll || ('ID: ' + Math.floor(1000 + Math.random() * 9000)),
-      avatar,
-      phone: '',
-      department: '',
-      organization: 'Campus Tech Society',
-      bio: '',
-      provider: 'google',
-      verified: true,
-      role: 'Campus Member'
-    };
+    try {
+      const user = await this.registerUserAccount({
+        name,
+        email,
+        password: pw,
+        rollNo: roll,
+        avatar,
+        provider: 'google',
+        role: 'Campus Member'
+      });
 
-    sound.playPassUnlocked();
-    this.addSavedGoogleAccount(user);
-    this.saveUser(user);
-    this.closeModal();
-    this.showAuthToast(`Signed in with Google as ${user.name}!`);
+      sound.playPassUnlocked();
+      this.addSavedGoogleAccount(user);
+      this.saveUser(user);
+      this.closeModal();
+      this.showAuthToast(`Google account registered and verified as ${user.name}!`);
+    } catch (err) {
+      this.showFormError(err.message || 'Failed to register account.', 'googleModalError');
+    }
   }
 
   selectGoogleAccount(index) {
     const list = this.getSavedGoogleAccounts();
     const acc = list[index];
     if (!acc) return;
-
-    sound.playPassUnlocked();
-    this.saveUser(acc);
-    this.closeModal();
-    this.showAuthToast(`Welcome back, ${acc.name}!`);
+    this.openGooglePasswordPrompt(acc);
   }
 
-  handleAuthSubmit() {
+  async handleAuthSubmit() {
     sound.playClick();
+    this.hideFormError('authErrorMessage');
     const email = document.getElementById('authEmail')?.value.trim();
     const pw = document.getElementById('authPassword')?.value;
 
@@ -841,59 +1306,64 @@ export class AuthSystem {
       const confirmPw = document.getElementById('authConfirmPassword')?.value;
 
       if (!name || !roll || !email || !pw) {
-        alert('Please fill out all mandatory fields.');
+        this.showFormError('Please fill out all mandatory fields.', 'authErrorMessage');
         return;
       }
 
       if (pw !== confirmPw) {
-        alert('Password and Confirm Password must match!');
+        this.showFormError('Password and Confirm Password must match.', 'authErrorMessage');
         return;
       }
 
       if (pw.length < 6) {
-        alert('Password must be at least 6 characters long.');
+        this.showFormError('Password must be at least 6 characters long.', 'authErrorMessage');
         return;
       }
 
-      const newUser = {
-        name,
-        email,
-        rollNo: roll,
-        avatar: name.charAt(0).toUpperCase(),
-        provider: 'email',
-        verified: true,
-        role: 'Club Participant'
-      };
+      try {
+        const user = await this.registerUserAccount({
+          name,
+          email,
+          password: pw,
+          rollNo: roll,
+          avatar: name.charAt(0).toUpperCase(),
+          provider: 'email',
+          role: 'Club Participant'
+        });
 
-      sound.playPassUnlocked();
-      this.saveUser(newUser);
-      this.closeModal();
-      this.showAuthToast(`Account created! Welcome, ${newUser.name}.`);
+        sound.playPassUnlocked();
+        this.saveUser(user);
+        this.closeModal();
+        this.showAuthToast(`Account created! Welcome, ${user.name}.`);
+      } catch (err) {
+        if (err.message && err.message.toLowerCase().includes('already exists')) {
+          this.switchAuthMode('signin');
+          const emailInput = document.getElementById('authEmail');
+          if (emailInput) emailInput.value = email;
+          const pwInput = document.getElementById('authPassword');
+          if (pwInput) pwInput.focus();
+          this.showFormError('An account with this email already exists. Please enter your password to sign in.', 'authErrorMessage');
+        } else {
+          this.showFormError(err.message || 'Registration failed.', 'authErrorMessage');
+        }
+      }
 
     } else {
       // Sign in mode
       if (!email || !pw) {
-        alert('Please enter your email and password.');
+        this.showFormError('Please enter your email and password.', 'authErrorMessage');
         return;
       }
 
-      const nameCandidate = email.split('@')[0].replace(/[._]/g, ' ');
-      const cleanName = nameCandidate.charAt(0).toUpperCase() + nameCandidate.slice(1);
-
-      const user = {
-        name: cleanName || 'Campus Member',
-        email,
-        rollNo: '2024-ID-' + Math.floor(100 + Math.random() * 900),
-        avatar: (cleanName || 'U').charAt(0).toUpperCase(),
-        provider: 'email',
-        verified: true,
-        role: 'Registered Attendee'
-      };
-
-      sound.playPassUnlocked();
-      this.saveUser(user);
-      this.closeModal();
-      this.showAuthToast(`Welcome back, ${user.name}!`);
+      try {
+        const user = await this.loginUserAccount({ email, password: pw });
+        sound.playPassUnlocked();
+        this.saveUser(user);
+        this.closeModal();
+        this.showAuthToast(`Welcome back, ${user.name}!`);
+      } catch (err) {
+        this.showFormError(err.message || 'Sign in failed.', 'authErrorMessage');
+      }
     }
   }
 
