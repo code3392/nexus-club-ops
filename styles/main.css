@@ -807,6 +807,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .event-club-badge {
@@ -818,6 +819,14 @@ body {
   border-radius: 999px;
   color: #ffffff;
   border: 1px solid rgba(255, 255, 255, 0.25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .event-tier-badge {
@@ -825,8 +834,31 @@ body {
   color: #000000;
   font-size: 0.7rem;
   font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  margin-left: auto;
+}
+
+.fest-status-pill {
+  font-size: 0.7rem;
+  font-weight: 800;
   padding: 3px 9px;
   border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .event-category-chip {
@@ -2220,6 +2252,11 @@ body {
   color: #000000;
   padding: 2px 7px;
   border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .badge-event-pill {
@@ -2229,6 +2266,11 @@ body {
   color: var(--text-muted);
   padding: 2px 7px;
   border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .badge-tier-tag {
@@ -2238,6 +2280,11 @@ body {
   border-radius: 4px;
   background: #ffffff;
   color: #000000;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .badge-event-title {
