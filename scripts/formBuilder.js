@@ -56,6 +56,11 @@ export class FormBuilderStudio {
     this.renderPhonePreview();
   }
 
+  renderMetaFields() {
+    this.renderStudio();
+    this.renderPhonePreview();
+  }
+
   // Requirement 8: Load an existing form for editing
   loadEventForEditing(eventId) {
     const event = (db.getEvents ? db.getEvents() : []).find(e => e.id === eventId);

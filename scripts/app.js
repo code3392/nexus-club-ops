@@ -1726,6 +1726,36 @@ class NexusApp {
       this.currentPaletteItems[idx].action();
     }
   }
+
+  updateAnnouncementTicker() {
+    const tickerTrack = document.getElementById('announcementTickerTrack');
+    if (!tickerTrack) return;
+    const announcements = db.state.announcements || [];
+    if (announcements.length === 0) {
+      tickerTrack.innerHTML = '<span>Campus Live Broadcast: All events are live and registrations are open.</span>';
+      return;
+    }
+    tickerTrack.innerHTML = announcements.map(a => `
+      <span class="ticker-item"><strong>${a.title}:</strong> ${a.message || a.body || ''}</span>
+    `).join(' • ');
+  }
+
+  showToast(title, desc = '') {
+    const toast = document.createElement('div');
+    toast.className = 'nexus-toast toast-success visible';
+    toast.innerHTML = `
+      <div class="toast-icon">OK</div>
+      <div class="toast-content">
+        <div class="toast-title">${title}</div>
+        ${desc ? `<div class="toast-desc">${desc}</div>` : ''}
+      </div>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.classList.remove('visible');
+      setTimeout(() => toast.remove(), 400);
+    }, 3500);
+  }
 }
 
 // Global App Instance
