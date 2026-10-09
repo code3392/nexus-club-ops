@@ -336,46 +336,9 @@ export class AuthSystem {
   }
 
   initAndRenderGoogleButton() {
-    const tryRender = (attempts = 0) => {
-      const clientId = this.getEffectiveGoogleClientId();
-      const slot = document.getElementById('googleOfficialBtnSlot');
-      const fallbackBtn = document.getElementById('googleCustomBtnFallback');
-
-      if (!slot) return;
-
-      if (clientId && window.google?.accounts?.id) {
-        const initialized = this.initGoogleIdentity();
-        if (initialized) {
-          try {
-            slot.innerHTML = '';
-            window.google.accounts.id.renderButton(slot, {
-              theme: 'outline',
-              size: 'large',
-              type: 'standard',
-              shape: 'rectangular',
-              text: this.authMode === 'signin' ? 'signin_with' : 'signup_with',
-              logo_alignment: 'left',
-              width: 320
-            });
-            slot.style.display = 'flex';
-            if (fallbackBtn) fallbackBtn.style.display = 'none';
-            return;
-          } catch (e) {
-            console.warn('Google renderButton error:', e);
-          }
-        }
-      }
-
-      if (attempts < 25 && (!window.google || !window.google.accounts || !window.google.accounts.id)) {
-        setTimeout(() => tryRender(attempts + 1), 150);
-        return;
-      }
-
-      if (slot) slot.style.display = 'none';
-      if (fallbackBtn) fallbackBtn.style.display = 'flex';
-    };
-
-    setTimeout(() => tryRender(0), 40);
+    if (window.google?.accounts?.id) {
+      this.initGoogleIdentity();
+    }
   }
 
   showAuthLoading(isLoading, message = 'Verifying identity...') {
@@ -703,8 +666,7 @@ export class AuthSystem {
       <!-- 1. Sign In With Google Button -->
       <div class="google-auth-section">
         <div id="authLoadingIndicator" class="auth-loading-banner hidden"></div>
-        <div id="googleOfficialBtnSlot" class="google-official-btn-slot"></div>
-        <button id="googleCustomBtnFallback" class="btn-google-auth" onclick="window.authSystem.handleGoogleSignIn()">
+        <button id="googleAuthBtn" class="btn-google-auth" type="button" onclick="window.authSystem.handleGoogleSignIn()">
           <svg class="google-logo" viewBox="0 0 24 24" width="20" height="20">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -713,12 +675,6 @@ export class AuthSystem {
           </svg>
           <span>${this.authMode === 'signin' ? 'Continue with Google' : 'Sign up with Google'}</span>
         </button>
-
-        <div class="google-auth-meta-row" style="justify-content:center;">
-          <button type="button" class="btn-subtle-link" onclick="window.authSystem.promptGoogleClientIdConfig()">
-            Google Cloud OAuth Client ID (Optional)
-          </button>
-        </div>
       </div>
 
       <div class="auth-divider">
@@ -890,13 +846,23 @@ export class AuthSystem {
     this.addSavedGoogleAccount(user);
   }
 
-  handleGoogleSignIn() {
+  async handleGoogleSignIn() {
     sound.playClick();
     const effectiveClientId = this.getEffectiveGoogleClientId();
 
     if (!effectiveClientId) {
       this.promptGoogleClientIdConfig();
       return;
+    }
+
+    this.showAuthLoading(true, 'Opening Google Sign-In...');
+
+    // If Google SDK is still loading, wait up to 2 seconds
+    if (!window.google?.accounts?.oauth2 && !window.google?.accounts?.id) {
+      for (let i = 0; i < 20; i++) {
+        await new Promise(r => setTimeout(r, 100));
+        if (window.google?.accounts?.oauth2 || window.google?.accounts?.id) break;
+      }
     }
 
     // Launch official Google OAuth 2.0 account chooser popup
@@ -933,33 +899,55 @@ export class AuthSystem {
                 this.showAuthLoading(false);
                 this.showFormError(err.message || 'Google authentication failed.');
               }
-            } else if (tokenResponse && tokenResponse.error && tokenResponse.error !== 'popup_closed_by_user') {
-              this.showFormError(`Google Sign-In: ${tokenResponse.error}`);
+            } else {
+              this.showAuthLoading(false);
+              if (tokenResponse && tokenResponse.error && tokenResponse.error !== 'popup_closed_by_user') {
+                this.showFormError(`Google Sign-In: ${tokenResponse.error}`);
+              }
             }
           },
           error_callback: (err) => {
+            this.showAuthLoading(false);
             console.warn('Google TokenClient popup error:', err);
-            if (err?.type !== 'popup_closed') {
-              this.showFormError(err.message || 'Google Sign-In popup could not be displayed.');
+            if (err?.type === 'popup_failed_to_open') {
+              this.showFormError('Pop-up blocked. Please allow popups for this site and try again.');
+            } else if (err?.type !== 'popup_closed') {
+              this.showFormError(err?.message || 'Google Sign-In popup could not be displayed.');
             }
           }
         });
         client.requestAccessToken({ prompt: 'select_account' });
+
+        // Auto-clear loading banner after 5 seconds if user leaves popup open
+        setTimeout(() => {
+          const loadingEl = document.getElementById('authLoadingIndicator');
+          if (loadingEl && !loadingEl.classList.contains('hidden') && loadingEl.textContent.includes('Opening Google')) {
+            this.showAuthLoading(false);
+          }
+        }, 5000);
         return;
       } catch (e) {
         console.warn('Error launching Google token client:', e);
+        this.showAuthLoading(false);
       }
     }
 
     // Fallback: Attempt One-Tap prompt if SDK loaded
     if (window.google?.accounts?.id) {
       this.initGoogleIdentity();
-      window.google.accounts.id.prompt();
+      window.google.accounts.id.prompt((notification) => {
+        if (notification.isNotDisplayed()) {
+          this.showAuthLoading(false);
+          this.showFormError('Google prompt blocked. Check browser popup settings.');
+        } else if (notification.isSkippedMoment() || notification.isDismissedMoment()) {
+          this.showAuthLoading(false);
+        }
+      });
       return;
     }
 
-    const saved = this.getSavedGoogleAccounts();
-    this.openGoogleAccountModal(saved.length === 0);
+    this.showAuthLoading(false);
+    this.showFormError('Google Identity SDK failed to load. Please check your internet connection or ad-blocker.');
   }
 
   promptGoogleClientIdConfig() {
