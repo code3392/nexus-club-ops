@@ -2,8 +2,37 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+
+// Safely load environment variables from .env if present
+const envFilePath = path.join(__dirname, '.env');
+if (fs.existsSync(envFilePath)) {
+  try {
+    if (typeof process.loadEnvFile === 'function') {
+      process.loadEnvFile(envFilePath);
+    } else {
+      const envRaw = fs.readFileSync(envFilePath, 'utf8');
+      envRaw.split(/\r?\n/).forEach(line => {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) return;
+        const eqIdx = trimmed.indexOf('=');
+        if (eqIdx > 0) {
+          const key = trimmed.slice(0, eqIdx).trim();
+          const val = trimmed.slice(eqIdx + 1).trim();
+          if (!process.env[key]) {
+            process.env[key] = val.replace(/^["']|["']$/g, '');
+          }
+        }
+      });
+    }
+  } catch (err) {
+    console.warn('Notice: Could not load .env file:', err.message);
+  }
+}
 
 const PORT = process.env.PORT || 3000;
+const SESSION_SECRET = process.env.SESSION_SECRET || 'nexus-default-session-secret-change-in-production';
+const GOOGLE_CLIENT_ID = (process.env.GOOGLE_CLIENT_ID || '').trim();
 const DATA_DIR = path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 
@@ -134,18 +163,154 @@ function parseJsonBody(req) {
   });
 }
 
+function parseCookies(req) {
+  const list = {};
+  const cookieHeader = req.headers.cookie;
+  if (!cookieHeader) return list;
+  cookieHeader.split(';').forEach(cookie => {
+    const parts = cookie.split('=');
+    const name = parts[0]?.trim();
+    if (!name) return;
+    const val = parts.slice(1).join('=').trim();
+    try {
+      list[name] = decodeURIComponent(val);
+    } catch {
+      list[name] = val;
+    }
+  });
+  return list;
+}
+
+function base64UrlEncode(str) {
+  return Buffer.from(str)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+function base64UrlDecode(str) {
+  let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4) {
+    base64 += '=';
+  }
+  return Buffer.from(base64, 'base64').toString('utf8');
+}
+
+function createSignedSessionToken(payload, secret = SESSION_SECRET) {
+  const header = { alg: 'HS256', typ: 'JWT' };
+  const encodedHeader = base64UrlEncode(JSON.stringify(header));
+  const encodedPayload = base64UrlEncode(JSON.stringify(payload));
+  const signature = crypto
+    .createHmac('sha256', secret)
+    .update(`${encodedHeader}.${encodedPayload}`)
+    .digest('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+  return `${encodedHeader}.${encodedPayload}.${signature}`;
+}
+
+function verifySignedSessionToken(token, secret = SESSION_SECRET) {
+  if (!token || typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+  const [encodedHeader, encodedPayload, signature] = parts;
+  const expectedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(`${encodedHeader}.${encodedPayload}`)
+    .digest('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+
+  if (signature.length !== expectedSignature.length) return null;
+  const sigBuf = Buffer.from(signature);
+  const expBuf = Buffer.from(expectedSignature);
+  if (!crypto.timingSafeEqual(sigBuf, expBuf)) return null;
+
+  try {
+    const payload = JSON.parse(base64UrlDecode(encodedPayload));
+    if (payload.exp && Date.now() >= payload.exp * 1000) {
+      return null; // Expired session
+    }
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+function getSessionFromReq(req) {
+  const authHeader = req.headers['authorization'];
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.slice(7).trim();
+    const session = verifySignedSessionToken(token);
+    if (session) return session;
+  }
+
+  const cookies = parseCookies(req);
+  if (cookies.nexus_session) {
+    const session = verifySignedSessionToken(cookies.nexus_session);
+    if (session) return session;
+  }
+
+  return null;
+}
+
+async function verifyGoogleIdToken(idToken, expectedClientId) {
+  if (!idToken || typeof idToken !== 'string') {
+    throw new Error('ID token is missing or invalid.');
+  }
+
+  const tokeninfoUrl = `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`;
+  const resp = await fetch(tokeninfoUrl);
+  if (!resp.ok) {
+    const errText = await resp.text();
+    throw new Error(`Google token verification failed (${resp.status}): ${errText}`);
+  }
+
+  const payload = await resp.json();
+
+  if (expectedClientId) {
+    if (payload.aud !== expectedClientId) {
+      throw new Error('Audience mismatch: token audience does not match configured client id.');
+    }
+  }
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  if (payload.exp && parseInt(payload.exp, 10) < nowSec) {
+    throw new Error('Google token has expired.');
+  }
+
+  if (!payload.email) {
+    throw new Error('Google token does not contain an email address.');
+  }
+
+  return {
+    sub: payload.sub,
+    email: payload.email.toLowerCase(),
+    name: payload.name || payload.email.split('@')[0],
+    picture: payload.picture || '',
+    email_verified: payload.email_verified === 'true' || payload.email_verified === true
+  };
+}
+
 const server = http.createServer(async (req, res) => {
   const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const reqPath = parsedUrl.pathname;
 
+  const origin = req.headers.origin || '*';
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': origin === 'null' ? '*' : origin,
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Max-Age': '86400'
+  };
+
   // Handle CORS Preflight
   if (req.method === 'OPTIONS') {
-    res.writeHead(204, {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      'Access-Control-Max-Age': '86400'
-    });
+    res.writeHead(204, corsHeaders);
     res.end();
     return;
   }
@@ -154,8 +319,128 @@ const server = http.createServer(async (req, res) => {
   const jsonHeaders = {
     'Content-Type': 'application/json; charset=utf-8',
     'Cache-Control': 'no-cache, no-store, must-revalidate',
-    'Access-Control-Allow-Origin': '*'
+    ...corsHeaders
   };
+
+  // API Route: GET /api/auth/config (Check Google Client ID configuration status)
+  if (reqPath === '/api/auth/config' && req.method === 'GET') {
+    res.writeHead(200, jsonHeaders);
+    res.end(JSON.stringify({
+      configured: !!GOOGLE_CLIENT_ID,
+      clientId: GOOGLE_CLIENT_ID || ''
+    }));
+    return;
+  }
+
+  // API Route: POST /api/auth/google (Server-side Google ID token verification)
+  if (reqPath === '/api/auth/google' && req.method === 'POST') {
+    try {
+      const payload = await parseJsonBody(req);
+      const idToken = payload.idToken || payload.credential;
+      if (!idToken) {
+        res.writeHead(400, jsonHeaders);
+        res.end(JSON.stringify({ error: 'Missing idToken in request body.' }));
+        return;
+      }
+
+      const googleUser = await verifyGoogleIdToken(idToken, GOOGLE_CLIENT_ID);
+      const db = readDb();
+      if (!Array.isArray(db.users)) db.users = [];
+
+      let user = db.users.find(u => u.email.toLowerCase() === googleUser.email);
+      if (!user) {
+        user = {
+          id: 'g-usr-' + Date.now().toString(36) + '-' + Math.floor(1000 + Math.random() * 9000),
+          email: googleUser.email,
+          name: googleUser.name,
+          rollNo: '',
+          avatar: googleUser.picture || googleUser.name.charAt(0).toUpperCase(),
+          provider: 'google',
+          verified: true,
+          role: 'Campus Member',
+          createdAt: new Date().toISOString()
+        };
+        db.users.push(user);
+        writeDb(db);
+      } else {
+        if (googleUser.picture && (!user.avatar || !user.avatar.startsWith('data:'))) {
+          user.avatar = googleUser.picture;
+        }
+        if (googleUser.name && (!user.name || user.name === user.email.split('@')[0])) {
+          user.name = googleUser.name;
+        }
+        user.verified = true;
+        writeDb(db);
+      }
+
+      const safeUser = { ...user };
+      delete safeUser.password;
+
+      const nowSec = Math.floor(Date.now() / 1000);
+      const sessionPayload = {
+        userId: safeUser.id,
+        email: safeUser.email,
+        name: safeUser.name,
+        avatar: safeUser.avatar,
+        role: safeUser.role,
+        iat: nowSec,
+        exp: nowSec + (7 * 24 * 60 * 60)
+      };
+
+      const sessionToken = createSignedSessionToken(sessionPayload);
+      const cookieHeader = `nexus_session=${sessionToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`;
+
+      res.writeHead(200, {
+        ...jsonHeaders,
+        'Set-Cookie': cookieHeader
+      });
+      res.end(JSON.stringify({
+        success: true,
+        user: safeUser,
+        sessionToken
+      }));
+      return;
+    } catch (err) {
+      res.writeHead(401, jsonHeaders);
+      res.end(JSON.stringify({ error: err.message || 'Google authentication failed.' }));
+      return;
+    }
+  }
+
+  // API Route: GET /api/auth/me (Verify active session server-side)
+  if (reqPath === '/api/auth/me' && req.method === 'GET') {
+    const session = getSessionFromReq(req);
+    if (!session) {
+      res.writeHead(200, jsonHeaders);
+      res.end(JSON.stringify({ authenticated: false, user: null }));
+      return;
+    }
+
+    const db = readDb();
+    const user = (db.users || []).find(u => u.id === session.userId || u.email.toLowerCase() === session.email.toLowerCase());
+    const safeUser = user ? { ...user } : {
+      id: session.userId,
+      email: session.email,
+      name: session.name,
+      avatar: session.avatar,
+      role: session.role
+    };
+    delete safeUser.password;
+
+    res.writeHead(200, jsonHeaders);
+    res.end(JSON.stringify({ authenticated: true, user: safeUser }));
+    return;
+  }
+
+  // API Route: POST /api/auth/logout (Clear session)
+  if (reqPath === '/api/auth/logout' && req.method === 'POST') {
+    res.writeHead(200, {
+      ...jsonHeaders,
+      'Set-Cookie': 'nexus_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0'
+    });
+    res.end(JSON.stringify({ success: true }));
+    return;
+  }
 
   // API Route: GET /api/data (Retrieve shared fests, events, and registrations)
   if (reqPath === '/api/data' && req.method === 'GET') {
@@ -204,8 +489,15 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  // API Route: POST /api/fests (Create or update festival)
+  // API Route: POST /api/fests (Create or update festival - Requires verified session)
   if (reqPath === '/api/fests' && req.method === 'POST') {
+    const session = getSessionFromReq(req);
+    if (!session) {
+      res.writeHead(401, jsonHeaders);
+      res.end(JSON.stringify({ error: 'Authentication required. Please sign in to create or modify festivals.' }));
+      return;
+    }
+
     try {
       const fest = await parseJsonBody(req);
       if (!fest || !fest.id) {
@@ -231,8 +523,15 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  // API Route: DELETE /api/fests/:id
+  // API Route: DELETE /api/fests/:id (Requires verified session)
   if (reqPath.startsWith('/api/fests/') && req.method === 'DELETE') {
+    const session = getSessionFromReq(req);
+    if (!session) {
+      res.writeHead(401, jsonHeaders);
+      res.end(JSON.stringify({ error: 'Authentication required. Please sign in to delete festivals.' }));
+      return;
+    }
+
     const festId = reqPath.replace('/api/fests/', '');
     const db = readDb();
     db.fests = db.fests.filter(f => f.id !== festId);
@@ -242,8 +541,15 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // API Route: POST /api/events (Create or update event)
+  // API Route: POST /api/events (Create or update event - Requires verified session)
   if (reqPath === '/api/events' && req.method === 'POST') {
+    const session = getSessionFromReq(req);
+    if (!session) {
+      res.writeHead(401, jsonHeaders);
+      res.end(JSON.stringify({ error: 'Authentication required. Please sign in to create or modify events.' }));
+      return;
+    }
+
     try {
       const evt = await parseJsonBody(req);
       if (!evt || !evt.id) {
@@ -269,8 +575,15 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  // API Route: DELETE /api/events/:id
+  // API Route: DELETE /api/events/:id (Requires verified session)
   if (reqPath.startsWith('/api/events/') && req.method === 'DELETE') {
+    const session = getSessionFromReq(req);
+    if (!session) {
+      res.writeHead(401, jsonHeaders);
+      res.end(JSON.stringify({ error: 'Authentication required. Please sign in to delete events.' }));
+      return;
+    }
+
     const eventId = reqPath.replace('/api/events/', '');
     const db = readDb();
     db.events = db.events.filter(e => e.id !== eventId);
@@ -382,8 +695,24 @@ const server = http.createServer(async (req, res) => {
       const safeUser = { ...newUser };
       delete safeUser.password;
 
-      res.writeHead(201, jsonHeaders);
-      res.end(JSON.stringify({ success: true, user: safeUser }));
+      const nowSec = Math.floor(Date.now() / 1000);
+      const sessionPayload = {
+        userId: safeUser.id,
+        email: safeUser.email,
+        name: safeUser.name,
+        avatar: safeUser.avatar,
+        role: safeUser.role,
+        iat: nowSec,
+        exp: nowSec + (7 * 24 * 60 * 60)
+      };
+      const sessionToken = createSignedSessionToken(sessionPayload);
+      const cookieHeader = `nexus_session=${sessionToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`;
+
+      res.writeHead(201, {
+        ...jsonHeaders,
+        'Set-Cookie': cookieHeader
+      });
+      res.end(JSON.stringify({ success: true, user: safeUser, sessionToken }));
       return;
     } catch (err) {
       res.writeHead(400, jsonHeaders);
@@ -424,8 +753,24 @@ const server = http.createServer(async (req, res) => {
       const safeUser = { ...user };
       delete safeUser.password;
 
-      res.writeHead(200, jsonHeaders);
-      res.end(JSON.stringify({ success: true, user: safeUser }));
+      const nowSec = Math.floor(Date.now() / 1000);
+      const sessionPayload = {
+        userId: safeUser.id,
+        email: safeUser.email,
+        name: safeUser.name,
+        avatar: safeUser.avatar,
+        role: safeUser.role,
+        iat: nowSec,
+        exp: nowSec + (7 * 24 * 60 * 60)
+      };
+      const sessionToken = createSignedSessionToken(sessionPayload);
+      const cookieHeader = `nexus_session=${sessionToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`;
+
+      res.writeHead(200, {
+        ...jsonHeaders,
+        'Set-Cookie': cookieHeader
+      });
+      res.end(JSON.stringify({ success: true, user: safeUser, sessionToken }));
       return;
     } catch (err) {
       res.writeHead(400, jsonHeaders);

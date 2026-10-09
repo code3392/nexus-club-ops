@@ -28,6 +28,44 @@ export class AuthSystem {
     this.authMode = 'signin'; // 'signin' | 'signup'
     this.pendingAuthCallback = null;
     this.listeners = [];
+    this.serverGoogleClientId = '';
+    this.setupCrossTabSync();
+  }
+
+  setupCrossTabSync() {
+    if (typeof window === 'undefined') return;
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        this.syncChannel = new BroadcastChannel('nexus_auth_channel');
+        this.syncChannel.onmessage = (event) => {
+          if (event.data && event.data.type === 'AUTH_SYNC') {
+            const syncedUser = event.data.user;
+            this.currentUser = syncedUser;
+            if (syncedUser) {
+              try { localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(syncedUser)); } catch (e) {}
+            } else {
+              try { localStorage.removeItem(AUTH_STORAGE_KEY); } catch (e) {}
+            }
+            this.renderNavAuth();
+            this.notifyListeners(syncedUser);
+          }
+        };
+      }
+    } catch (e) {
+      // BroadcastChannel unavailable
+    }
+
+    try {
+      window.addEventListener('storage', (e) => {
+        if (e.key === AUTH_STORAGE_KEY) {
+          try {
+            this.currentUser = e.newValue ? JSON.parse(e.newValue) : null;
+            this.renderNavAuth();
+            this.notifyListeners(this.currentUser);
+          } catch (err) {}
+        }
+      });
+    } catch (e) {}
   }
 
   getLocalUsers() {
@@ -91,6 +129,7 @@ export class AuthSystem {
       const res = await fetch('/api/users/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           name: cleanName,
           email: cleanEmail,
@@ -108,6 +147,9 @@ export class AuthSystem {
       }
       if (!res.ok) {
         throw new Error(data.error || 'Registration failed.');
+      }
+      if (data.sessionToken) {
+        try { sessionStorage.setItem('NEXUS_SESSION_TOKEN', data.sessionToken); } catch (e) {}
       }
       serverUser = data.user;
     } catch (err) {
@@ -155,6 +197,7 @@ export class AuthSystem {
       const res = await fetch('/api/users/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ email: cleanEmail, password: cleanPass })
       });
       const data = await res.json();
@@ -166,6 +209,9 @@ export class AuthSystem {
         throw new Error(data.error || 'No account found with this email. Please register first.');
       }
       if (res.ok && data.user) {
+        if (data.sessionToken) {
+          try { sessionStorage.setItem('NEXUS_SESSION_TOKEN', data.sessionToken); } catch (e) {}
+        }
         const local = this.getLocalUsers();
         const idx = local.findIndex(u => u.email && u.email.toLowerCase() === cleanEmail);
         if (idx >= 0) {
@@ -259,9 +305,14 @@ export class AuthSystem {
     }
   }
 
+  getEffectiveGoogleClientId() {
+    if (this.serverGoogleClientId) return this.serverGoogleClientId;
+    return this.getGoogleClientId();
+  }
+
   initGoogleIdentity() {
     if (typeof window === 'undefined') return false;
-    const clientId = this.getGoogleClientId();
+    const clientId = this.getEffectiveGoogleClientId();
     if (!clientId) return false;
     if (!window.google || !window.google.accounts || !window.google.accounts.id) {
       return false;
@@ -271,7 +322,8 @@ export class AuthSystem {
         client_id: clientId,
         callback: (res) => this.handleGoogleCredentialResponse(res),
         auto_select: false,
-        cancel_on_tap_outside: true
+        cancel_on_tap_outside: true,
+        itp_support: true
       });
       return true;
     } catch (err) {
@@ -282,26 +334,94 @@ export class AuthSystem {
 
   initAndRenderGoogleButton() {
     setTimeout(() => {
+      const clientId = this.getEffectiveGoogleClientId();
       const slot = document.getElementById('googleOfficialBtnSlot');
       const fallbackBtn = document.getElementById('googleCustomBtnFallback');
+
+      if (clientId && window.google?.accounts?.id && slot) {
+        const initialized = this.initGoogleIdentity();
+        if (initialized) {
+          try {
+            slot.innerHTML = '';
+            window.google.accounts.id.renderButton(slot, {
+              theme: 'outline',
+              size: 'large',
+              type: 'standard',
+              shape: 'rectangular',
+              text: this.authMode === 'signin' ? 'signin_with' : 'signup_with',
+              logo_alignment: 'left',
+              width: 320
+            });
+            slot.style.display = 'flex';
+            if (fallbackBtn) fallbackBtn.style.display = 'none';
+            return;
+          } catch (e) {
+            console.warn('Google renderButton error:', e);
+          }
+        }
+      }
+
       if (slot) slot.style.display = 'none';
       if (fallbackBtn) fallbackBtn.style.display = 'flex';
     }, 40);
   }
 
-  handleGoogleCredentialResponse(response) {
-    if (!response || !response.credential) return;
-    const payload = this.decodeJwtResponse(response.credential);
-    if (!payload) {
-      alert('Unable to decode Google credential response.');
+  showAuthLoading(isLoading, message = 'Verifying identity...') {
+    const loadingEl = document.getElementById('authLoadingIndicator');
+    const formEl = document.querySelector('.auth-form');
+    const googleSec = document.querySelector('.google-auth-section');
+
+    if (loadingEl) {
+      if (isLoading) {
+        loadingEl.textContent = message;
+        loadingEl.classList.remove('hidden');
+      } else {
+        loadingEl.classList.add('hidden');
+      }
+    }
+    if (formEl) {
+      formEl.style.opacity = isLoading ? '0.4' : '1';
+      formEl.style.pointerEvents = isLoading ? 'none' : 'auto';
+    }
+    if (googleSec) {
+      googleSec.style.opacity = isLoading ? '0.4' : '1';
+      googleSec.style.pointerEvents = isLoading ? 'none' : 'auto';
+    }
+  }
+
+  async handleGoogleCredentialResponse(response) {
+    if (!response || !response.credential) {
+      this.showFormError('Google did not return authentication credentials.');
       return;
     }
-    this.applyGoogleUserData({
-      sub: payload.sub,
-      name: payload.name || payload.email?.split('@')[0],
-      email: payload.email,
-      picture: payload.picture
-    });
+
+    this.showAuthLoading(true, 'Verifying Google credentials with server...');
+
+    try {
+      const res = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ idToken: response.credential })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Server rejected Google authentication.');
+      }
+
+      if (data.sessionToken) {
+        try { sessionStorage.setItem('NEXUS_SESSION_TOKEN', data.sessionToken); } catch (e) {}
+      }
+
+      sound.playPassUnlocked();
+      this.saveUser(data.user);
+      this.closeModal();
+      this.showAuthToast(`Welcome, ${data.user.name}! Authenticated via Google.`);
+    } catch (err) {
+      this.showAuthLoading(false);
+      this.showFormError(err.message || 'Google authentication failed.');
+    }
   }
 
   async applyGoogleUserData({ sub, name, email, picture }) {
@@ -345,6 +465,7 @@ export class AuthSystem {
   }
 
   loadUser() {
+    if (typeof localStorage === 'undefined') return null;
     try {
       const data = localStorage.getItem(AUTH_STORAGE_KEY);
       if (data) {
@@ -365,6 +486,11 @@ export class AuthSystem {
     }
     this.renderNavAuth();
     this.notifyListeners(user);
+    try {
+      if (this.syncChannel) {
+        this.syncChannel.postMessage({ type: 'AUTH_SYNC', user });
+      }
+    } catch (e) {}
     if (user && this.pendingAuthCallback) {
       const cb = this.pendingAuthCallback;
       this.pendingAuthCallback = null;
@@ -372,8 +498,55 @@ export class AuthSystem {
     }
   }
 
-  init() {
+  async init() {
     this.renderNavAuth();
+    await this.fetchAuthConfig();
+    await this.checkServerSession();
+    this.initGoogleIdentity();
+  }
+
+  async fetchAuthConfig() {
+    try {
+      const res = await fetch('/api/auth/config', { cache: 'no-store' });
+      if (res.ok) {
+        const config = await res.json();
+        if (config && config.clientId) {
+          this.serverGoogleClientId = config.clientId;
+        }
+      }
+    } catch (e) {}
+  }
+
+  async checkServerSession() {
+    try {
+      const token = sessionStorage.getItem('NEXUS_SESSION_TOKEN');
+      const headers = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch('/api/auth/me', {
+        credentials: 'include',
+        headers,
+        cache: 'no-store'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.authenticated && data.user) {
+          this.currentUser = data.user;
+          localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(data.user));
+          this.renderNavAuth();
+          this.notifyListeners(data.user);
+          return;
+        } else if (!data.authenticated && this.currentUser) {
+          // If server says unauthenticated and we had local state, clear local state
+          this.currentUser = null;
+          localStorage.removeItem(AUTH_STORAGE_KEY);
+          this.renderNavAuth();
+          this.notifyListeners(null);
+        }
+      }
+    } catch (e) {
+      // Offline fallback: keep cached user
+    }
   }
 
   renderNavAuth() {
@@ -517,6 +690,7 @@ export class AuthSystem {
     return `
       <!-- 1. Sign In With Google Button -->
       <div class="google-auth-section">
+        <div id="authLoadingIndicator" class="auth-loading-banner hidden"></div>
         <div id="googleOfficialBtnSlot" class="google-official-btn-slot"></div>
         <button id="googleCustomBtnFallback" class="btn-google-auth" onclick="window.authSystem.handleGoogleSignIn()">
           <svg class="google-logo" viewBox="0 0 24 24" width="20" height="20">
@@ -706,49 +880,29 @@ export class AuthSystem {
 
   handleGoogleSignIn() {
     sound.playClick();
-    const customClientId = this.getGoogleClientId();
+    const effectiveClientId = this.getEffectiveGoogleClientId();
 
-    // Only attempt external popup if user explicitly provided a verified Google Cloud Client ID
-    if (customClientId && window.google?.accounts?.oauth2) {
-      try {
-        const client = window.google.accounts.oauth2.initTokenClient({
-          client_id: customClientId,
-          scope: 'email profile openid',
-          callback: async (tokenResponse) => {
-            if (tokenResponse && tokenResponse.access_token) {
-              try {
-                const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                  headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
-                });
-                if (res.ok) {
-                  const data = await res.json();
-                  this.applyGoogleUserData({
-                    sub: data.sub,
-                    name: data.name,
-                    email: data.email,
-                    picture: data.picture
-                  });
-                  return;
-                }
-              } catch (err) {
-                console.warn('Failed fetching Google userinfo:', err);
-              }
-            }
-          },
-          error_callback: (err) => {
-            console.warn('Google OAuth popup error:', err);
-            this.openGoogleAccountModal(true);
-          }
-        });
-        client.requestAccessToken();
-        return;
-      } catch (e) {
-        console.warn('Token client error:', e);
-      }
+    if (effectiveClientId && window.google?.accounts?.id) {
+      this.initGoogleIdentity();
+      window.google.accounts.id.prompt((notification) => {
+        if (notification.isNotDisplayed()) {
+          const reason = notification.getNotDisplayedReason ? notification.getNotDisplayedReason() : '';
+          console.log('Google prompt not displayed:', reason);
+          this.openGoogleAccountModal(true);
+        } else if (notification.isSkippedMoment()) {
+          console.log('Google prompt skipped');
+        } else if (notification.isDismissedMoment()) {
+          console.log('Google prompt dismissed');
+        }
+      });
+      return;
     }
 
-    // Default seamless Google Account Sign In / Sign Up:
-    // If no previous account on this browser, show the Google input form directly so the user enters their own account!
+    if (!effectiveClientId) {
+      this.promptGoogleClientIdConfig();
+      return;
+    }
+
     const saved = this.getSavedGoogleAccounts();
     this.openGoogleAccountModal(saved.length === 0);
   }
@@ -1367,8 +1521,17 @@ export class AuthSystem {
     }
   }
 
-  logout() {
+  async logout() {
     sound.playClick();
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (e) {}
+    try {
+      sessionStorage.removeItem('NEXUS_SESSION_TOKEN');
+    } catch (e) {}
     this.saveUser(null);
     this.showAuthToast('Successfully signed out of Nexus Ops.');
   }

@@ -257,6 +257,7 @@ export class StateManager {
       await fetch('/api/data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           fests: this.state.fests || [],
           events: this.state.events || [],
@@ -359,7 +360,7 @@ export class StateManager {
     if (!this.state.fests) return false;
     this.state.fests = this.state.fests.filter(f => f.id !== festId);
     this.save();
-    fetch('/api/fests/' + encodeURIComponent(festId), { method: 'DELETE' }).catch(() => {});
+    fetch('/api/fests/' + encodeURIComponent(festId), { method: 'DELETE', credentials: 'include' }).catch(() => {});
     this.pushStateToServer();
     return true;
   }
@@ -430,7 +431,7 @@ export class StateManager {
       this.state.registrations = this.state.registrations.filter(r => r.eventId !== eventId);
     }
     this.save();
-    fetch('/api/events/' + encodeURIComponent(eventId), { method: 'DELETE' }).catch(() => {});
+    fetch('/api/events/' + encodeURIComponent(eventId), { method: 'DELETE', credentials: 'include' }).catch(() => {});
     this.pushStateToServer();
     return true;
   }

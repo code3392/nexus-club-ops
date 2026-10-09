@@ -3530,6 +3530,27 @@ body {
   display: none !important;
 }
 
+.auth-loading-banner {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px dashed rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  text-align: center;
+  font-family: var(--font-mono);
+}
+
+.auth-loading-banner.hidden {
+  display: none !important;
+}
+
 .terms-check-group {
   margin: 1rem 0 0.5rem;
 }

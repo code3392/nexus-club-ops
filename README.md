@@ -74,25 +74,90 @@ The platform enables attendees to browse official festivals, inspect event sched
 
 ---
 
-## 5. Setup Instructions
+---
 
-### Option A: Run Locally via Node.js
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/code3392/nexus-club-ops.git
-   cd nexus-club-ops
-   ```
-2. Start the local server (no `npm install` needed):
+## 5. Setup & Authentication Configuration
+
+### 5.1 Google Cloud Authentication Setup
+
+NEXUS CLUB OPS supports secure Google Sign-In powered by official Google Identity Services (GIS) on the frontend and zero-dependency server-side cryptographic token verification on the backend.
+
+Follow these steps to generate your Google Cloud credentials:
+
+1. **Create or Select a Google Cloud Project:**
+   - Open the [Google Cloud Console](https://console.cloud.google.com/).
+   - Click the project dropdown in the top bar and select **New Project**.
+   - Enter a Project Name (e.g. `Nexus Club Ops`) and click **Create**.
+
+2. **Configure the OAuth Consent Screen:**
+   - In the left sidebar, navigate to **APIs & Services** > **OAuth consent screen**.
+   - Select User Type: **External** (or **Internal** if using Google Workspace), then click **Create**.
+   - Fill in the required fields:
+     - **App name:** `Nexus Club Ops`
+     - **User support email:** Select your email address
+     - **Developer contact email:** Enter your email address
+   - In the **Scopes** step, click **Add or Remove Scopes** and select:
+     - `.../auth/userinfo.email`
+     - `.../auth/userinfo.profile`
+     - `openid`
+   - Click **Save and Continue**.
+   - In the **Test users** step (if your app status is Testing), add your personal Gmail account(s) so you can sign in during development.
+   - Click **Save and Continue**.
+
+3. **Create OAuth 2.0 Client ID Credentials:**
+   - In the left sidebar, navigate to **APIs & Services** > **Credentials**.
+   - Click **Create Credentials** > **OAuth client ID**.
+   - Set **Application type** to **Web application**.
+   - Set **Name** to `Nexus Web Client`.
+   - Under **Authorized JavaScript origins**, click **Add URI** and enter:
+     - `http://localhost:3000`
+     - `http://127.0.0.1:3000`
+     - `https://<your-project>.vercel.app` (replace with your Vercel deployment domain)
+   - Under **Authorized redirect URIs**, click **Add URI** and enter:
+     - `http://localhost:3000`
+     - `https://<your-project>.vercel.app`
+   - Click **Create**.
+   - Copy the generated **Client ID** (format: `xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com`).
+
+4. **Configure Environment Variables:**
+   - Copy the template file `.env.example` to `.env`:
+     ```bash
+     cp .env.example .env
+     ```
+   - Open `.env` and set your configuration values:
+     ```env
+     PORT=3000
+     GOOGLE_CLIENT_ID=your-actual-client-id.apps.googleusercontent.com
+     GOOGLE_CLIENT_SECRET=your-actual-client-secret
+     SESSION_SECRET=your-random-32-character-session-secret-string
+     ```
+
+### 5.2 Running Locally via Node.js
+1. Start the zero-dependency Node.js server:
    ```bash
    node serve.js
    ```
-3. Open in your browser:
+2. Open in your browser:
    ```
    http://localhost:3000
    ```
+3. Test authentication:
+   - Click **Sign In / Join** in the navigation header.
+   - Click **Continue with Google** (or use the rendered Google button if configured).
+   - Once signed in, your Google name, email, and avatar will appear across all pages (`index.html` and `events.html`) simultaneously.
 
-### Option B: Direct Browser Launch
-Because the application uses standard browser ES Modules and zero third-party build steps, you can also launch `index.html` directly in modern web browsers or host it with any static server.
+### 5.3 Deploying to Vercel
+1. Push your repository to GitHub.
+2. Log in to [Vercel](https://vercel.com/) and click **Add New** > **Project**.
+3. Import your `nexus-club-ops` repository.
+4. Under **Environment Variables**, add the following keys:
+   - `GOOGLE_CLIENT_ID`: Your Google Cloud OAuth Client ID
+   - `SESSION_SECRET`: A secure random string for HMAC session token signing
+5. Click **Deploy**.
+6. Once deployed, copy your production Vercel URL (e.g. `https://nexus-ops.vercel.app`) and add it to **Authorized JavaScript origins** in your Google Cloud Console project.
+
+### 5.4 Offline & Password Fallback
+If Google OAuth credentials are not yet configured, the system provides a seamless email and password sign-in and registration flow. Every account enforces a strict 1-email-to-1-account policy with password authentication. All accounts, whether registered via Google or campus email, receive cryptographically signed session tokens and `HttpOnly` session cookies.
 
 ---
 
