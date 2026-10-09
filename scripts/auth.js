@@ -724,8 +724,8 @@ export class AuthSystem {
 
   renderAuthForm() {
     return `
-      <!-- 1. Sign In With Google Button -->
-      <div class="google-auth-section">
+      <!-- 1. Sign In With Google Button (Hidden for later use) -->
+      <div class="google-auth-section" style="display: none;">
         <div id="authLoadingIndicator" class="auth-loading-banner hidden"></div>
         <button id="googleAuthBtn" class="btn-google-auth" type="button" onclick="window.authSystem.handleGoogleSignIn()">
           <svg class="google-logo" viewBox="0 0 24 24" width="20" height="20">
@@ -743,7 +743,7 @@ export class AuthSystem {
         </div>
       </div>
 
-      <div class="auth-divider">
+      <div class="auth-divider" style="display: none;">
         <span>OR WITH EMAIL & PASSWORD</span>
       </div>
 
