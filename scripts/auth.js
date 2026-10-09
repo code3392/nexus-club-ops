@@ -28,7 +28,7 @@ export class AuthSystem {
     this.authMode = 'signin'; // 'signin' | 'signup'
     this.pendingAuthCallback = null;
     this.listeners = [];
-    this.serverGoogleClientId = '';
+    this.serverGoogleClientId = '978129130210-1uspjmfts0fp1o1ao1a0ghlrq4tlsue8.apps.googleusercontent.com';
     this.setupCrossTabSync();
   }
 
@@ -307,7 +307,10 @@ export class AuthSystem {
 
   getEffectiveGoogleClientId() {
     if (this.serverGoogleClientId) return this.serverGoogleClientId;
-    return this.getGoogleClientId();
+    if (this.serverGoogleClientId) return this.serverGoogleClientId;
+    const stored = this.getGoogleClientId();
+    if (stored) return stored;
+    return '978129130210-1uspjmfts0fp1o1ao1a0ghlrq4tlsue8.apps.googleusercontent.com';
   }
 
   initGoogleIdentity() {
@@ -333,12 +336,14 @@ export class AuthSystem {
   }
 
   initAndRenderGoogleButton() {
-    setTimeout(() => {
+    const tryRender = (attempts = 0) => {
       const clientId = this.getEffectiveGoogleClientId();
       const slot = document.getElementById('googleOfficialBtnSlot');
       const fallbackBtn = document.getElementById('googleCustomBtnFallback');
 
-      if (clientId && window.google?.accounts?.id && slot) {
+      if (!slot) return;
+
+      if (clientId && window.google?.accounts?.id) {
         const initialized = this.initGoogleIdentity();
         if (initialized) {
           try {
@@ -361,9 +366,16 @@ export class AuthSystem {
         }
       }
 
+      if (attempts < 25 && (!window.google || !window.google.accounts || !window.google.accounts.id)) {
+        setTimeout(() => tryRender(attempts + 1), 150);
+        return;
+      }
+
       if (slot) slot.style.display = 'none';
       if (fallbackBtn) fallbackBtn.style.display = 'flex';
-    }, 40);
+    };
+
+    setTimeout(() => tryRender(0), 40);
   }
 
   showAuthLoading(isLoading, message = 'Verifying identity...') {
@@ -882,24 +894,67 @@ export class AuthSystem {
     sound.playClick();
     const effectiveClientId = this.getEffectiveGoogleClientId();
 
-    if (effectiveClientId && window.google?.accounts?.id) {
-      this.initGoogleIdentity();
-      window.google.accounts.id.prompt((notification) => {
-        if (notification.isNotDisplayed()) {
-          const reason = notification.getNotDisplayedReason ? notification.getNotDisplayedReason() : '';
-          console.log('Google prompt not displayed:', reason);
-          this.openGoogleAccountModal(true);
-        } else if (notification.isSkippedMoment()) {
-          console.log('Google prompt skipped');
-        } else if (notification.isDismissedMoment()) {
-          console.log('Google prompt dismissed');
-        }
-      });
+    if (!effectiveClientId) {
+      this.promptGoogleClientIdConfig();
       return;
     }
 
-    if (!effectiveClientId) {
-      this.promptGoogleClientIdConfig();
+    // Launch official Google OAuth 2.0 account chooser popup
+    if (window.google?.accounts?.oauth2) {
+      try {
+        const client = window.google.accounts.oauth2.initTokenClient({
+          client_id: effectiveClientId,
+          scope: 'openid email profile',
+          callback: async (tokenResponse) => {
+            if (tokenResponse && tokenResponse.access_token) {
+              this.showAuthLoading(true, 'Verifying Google credentials with server...');
+              try {
+                const res = await fetch('/api/auth/google', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  credentials: 'include',
+                  body: JSON.stringify({ accessToken: tokenResponse.access_token })
+                });
+
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                  throw new Error(data.error || 'Server rejected Google authentication.');
+                }
+
+                if (data.sessionToken) {
+                  try { sessionStorage.setItem('NEXUS_SESSION_TOKEN', data.sessionToken); } catch (e) {}
+                }
+
+                sound.playPassUnlocked();
+                this.saveUser(data.user);
+                this.closeModal();
+                this.showAuthToast(`Welcome, ${data.user.name}! Authenticated via Google.`);
+              } catch (err) {
+                this.showAuthLoading(false);
+                this.showFormError(err.message || 'Google authentication failed.');
+              }
+            } else if (tokenResponse && tokenResponse.error && tokenResponse.error !== 'popup_closed_by_user') {
+              this.showFormError(`Google Sign-In: ${tokenResponse.error}`);
+            }
+          },
+          error_callback: (err) => {
+            console.warn('Google TokenClient popup error:', err);
+            if (err?.type !== 'popup_closed') {
+              this.showFormError(err.message || 'Google Sign-In popup could not be displayed.');
+            }
+          }
+        });
+        client.requestAccessToken({ prompt: 'select_account' });
+        return;
+      } catch (e) {
+        console.warn('Error launching Google token client:', e);
+      }
+    }
+
+    // Fallback: Attempt One-Tap prompt if SDK loaded
+    if (window.google?.accounts?.id) {
+      this.initGoogleIdentity();
+      window.google.accounts.id.prompt();
       return;
     }
 

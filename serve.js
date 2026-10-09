@@ -257,42 +257,64 @@ function getSessionFromReq(req) {
   return null;
 }
 
-async function verifyGoogleIdToken(idToken, expectedClientId) {
-  if (!idToken || typeof idToken !== 'string') {
-    throw new Error('ID token is missing or invalid.');
-  }
+async function verifyGoogleToken(payload, expectedClientId) {
+  if (payload.idToken || payload.credential) {
+    const idToken = payload.idToken || payload.credential;
+    const tokeninfoUrl = `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`;
+    const resp = await fetch(tokeninfoUrl);
+    if (!resp.ok) {
+      const errText = await resp.text();
+      throw new Error(`Google token verification failed (${resp.status}): ${errText}`);
+    }
 
-  const tokeninfoUrl = `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`;
-  const resp = await fetch(tokeninfoUrl);
-  if (!resp.ok) {
-    const errText = await resp.text();
-    throw new Error(`Google token verification failed (${resp.status}): ${errText}`);
-  }
-
-  const payload = await resp.json();
-
-  if (expectedClientId) {
-    if (payload.aud !== expectedClientId) {
+    const tokenData = await resp.json();
+    if (expectedClientId && tokenData.aud !== expectedClientId) {
       throw new Error('Audience mismatch: token audience does not match configured client id.');
     }
+
+    const nowSec = Math.floor(Date.now() / 1000);
+    if (tokenData.exp && parseInt(tokenData.exp, 10) < nowSec) {
+      throw new Error('Google token has expired.');
+    }
+
+    if (!tokenData.email) {
+      throw new Error('Google token does not contain an email address.');
+    }
+
+    return {
+      sub: tokenData.sub,
+      email: tokenData.email.toLowerCase(),
+      name: tokenData.name || tokenData.email.split('@')[0],
+      picture: tokenData.picture || '',
+      email_verified: tokenData.email_verified === 'true' || tokenData.email_verified === true
+    };
   }
 
-  const nowSec = Math.floor(Date.now() / 1000);
-  if (payload.exp && parseInt(payload.exp, 10) < nowSec) {
-    throw new Error('Google token has expired.');
+  if (payload.accessToken) {
+    const userInfoUrl = 'https://www.googleapis.com/oauth2/v3/userinfo';
+    const resp = await fetch(userInfoUrl, {
+      headers: { Authorization: `Bearer ${payload.accessToken}` }
+    });
+    if (!resp.ok) {
+      const errText = await resp.text();
+      throw new Error(`Google token verification failed (${resp.status}): ${errText}`);
+    }
+
+    const userData = await resp.json();
+    if (!userData.email) {
+      throw new Error('Google profile does not contain an email address.');
+    }
+
+    return {
+      sub: userData.sub,
+      email: userData.email.toLowerCase(),
+      name: userData.name || userData.email.split('@')[0],
+      picture: userData.picture || '',
+      email_verified: userData.email_verified === true || userData.email_verified === 'true'
+    };
   }
 
-  if (!payload.email) {
-    throw new Error('Google token does not contain an email address.');
-  }
-
-  return {
-    sub: payload.sub,
-    email: payload.email.toLowerCase(),
-    name: payload.name || payload.email.split('@')[0],
-    picture: payload.picture || '',
-    email_verified: payload.email_verified === 'true' || payload.email_verified === true
-  };
+  throw new Error('Missing Google credentials (idToken or accessToken required).');
 }
 
 const server = http.createServer(async (req, res) => {
@@ -332,18 +354,11 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // API Route: POST /api/auth/google (Server-side Google ID token verification)
+  // API Route: POST /api/auth/google (Server-side Google token verification)
   if (reqPath === '/api/auth/google' && req.method === 'POST') {
     try {
       const payload = await parseJsonBody(req);
-      const idToken = payload.idToken || payload.credential;
-      if (!idToken) {
-        res.writeHead(400, jsonHeaders);
-        res.end(JSON.stringify({ error: 'Missing idToken in request body.' }));
-        return;
-      }
-
-      const googleUser = await verifyGoogleIdToken(idToken, GOOGLE_CLIENT_ID);
+      const googleUser = await verifyGoogleToken(payload, GOOGLE_CLIENT_ID);
       const db = readDb();
       if (!Array.isArray(db.users)) db.users = [];
 
