@@ -335,7 +335,65 @@ export class AuthSystem {
     }
   }
 
+  initTokenClientIfReady() {
+    const clientId = this.getEffectiveGoogleClientId();
+    if (!clientId || !window.google?.accounts?.oauth2) return;
+    try {
+      this.tokenClient = window.google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'openid email profile',
+        callback: async (tokenResponse) => {
+          if (tokenResponse && tokenResponse.access_token) {
+            this.showAuthLoading(true, 'Verifying Google credentials with server...');
+            try {
+              const res = await fetch('/api/auth/google', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ accessToken: tokenResponse.access_token })
+              });
+
+              const data = await res.json();
+              if (!res.ok || !data.success) {
+                throw new Error(data.error || 'Server rejected Google authentication.');
+              }
+
+              if (data.sessionToken) {
+                try { sessionStorage.setItem('NEXUS_SESSION_TOKEN', data.sessionToken); } catch (e) {}
+              }
+
+              sound.playPassUnlocked();
+              this.saveUser(data.user);
+              this.closeModal();
+              this.showAuthToast(`Welcome, ${data.user.name}! Authenticated via Google.`);
+            } catch (err) {
+              this.showAuthLoading(false);
+              this.showFormError(err.message || 'Google authentication failed.');
+            }
+          } else {
+            this.showAuthLoading(false);
+            if (tokenResponse && tokenResponse.error && tokenResponse.error !== 'popup_closed_by_user') {
+              this.showFormError(`Google Sign-In: ${tokenResponse.error}`);
+            }
+          }
+        },
+        error_callback: (err) => {
+          this.showAuthLoading(false);
+          console.warn('Google TokenClient popup error:', err);
+          if (err?.type === 'popup_failed_to_open') {
+            this.showFormError('Pop-up blocked. Click the pop-up icon in your address bar to allow pop-ups for this site, then try again.');
+          } else if (err?.type !== 'popup_closed') {
+            this.showFormError(err?.message || 'Google Sign-In popup could not be displayed.');
+          }
+        }
+      });
+    } catch (e) {
+      console.warn('Error pre-initializing tokenClient:', e);
+    }
+  }
+
   initAndRenderGoogleButton() {
+    this.initTokenClientIfReady();
     if (window.google?.accounts?.id) {
       this.initGoogleIdentity();
     }
@@ -846,7 +904,7 @@ export class AuthSystem {
     this.addSavedGoogleAccount(user);
   }
 
-  async handleGoogleSignIn() {
+  handleGoogleSignIn() {
     sound.playClick();
     const effectiveClientId = this.getEffectiveGoogleClientId();
 
@@ -855,81 +913,29 @@ export class AuthSystem {
       return;
     }
 
-    this.showAuthLoading(true, 'Opening Google Sign-In...');
-
-    // If Google SDK is still loading, wait up to 2 seconds
-    if (!window.google?.accounts?.oauth2 && !window.google?.accounts?.id) {
-      for (let i = 0; i < 20; i++) {
-        await new Promise(r => setTimeout(r, 100));
-        if (window.google?.accounts?.oauth2 || window.google?.accounts?.id) break;
-      }
+    if (!window.google?.accounts?.oauth2) {
+      this.showFormError('Google Identity Services is still loading. Please wait 2 seconds and try again.');
+      return;
     }
 
-    // Launch official Google OAuth 2.0 account chooser popup
-    if (window.google?.accounts?.oauth2) {
-      try {
-        const client = window.google.accounts.oauth2.initTokenClient({
-          client_id: effectiveClientId,
-          scope: 'openid email profile',
-          callback: async (tokenResponse) => {
-            if (tokenResponse && tokenResponse.access_token) {
-              this.showAuthLoading(true, 'Verifying Google credentials with server...');
-              try {
-                const res = await fetch('/api/auth/google', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  credentials: 'include',
-                  body: JSON.stringify({ accessToken: tokenResponse.access_token })
-                });
+    if (!this.tokenClient) {
+      this.initTokenClientIfReady();
+    }
 
-                const data = await res.json();
-                if (!res.ok || !data.success) {
-                  throw new Error(data.error || 'Server rejected Google authentication.');
-                }
+    if (this.tokenClient) {
+      this.showAuthLoading(true, 'Opening Google Sign-In...');
+      // SYNCHRONOUS CALL: Must be executed directly in the user click callstack
+      // to maintain browser transient activation and prevent pop-up blocker interception.
+      this.tokenClient.requestAccessToken({ prompt: 'select_account' });
 
-                if (data.sessionToken) {
-                  try { sessionStorage.setItem('NEXUS_SESSION_TOKEN', data.sessionToken); } catch (e) {}
-                }
-
-                sound.playPassUnlocked();
-                this.saveUser(data.user);
-                this.closeModal();
-                this.showAuthToast(`Welcome, ${data.user.name}! Authenticated via Google.`);
-              } catch (err) {
-                this.showAuthLoading(false);
-                this.showFormError(err.message || 'Google authentication failed.');
-              }
-            } else {
-              this.showAuthLoading(false);
-              if (tokenResponse && tokenResponse.error && tokenResponse.error !== 'popup_closed_by_user') {
-                this.showFormError(`Google Sign-In: ${tokenResponse.error}`);
-              }
-            }
-          },
-          error_callback: (err) => {
-            this.showAuthLoading(false);
-            console.warn('Google TokenClient popup error:', err);
-            if (err?.type === 'popup_failed_to_open') {
-              this.showFormError('Pop-up blocked. Please allow popups for this site and try again.');
-            } else if (err?.type !== 'popup_closed') {
-              this.showFormError(err?.message || 'Google Sign-In popup could not be displayed.');
-            }
-          }
-        });
-        client.requestAccessToken({ prompt: 'select_account' });
-
-        // Auto-clear loading banner after 5 seconds if user leaves popup open
-        setTimeout(() => {
-          const loadingEl = document.getElementById('authLoadingIndicator');
-          if (loadingEl && !loadingEl.classList.contains('hidden') && loadingEl.textContent.includes('Opening Google')) {
-            this.showAuthLoading(false);
-          }
-        }, 5000);
-        return;
-      } catch (e) {
-        console.warn('Error launching Google token client:', e);
-        this.showAuthLoading(false);
-      }
+      // Automatically reset loading banner if the user switches tabs or leaves popup open
+      setTimeout(() => {
+        const loadingEl = document.getElementById('authLoadingIndicator');
+        if (loadingEl && !loadingEl.classList.contains('hidden') && loadingEl.textContent.includes('Opening Google')) {
+          this.showAuthLoading(false);
+        }
+      }, 4000);
+      return;
     }
 
     // Fallback: Attempt One-Tap prompt if SDK loaded
